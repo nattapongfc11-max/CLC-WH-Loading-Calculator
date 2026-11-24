@@ -156,7 +156,7 @@ function calculateMixPalletLayouts(){
         const byModel=Object.entries(result.counts).map(([key,count])=>({model:hg.types.find(t=>t.key===key)?.model||key,count}));
         const orientationMap=new Map();
         result.placements.forEach(p=>{const key=[p.key,p.w,p.d,p.rotated].join('|');if(!orientationMap.has(key))orientationMap.set(key,{model:p.model,width:p.w,depth:p.d,rotated:p.rotated,count:0});orientationMap.get(key).count++;});
-        const byOrientation=[...orientationMap.values()];
+        const byOrientation=[...orientationMap.values()].map(x=>{x.across=Math.floor(110/x.width);x.along=Math.floor(110/x.depth);x.gridCapacity=x.across*x.along;return x;});
         layers.push({cartons:result.placed,byModel,byOrientation,fillPercent:result.fillPercent,usedArea:result.usedArea,placements:result.placements});
       }
       hg.layers=layers;
@@ -192,7 +192,7 @@ function renderMixCalcPanel(){
     g.heightGroups.forEach(hg=>{
       hg.layers.forEach((layer,i)=>{
         const detail=layer.byModel.map(x=>esc(x.model)+' × '+fmt(x.count)).join('<br>');
-        const orient=layer.byOrientation.map(x=>esc(x.model)+' · '+fmt(x.width)+' × '+fmt(x.depth)+' cm × '+fmt(x.count)+(x.rotated?' (หมุน 90°)':'')).join('<br>');
+        const orient=layer.byOrientation.map(x=>esc(x.model)+' · '+fmt(x.width)+' × '+fmt(x.depth)+' cm · กว้าง '+fmt(x.across)+' × ยาว '+fmt(x.along)+' (Grid '+fmt(x.gridCapacity)+') · จัดจริง '+fmt(x.count)+(x.rotated?' (หมุน 90°)':'')).join('<br>');
         rows.push('<tr><td>'+fmt(hg.height)+' cm</td><td>Layer '+(i+1)+'</td><td>'+fmt(layer.cartons)+'</td><td>'+fmt(layer.fillPercent)+'%</td><td>'+detail+'<div class="sub" style="margin-top:4px">'+orient+'</div></td></tr>');
       });
     });
