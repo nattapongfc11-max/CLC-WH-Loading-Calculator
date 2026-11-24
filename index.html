@@ -107,14 +107,14 @@ function calculateMixPalletLayouts(){
     const g=grouped.get(key),d=n(a.cartonD),w=n(a.cartonW),h=n(a.cartonH),count=Math.max(0,Math.floor(n(a.ctnNo)));
     if(!count)return;
     if(!(d>0&&w>0&&h>0)){g.invalid.push({model:a.shipmentModel||a.packingModel,reason:'ขนาด D/W/H ไม่ครบหรือเป็นศูนย์'});return;}
-    const typeKey=[a.packingModel||a.shipmentModel,d.toFixed(2),w.toFixed(2),h.toFixed(2)].join('|');
+    const typeKey=[a.packingModel||a.shipmentModel,String(d),String(w),String(h)].join('|');
     if(!g.types.has(typeKey))g.types.set(typeKey,{key:typeKey,model:a.shipmentModel||a.packingModel||'-',packingModel:a.packingModel||'',w,d,h,count:0});
     g.types.get(typeKey).count+=count;
   });
   return [...grouped.values()].map(g=>{
     const byHeight=new Map();
     [...g.types.values()].forEach(t=>{
-      const hk=t.h.toFixed(2);
+      const hk=String(t.h);
       if(!byHeight.has(hk))byHeight.set(hk,{height:t.h,types:[]});
       byHeight.get(hk).types.push(t);
     });
