@@ -154,7 +154,10 @@ function calculateMixPalletLayouts(){
           break;
         }
         const byModel=Object.entries(result.counts).map(([key,count])=>({model:hg.types.find(t=>t.key===key)?.model||key,count}));
-        layers.push({cartons:result.placed,byModel});
+        const orientationMap=new Map();
+        result.placements.forEach(p=>{const key=[p.key,p.w,p.d,p.rotated].join('|');if(!orientationMap.has(key))orientationMap.set(key,{model:p.model,width:p.w,depth:p.d,rotated:p.rotated,count:0});orientationMap.get(key).count++;});
+        const byOrientation=[...orientationMap.values()];
+        layers.push({cartons:result.placed,byModel,byOrientation,fillPercent:result.fillPercent,usedArea:result.usedArea,placements:result.placements});
       }
       hg.layers=layers;
       hg.cartons=hg.types.reduce((sum,t)=>sum+t.count,0);
