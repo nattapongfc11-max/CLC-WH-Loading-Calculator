@@ -4,8 +4,16 @@ if(!window.supabase){const e=document.getElementById('authError');if(e)e.textCon
 const CLC_URL='https://takwoycaniiaesepbmss.supabase.co';
 const CLC_KEY='sb_publishable_NFheSmababFHy_YPlFhNnQ_EIEog0y5';
 const cloud=window.supabase.createClient(CLC_URL,CLC_KEY);
-const state=window.CLC_STATE;
-if(!state){const e=document.getElementById('authError');if(e)e.textContent='CLC application state failed to initialize. Please reload.';return;}
+const state=window.CLC_STATE||{
+ get parts(){return window.parts||[]},set parts(v){window.parts=v},
+ get options(){return window.options||[]},set options(v){window.options=v},
+ get destinations(){return window.destinations||[]},set destinations(v){window.destinations=v},
+ get plans(){return window.plans||[]},set plans(v){window.plans=v},
+ get models(){return window.models||[]},set models(v){window.models=v},
+ get allocations(){return window.allocations||[]},set allocations(v){window.allocations=v}
+};
+window.CLC_STATE=state;
+if(!Array.isArray(state.parts)||!Array.isArray(state.options)||!Array.isArray(state.destinations)){const e=document.getElementById('authError');if(e)e.textContent='CLC data arrays are not ready. Refresh the page.';return;}
 let signedUser=null,cloudChannel=null;
 const $=id=>document.getElementById(id);
 const num=v=>Number(v)||0;
