@@ -43,60 +43,82 @@ function getPalletSequenceMap(){const map=new Map(),seen=new Map();let seq=0;all
 
 // Mix Pallet carton layout: 110 x 110 cm footprint; cartons of different heights
 // are assigned to separate, level layers. Carton D/W may rotate by 90 degrees.
-function mixTryPlace(freeRects,w,h){
-  let best=null;
-  freeRects.forEach((r,ri)=>{
-    [[w,h,false],[h,w,true]].forEach(([rw,rh,rot])=>{
-      if(rw>r.w+1e-7||rh>r.h+1e-7)return;
-      const dw=r.w-rw,dh=r.h-rh;
-      const score=[Math.min(dw,dh),Math.max(dw,dh),r.w*r.h-rw*rh];
-      if(!best||score[0]<best.score[0]-1e-7||(Math.abs(score[0]-best.score[0])<1e-7&&(score[1]<best.score[1]-1e-7||(Math.abs(score[1]-best.score[1])<1e-7&&score[2]<best.score[2])))){
-        best={rect:r,rectIndex:ri,w:rw,h:rh,rotated:rot,score};
-      }
-    });
-  });
-  if(!best)return null;
-  const used={x:best.rect.x,y:best.rect.y,w:best.w,h:best.h};
-  let next=[];
+function mixSplitFreeRects(freeRects,used){
+  const next=[];
   freeRects.forEach(r=>{
     const overlap=used.x<r.x+r.w-1e-7&&used.x+used.w>r.x+1e-7&&used.y<r.y+r.h-1e-7&&used.y+used.h>r.y+1e-7;
     if(!overlap){next.push(r);return;}
-    if(used.x<r.x+r.w-1e-7&&used.x+used.w>r.x+1e-7){
-      if(used.y>r.y+1e-7)next.push({x:r.x,y:r.y,w:r.w,h:used.y-r.y});
-      if(used.y+used.h<r.y+r.h-1e-7)next.push({x:r.x,y:used.y+used.h,w:r.w,h:r.y+r.h-(used.y+used.h)});
-    }
-    if(used.y<r.y+r.h-1e-7&&used.y+used.h>r.y+1e-7){
-      if(used.x>r.x+1e-7)next.push({x:r.x,y:r.y,w:used.x-r.x,h:r.h});
-      if(used.x+used.w<r.x+r.w-1e-7)next.push({x:used.x+used.w,y:r.y,w:r.x+r.w-(used.x+used.w),h:r.h});
-    }
+    if(used.x>r.x+1e-7)next.push({x:r.x,y:r.y,w:used.x-r.x,h:r.h});
+    if(used.x+used.w<r.x+r.w-1e-7)next.push({x:used.x+used.w,y:r.y,w:r.x+r.w-(used.x+used.w),h:r.h});
+    if(used.y>r.y+1e-7)next.push({x:r.x,y:r.y,w:r.w,h:used.y-r.y});
+    if(used.y+used.h<r.y+r.h-1e-7)next.push({x:r.x,y:used.y+used.h,w:r.w,h:r.y+r.h-(used.y+used.h)});
   });
-  next=next.filter(r=>r.w>1e-7&&r.h>1e-7);
-  const pruned=[];
-  for(let i=0;i<next.length;i++){
-    let contained=false;
-    for(let j=0;j<next.length;j++){
-      if(i===j)continue;
-      const a=next[i],b=next[j];
-      if(a.x>=b.x-1e-7&&a.y>=b.y-1e-7&&a.x+a.w<=b.x+b.w+1e-7&&a.y+a.h<=b.y+b.h+1e-7){contained=true;break;}
-    }
-    if(!contained)pruned.push(next[i]);
+  const valid=next.filter(r=>r.w>1e-7&&r.h>1e-7);
+  return valid.filter((r,i)=>!valid.some((q,j)=>i!==j&&r.x>=q.x-1e-7&&r.y>=q.y-1e-7&&r.x+r.w<=q.x+q.w+1e-7&&r.y+r.h<=q.y+q.h+1e-7));
+}
+function mixCompareScore(a,b){
+  for(let i=0;i<Math.max(a.length,b.length);i++){
+    const d=(a[i]??0)-(b[i]??0);
+    if(Math.abs(d)>1e-7)return d;
   }
-  return {freeRects:pruned,rotated:best.rotated};
+  return 0;
+}
+function mixRunLayer(types,sourceRemaining,mode){
+  const palletW=110,palletD=110;
+  const remaining={...sourceRemaining};
+  let freeRects=[{x:0,y:0,w:palletW,h:palletD}];
+  const placements=[];
+  while(true){
+    let best=null;
+    types.forEach(t=>{
+      if((remaining[t.key]||0)<=0)return;
+      const orientations=[
+        {w:t.w,d:t.d,rotated:false},
+        {w:t.d,d:t.w,rotated:true}
+      ];
+      orientations.forEach(o=>{
+        if(o.w>palletW+1e-7||o.d>palletD+1e-7)return;
+        freeRects.forEach(r=>{
+          if(o.w>r.w+1e-7||o.d>r.h+1e-7)return;
+          const leftW=r.w-o.w,leftD=r.h-o.d;
+          const short=Math.min(leftW,leftD),long=Math.max(leftW,leftD);
+          const waste=r.w*r.h-o.w*o.d,area=o.w*o.d;
+          let score;
+          if(mode===0)score=[short,waste,long,r.y,r.x,-area];
+          else if(mode===1)score=[waste,short,long,r.y,r.x,-area];
+          else if(mode===2)score=[long,short,waste,r.y,r.x,-area];
+          else if(mode===3)score=[r.y,r.x,leftW,leftD,waste,-area];
+          else if(mode===4)score=[-area,short,waste,long,r.y,r.x];
+          else score=[-o.w,r.y,leftW,leftD,waste,-area];
+          const candidate={type:t,rect:r,w:o.w,d:o.d,rotated:o.rotated,score,x:r.x,y:r.y,area};
+          if(!best||mixCompareScore(candidate.score,best.score)<0)best=candidate;
+        });
+      });
+    });
+    if(!best)break;
+    placements.push({key:best.type.key,model:best.type.model,x:best.x,y:best.y,w:best.w,d:best.d,rotated:best.rotated,area:best.area});
+    remaining[best.type.key]--;
+    freeRects=mixSplitFreeRects(freeRects,{x:best.x,y:best.y,w:best.w,h:best.d});
+  }
+  const counts={};
+  placements.forEach(p=>{counts[p.key]=(counts[p.key]||0)+1;});
+  const usedArea=placements.reduce((sum,p)=>sum+p.area,0);
+  return {counts,remaining,placed:placements.length,placements,usedArea,fillPercent:usedArea/(palletW*palletD)*100,freeRectCount:freeRects.length,mode};
 }
 function mixPackOneLayer(types,remaining){
-  let freeRects=[{x:0,y:0,w:110,h:110}],counts={},placed=0;
-  const ordered=[...types].sort((a,b)=>(b.w*b.d-a.w*a.d)||(Math.max(b.w,b.d)-Math.max(a.w,a.d))||a.model.localeCompare(b.model));
-  ordered.forEach(t=>{
-    let left=remaining[t.key]||0;
-    while(left>0){
-      const result=mixTryPlace(freeRects,t.w,t.d);
-      if(!result)break;
-      freeRects=result.freeRects;left--;placed++;
-      counts[t.key]=(counts[t.key]||0)+1;
-    }
-    remaining[t.key]=left;
-  });
-  return {counts,placed};
+  // Try several width/length placement priorities; keep the layout that fits
+  // the most cartons, then the greatest footprint area, before creating Layer 2.
+  const modes=[0,1,2,3,4,5];
+  const runs=modes.map(mode=>mixRunLayer(types,remaining,mode));
+  runs.sort((a,b)=>
+    (b.placed-a.placed)||
+    (b.usedArea-a.usedArea)||
+    (a.freeRectCount-b.freeRectCount)||
+    (a.mode-b.mode)
+  );
+  const best=runs[0]||{counts:{},remaining:{...remaining},placed:0,placements:[],usedArea:0,fillPercent:0,freeRectCount:1,mode:0};
+  Object.keys(remaining).forEach(key=>{remaining[key]=best.remaining[key]??remaining[key];});
+  return best;
 }
 function calculateMixPalletLayouts(){
   const grouped=new Map();
@@ -167,13 +189,14 @@ function renderMixCalcPanel(){
     g.heightGroups.forEach(hg=>{
       hg.layers.forEach((layer,i)=>{
         const detail=layer.byModel.map(x=>esc(x.model)+' × '+fmt(x.count)).join('<br>');
-        rows.push('<tr><td>'+fmt(hg.height)+' cm</td><td>'+(i+1)+'</td><td>'+fmt(layer.cartons)+'</td><td>'+detail+'</td></tr>');
+        const orient=layer.byOrientation.map(x=>esc(x.model)+' · '+fmt(x.width)+' × '+fmt(x.depth)+' cm × '+fmt(x.count)+(x.rotated?' (หมุน 90°)':'')).join('<br>');
+        rows.push('<tr><td>'+fmt(hg.height)+' cm</td><td>Layer '+(i+1)+'</td><td>'+fmt(layer.cartons)+'</td><td>'+fmt(layer.fillPercent)+'%</td><td>'+detail+'<div class="sub" style="margin-top:4px">'+orient+'</div></td></tr>');
       });
     });
     const issues=[...g.invalid.map(x=>esc(x.model)+': '+esc(x.reason)),...g.unplaced.map(x=>esc(x.model)+' ('+fmt(x.count)+' CTN): '+esc(x.reason))];
-    return '<div class="mix-group-card"><b>'+esc(g.group)+'</b><div class="mix-metrics"><span>Cartons: <b>'+fmt(g.cartons)+'</b></span><span>Total Layers: <b>'+fmt(g.layers)+'</b></span><span>Calculated Height: <b>'+fmt(g.totalHeight)+' cm</b></span><span class="mix-status '+statusClass+'">'+esc(g.status)+'</span></div><div class="sub">ความสูงรวม = ฐาน Pallet 7 cm + ผลรวมความสูงทุกชั้น · พื้นที่ 110 × 110 cm · อนุญาตหมุนกล่อง 90°</div><div class="tablewrap" style="margin-top:8px"><table><thead><tr><th>Carton Height</th><th>Layer</th><th>Cartons / Layer</th><th>Model Breakdown</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+(issues.length?'<div class="note" style="margin-top:8px">'+issues.join('<br>')+'</div>':'')+'</div>';
+    return '<div class="mix-group-card"><b>'+esc(g.group)+'</b><div class="mix-metrics"><span>Cartons: <b>'+fmt(g.cartons)+'</b></span><span>Total Layers: <b>'+fmt(g.layers)+'</b></span><span>Calculated Height: <b>'+fmt(g.totalHeight)+' cm</b></span><span class="mix-status '+statusClass+'">'+esc(g.status)+'</span></div><div class="sub">พื้นที่ Pallet 110 × 110 cm · คำนวณทั้งแนวกว้างและแนวยาว พร้อมหมุนกล่อง 90° · ระบบเลือกการจัดเรียงที่วางได้มากที่สุดในแต่ละชั้นก่อนเริ่มชั้นถัดไป</div><div class="tablewrap" style="margin-top:8px"><table><thead><tr><th>Carton Height</th><th>Layer</th><th>Cartons / Layer</th><th>Layer Area Fill</th><th>Model &amp; Orientation (Width × Length)</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+(issues.length?'<div class="note" style="margin-top:8px">'+issues.join('<br>')+'</div>':'')+'</div>';
   }).join('');
-  el.innerHTML='<div class="section">Mix Pallet Dimension Calculation</div><div class="sub">แยกชั้นตามความสูงกล่องเดียวกันเท่านั้น · คำนวณการจัดวางบนฐาน 110 × 110 cm พร้อมหมุน 90°</div>'+cards;
+  el.innerHTML='<div class="section">Mix Pallet Dimension Calculation</div><div class="sub">แยกชั้นตามความสูง Carton เดียวกัน · เติมแต่ละ Layer ให้ได้จำนวนกล่องสูงสุดก่อนขึ้น Layer ถัดไป</div>'+cards;
 }
 
 function renderCalc(){sortAllocationsForMix();applyMixPalletDimensions();$('shipmentModels').innerHTML=models.map((m,i)=>`<tr><td><b>${esc(m.model)}</b></td><td>${esc(partFor(m.model)?.description||'')}</td><td>${fmt(m.planQty)}</td><td><input type="number" min="0" value="${m.actualQty??''}" placeholder="Same as plan" onchange="setActual(${i},this.value)"></td><td>${fmt(effectiveQty(m))}</td><td><button class="btn danger small" onclick="removeModel(${i})">Remove</button></td></tr>`).join('');$('allocations').innerHTML=allocations.map((a,i)=>allocRow(a,i)).join('');renderMixCalcPanel();renderSummary();}
