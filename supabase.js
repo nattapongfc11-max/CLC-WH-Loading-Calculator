@@ -1,5 +1,6 @@
 (function(){
 'use strict';
+if(!window.supabase){const e=document.getElementById('authError');if(e)e.textContent='Cloud library did not load. Please refresh the page or check your network.';const s=document.getElementById('connectionStatus');if(s)s.textContent='Cloud library unavailable';return;}
 const CLC_URL='https://takwoycaniiaesepbmss.supabase.co';
 const CLC_KEY='sb_publishable_NFheSmababFHy_YPlFhNnQ_EIEog0y5';
 const cloud=window.supabase.createClient(CLC_URL,CLC_KEY);
