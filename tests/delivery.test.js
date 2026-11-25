@@ -26,11 +26,22 @@ setTimeout(async()=>{
   w.plans=[mk('P1','00:00',{booking:full(day,'00:00')}),mk('P2','23:59'),mk('P3','23:58',{cancel:{reason:'r'}}),mk('P4','23:57',{slides:[{fromDate:day,fromTime:'23:57',toDate:w.shiftDay(day,2),toTime:'08:00'}]})];
   w.renderDeliveryBoard();
   const k=[...d.querySelectorAll('#deliveryBoard .kpi b')].map(x=>x.textContent);
-  ok(k[0]==='4'&&k[1]==='1'&&k[2]==='2','board: 4 firm trips, 1 delivered complete, 2 outstanding ('+k.join(',')+')');
-  ok(k[5]==='1 / 1','board: 1 slide / 1 cancel');
+  ok(k[0]==='3'&&k[1]==='1'&&k[2]==='1','board day: 3 trips (slid trip moved out), 1 delivered complete, 1 outstanding ('+k.join(',')+')');
+  ok(k[4]==='0 / 1'&&k[5]==='1','board: Slide in/out = 0 / 1, Cancel = 1 ('+k[4]+','+k[5]+')');
+  ok(d.querySelector('#deliveryBoard .tripbar')&&/Count\/Trip/.test(d.getElementById('deliveryBoard').textContent),'Count/Trip breakdown shown with Delivered, Slide, Cancel');
   w.setBoardDay(w.shiftDay(day,2));
-  ok(d.querySelector('#deliveryBoard').textContent.includes('Slide จาก '+day),'slid trip appears on new day with original date');
+  const k2=[...d.querySelectorAll('#deliveryBoard .kpi b')].map(x=>x.textContent);
+  ok(k2[0]==='1'&&k2[4]==='1 / 0'&&d.querySelector('#deliveryBoard').textContent.includes(day),'slid trip is counted on the NEW date, original date still shown ('+k2.join(',')+')');
   w.setBoardDay(day);
+  // slid 3 times: counted only on the last date
+  const multi=mk('M1','08:00',{slides:[{fromDate:day,fromTime:'08:00',toDate:w.shiftDay(day,1),toTime:'08:00'},{fromDate:w.shiftDay(day,1),fromTime:'08:00',toDate:w.shiftDay(day,2),toTime:'08:00'},{fromDate:w.shiftDay(day,2),fromTime:'08:00',toDate:w.shiftDay(day,5),toTime:'10:00'}]});
+  w.plans.push(multi);
+  ok(w.boardRows(w.shiftDay(day,5),new Date()).length===1&&w.boardRows(w.shiftDay(day,2),new Date()).filter(r=>r.p.planId==='M1').length===0,'3x Slide: trip counted only on the latest date');
+  w.plans.pop();
+  // outstanding trips without a status judgement
+  w.plans.push(mk('J1','00:00',{requestDate:w.shiftDay(day,-3)}));w.renderDeliveryBoard();
+  ok(d.getElementById('deliveryBoard').textContent.includes('ยังไม่มีการ Judge Status')&&d.getElementById('deliveryBoard').textContent.includes('J1'),'overdue outstanding plan listed as not yet judged');
+  w.plans.pop();
   // booking flow
   let saved=null;w.savePlanRecord=async p=>{saved=JSON.parse(JSON.stringify(p));return true};
   w.plans[1].booking={driver:'สมชาย',subTruck:'SUB-01',truckPlate:'1กข-1234',loadingBy:'Somchai',updatedAt:'2026-01-01'};
@@ -72,15 +83,33 @@ setTimeout(async()=>{
   ok(fills.has(w.simColor('A'))&&fills.has(w.simColor('B'))&&w.simColor('A')!==w.simColor('B'),'pallets coloured per model');
   w.models=[{model:'A',planQty:200*22,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(d.getElementById('simLayout').textContent.includes('เกินความจุพื้นตู้'),'over 20 floor positions flagged in simulation');
+  // Mix calculation: flat stacking order, pallets <= 130 (125+5), Save blocked above floor capacity
+  w.parts=[part('A',{cartonH:25,cartonD:50,cartonW:40,qtyCarton:4,qtyPallet:100}),part('B',{cartonH:30,cartonD:55,cartonW:36,qtyCarton:6,qtyPallet:100})];
+  w.models=[{model:'A',planQty:4*30,actualQty:null,packingModel:'A'},{model:'B',planQty:6*20,actualQty:null,packingModel:'B'}];w.generateAllocations();
+  w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();w.renderCalc();
+  const gs=w.calculateMixPalletLayouts();
+  ok(gs.length>=1&&gs.every(g=>g.totalHeight<=130),'every Mix pallet height <= 130 cm (125 ± 5) after auto split ('+gs.map(g=>g.totalHeight).join(',')+')');
+  ok(gs.every(g=>{const s=g.stack;const firstPartial=s.findIndex(x=>x.partial);return firstPartial<0||s.slice(firstPartial).every(x=>x.partial)}),'incomplete layers are always on top (flat surface below)');
+  ok(gs.every(g=>g.stack.every((x,i)=>x.level===i+1&&(i===0||x.cum>g.stack[i-1].cum))),'levels numbered bottom to top with cumulative height');
+  const hs=gs.map(g=>g.totalHeight);ok(hs.length<2||Math.max(...hs)-Math.min(...hs)<=Math.max(...gs.map(g=>g.stack[0].h)),'split pallets have balanced heights ('+hs.join(',')+')');
+  w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.parts=[part('A')];w.generateAllocations();w.renderCalc();
+  ok(w.physicalPalletCount()>20&&d.getElementById('savePlanBtn').disabled===true,'Physical Pallet > 20 disables Save button');
+  let alerted='';w.alert=m=>alerted=m;w.savePlan();ok(/ไม่สามารถบันทึกได้/.test(alerted),'savePlan() is blocked with a message when over floor capacity');
+  w.models=[{model:'A',planQty:200*20,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  ok(w.physicalPalletCount()===20&&d.getElementById('savePlanBtn').disabled===false,'exactly 20 pallets: Save allowed');
+  w.alert=()=>{};
   // dashboard
-  w.plans=[mk('Q1','08:00',{shipBy:'Air',booking:full(day,'07:00')}),mk('Q2','08:00',{shipBy:'Sea'}),mk('Q3','08:00',{shipBy:'Sea'})];
+  w.plans=[mk('Q1','08:00',{shipBy:'Air',booking:full(day,'07:00')}),mk('Q2','08:00',{shipBy:'Sea',slides:[{fromDate:day,fromTime:'08:00',toDate:w.shiftDay(day,1),toTime:'08:00'}]}),mk('Q3','08:00',{shipBy:'Sea',cancel:{reason:'x'}})];
   w.eval("DASH.metric='delivered'");w.renderDashboard();
   ok(d.getElementById('dashChartTitle').textContent.startsWith('Delivered Complete'),'Metric: Delivered Complete');
   ok(/Shipments/.test(d.getElementById('dashKpis').textContent)&&/Delivered Complete/.test(d.getElementById('dashKpis').textContent),'Dashboard KPIs include Shipments & Delivered Complete');
+  w.eval("DASH.metric='slide'");w.renderDashboard();ok(d.getElementById('dashChartTitle').textContent.startsWith('Slide'),'Metric: Slide');
+  w.eval("DASH.metric='cancel'");w.renderDashboard();ok(d.getElementById('dashChartTitle').textContent.startsWith('Cancel'),'Metric: Cancel');
+  ok(/Slide \(Trip\)/.test(d.getElementById('dashKpis').textContent)&&/Cancel \(Trip\)/.test(d.getElementById('dashKpis').textContent),'Dashboard KPIs include Slide & Cancel');
   const st=d.getElementById('dashShipType').textContent;
   ok(/Air \/ Sea/.test(st),'Shipment by month · Air / Sea card');
   const tot=[...d.querySelectorAll('#dashShipType tbody tr:last-child td')].map(x=>x.textContent);
-  ok(tot[1]==='3'&&tot[2]==='1'&&tot[3]==='2'&&tot[5]==='1','totals: 3 shipments, 1 Air, 2 Sea, 1 Delivered Complete ('+tot.join(',')+')');
+  ok(tot[1]==='3'&&tot[2]==='1'&&tot[3]==='2'&&tot[5]==='1'&&tot[6]==='1'&&tot[7]==='1','totals: 3 shipments, 1 Air, 2 Sea, 1 Delivered, 1 Slide, 1 Cancel ('+tot.join(',')+')');
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
 },500);
