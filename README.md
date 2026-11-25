@@ -41,3 +41,8 @@ npm install
 npm test      # jsdom smoke tests for allocation, mix pallet, tare, dashboard, history
 ```
 Open `index.html` through any static server (`python -m http.server 8080`). Work on a feature branch and open a pull request; do not change the production Supabase schema without review.
+
+## Delivery board, booking & dimension toggle
+- **Dashboard › Delivery Board**: trips planned per day, delivered, outstanding, on-time / delay (plan time = Request Date + Delivery Time, Thai time), day slide strip and daily plan-vs-delivered chart.
+- **Delivery Booking** page / *Booking* button in Loading History: Container No., Seal No., Loading by, Loading date & time, Invoice No., Driver (พขร.), Sub control truck, plate, status Draft → Firm → Delivered. Stored in the plan payload (no schema change); Firm/Delivered require all fields. *Copy Firm Bookings* pastes into Excel.
+- **WH Calculate**: *Hide/Show Pallet Dimensions* toggles the Pallet D×W×H column and the mix-pallet calculation panel (remembered per browser).
