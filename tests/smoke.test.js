@@ -25,6 +25,21 @@ setTimeout(()=>{
   w.models=[{model:'A',planQty:20,actualQty:null,packingModel:'A'},{model:'C',planQty:8,actualQty:null,packingModel:'C'}];w.generateAllocations();
   w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();
   const l2=w.calculateMixPalletLayouts()[0];ok(l2.heightGroups.length===2,'25 cm and 30 cm cartons are separate height groups');
+  // 3b. Mix group taller than 130 cm is split into several physical pallets
+  w.models=[{model:'A',planQty:400,actualQty:null,packingModel:'A'}];w.generateAllocations();
+  w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();w.renderCalc();
+  const gs=w.calculateMixPalletLayouts();
+  ok(gs.length===2,'40 cartons x 25 cm (7+5x25=132 cm) split into 2 mix pallets, got '+gs.length);
+  ok(gs.every(g=>g.totalHeight<=130),'every split pallet <= 130 cm ('+gs.map(g=>g.totalHeight).join(', ')+')');
+  ok(w.allocations.reduce((s,a)=>s+a.ctnNo,0)===40&&w.allocations.reduce((s,a)=>s+a.qtyPallet,0)===400,'split keeps total cartons (40) and qty (400)');
+  ok(w.physicalPalletCount()===2&&Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0)-14)<1e-6,'2 physical pallets -> tare 14 kg');
+  ok(gs[0].group==='Mix Pallet 1'&&/Mix Pallet 1 \(2\)/.test(gs[1].group),'extra pallet named "Mix Pallet 1 (2)"');
+  w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
+  // 3c. 40HC floor capacity = 20 pallets
+  w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  ok(w.physicalPalletCount()===21&&/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'21 pallets on 40HC -> floor capacity warning');
+  w.models=[{model:'A',planQty:200*20,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  ok(/20 \/ 20/.test(d.getElementById('floorStatus').textContent)&&/เหลือ 0/.test(d.getElementById('floorStatus').textContent),'20 pallets on 40HC -> exactly full, no warning');
   // 4. Dashboard / History
   const today=new Date().toISOString().slice(0,10);
   w.plans=[{planId:'P1',requestDate:today,etd:today,destination:'JP',port:'TKY',shipBy:'Sea',deliveryTime:'09:30',models:[{model:'A'}],summary:{models:1,pallets:3,qty:600,gross:900,cbm:4.2},updatedAt:today+'T01:00:00Z'},
