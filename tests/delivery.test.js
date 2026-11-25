@@ -134,43 +134,39 @@ setTimeout(async()=>{
   ok(/On plan %/.test(d.getElementById('mgmtPerf').textContent)&&/Delivery Performance/.test(d.getElementById('mgmtPerf').textContent),'Management shows Delivery Performance On plan');
   const tr=[...d.querySelectorAll('#mgmtPerf tbody tr:last-child td')].map(x=>x.textContent);
   ok(tr[1]==='3'&&tr[2]==='1'&&tr[3]==='1'&&tr[5]==='1'&&tr[6]==='1','performance totals: 3 trips, 1 delivered, 1 on time, 1 slide, 1 cancel ('+tr.join(',')+')');
-  // Print: redesigned Shipment Slip, Delivered Complete slip + ใบส่งงาน (1 page), Pioneer logo
+  // Print: redesigned Shipment Slip + ใบส่งงาน (Delivery Note, 1 page) with the embedded Pioneer logo
   w.parts.push(part('PRT-1'),part('PRT-2'));
   const dAl=[{shipmentModel:'PRT-1',stack:'N',qtyPallet:100,skidNo:'SKID-1',palletD:110,palletW:110,palletH:105,grossLine:420,remark:''},{shipmentModel:'PRT-2',stack:'Y',qtyPallet:50,skidNo:'SKID-2',palletD:110,palletW:110,palletH:90,grossLine:380,remark:'Top'}];
   const dp=Object.assign(P('DN-1','09:00',{requestDate:day,orderType:'OEM',shipmentType:'40HC',remark:'Handle with care',models:[{model:'PRT-1',planQty:100,actualQty:null},{model:'PRT-2',planQty:50,actualQty:40}],allocations:dAl,summary:{models:2,qty:150,pallets:2,net:300,gross:900,cbm:4.2,containerType:'40HC',floorCap:20,floorUsed:2,stackPairs:0}}),{booking:{containerNo:'MSKU7654321',sealNo:'SEAL99',loadingBy:'Somchai',loadDate:day,loadTime:'10:30',invoiceNo:'INV-77',driver:'Somying',subTruck:'SUB-9',truckPlate:'1กข-1234'}});
   w.plans=[dp];
+  const LOGO=w.eval('PIONEER_LOGO');
   const slipH=w.slipHtml(dp);
   ok(/SHIPMENT DETAIL SLIP/.test(slipH)&&/DN-1/.test(slipH)&&/PRT-1/.test(slipH)&&/Pallet Allocation Detail/.test(slipH)&&/Approved by/.test(slipH),'Shipment Slip renders the new template (title, plan, models, pallet table, sign-off)');
-  ok(/class="logo"><img src="[^"]*pioneer-logo\.png"/.test(slipH)&&/<b>PIONEER<\/b>/.test(slipH),'logo top-left: pioneer-logo.png with wordmark fallback');
-  const dlv=w.deliveredHtml(dp);
-  ok(/DELIVERED COMPLETE SLIP/.test(dlv)&&/MSKU7654321/.test(dlv)&&/SEAL99/.test(dlv)&&/INV-77/.test(dlv)&&/Somying/.test(dlv)&&/1กข-1234/.test(dlv),'Delivered Complete slip shows booking details (container, seal, invoice, driver, plate)');
-  ok((dlv.match(/class="sheet fix pg-dn"/g)||[]).length===1&&/ใบส่งงาน/.test(dlv)&&/DELIVERY NOTE/.test(dlv)&&/ผู้รับสินค้า/.test(dlv),'ใบส่งงาน (Delivery Note) attached as exactly one fixed A4 page');
-  ok((dlv.match(/<header class="hd">/g)||[]).length===2&&(dlv.match(/class="logo"/g)||[]).length===2,'logo appears on both pages of the package');
-  ok(/DELAY 1h 30m/.test(dlv),'status vs original plan shown (Delay 1h 30m)');
-  ok(!/Slide history/.test(dlv),'no Slide history block when never slid');
-  const dp2=Object.assign({},dp,{planId:'DN-2',deliveryTime:'09:00',booking:Object.assign({},dp.booking,{loadTime:'08:40'}),slides:[{fromDate:day,fromTime:'09:00',toDate:day,toTime:'11:00',reason:'รถมาช้า'}]});
-  const dlv2=w.deliveredHtml(dp2);
-  ok(/ON TIME/.test(dlv2)&&/SLIP 1x/.test(dlv2)&&/Slide history/.test(dlv2)&&/รถมาช้า/.test(dlv2),'on-time + Slide history (original plan kept for KPI)');
-  const lateH=w.deliveredHtml(Object.assign({},dp,{booking:Object.assign({},dp.booking,{loadTime:'11:10'})}));
-  ok(/DELAY 2h 10m/.test(lateH),'delay computed vs the original plan time (2h 10m)');
-  // many models still print the note on a single page (two-column compact list)
+  ok(/^data:image\/svg\+xml;base64,/.test(LOGO)&&/fill="#A90533"/.test(Buffer.from(LOGO.split(',')[1],'base64').toString()),'embedded Pioneer logo is the attached SVG (brand colour #A90533)');
+  ok(slipH.includes('class="logo"><img src="'+LOGO+'"'),'Shipment Slip: Pioneer logo top-left');
+  const dn=w.deliveryNoteHtml(dp);
+  ok((dn.match(/<main class="sheet/g)||[]).length===1&&(dn.match(/class="sheet fix pg-dn"/g)||[]).length===1,'Delivered print = ใบส่งงาน only, exactly one fixed A4 page');
+  ok(!/DELIVERED COMPLETE SLIP/.test(dn)&&!/Model Summary/.test(dn)&&!/Slide history/.test(dn),'no Delivered Complete summary slip in the print');
+  ok(/DELIVERY NOTE/.test(dn)&&/ใบส่งงาน/.test(dn)&&/MSKU7654321/.test(dn)&&/SEAL99/.test(dn)&&/INV-77/.test(dn)&&/Somying/.test(dn)&&/1กข-1234/.test(dn)&&/SUB-9/.test(dn)&&/PRT-1/.test(dn)&&/ผู้รับสินค้า/.test(dn),'ใบส่งงาน shows container, seal, invoice, driver, truck, items and receiver sign-off');
+  ok(dn.includes('class="logo"><img src="'+LOGO+'"'),'ใบส่งงาน: Pioneer logo top-left');
+  ok(/PRT-2<\/b><\/td><td>PRT-2<\/td><td class="r">40</.test(dn),'item qty uses the actual Shipment Qty');
   const big=Object.assign({},dp,{models:Array.from({length:40},(_,i)=>({model:'M-'+i,planQty:10,actualQty:null})),allocations:[]});
-  const bigH=w.deliveredHtml(big);
-  ok((bigH.match(/class="sheet fix pg-dn"/g)||[]).length===1&&/class="two"/.test(bigH),'40 models: delivery note switches to compact two-column list, still 1 page');
-  // logo upload (stored in this browser) is used on printouts
+  const bigH=w.deliveryNoteHtml(big);
+  ok((bigH.match(/class="sheet fix pg-dn"/g)||[]).length===1&&/class="two"/.test(bigH),'40 models: compact two-column list, still 1 page');
+  // logo upload (stored in this browser) overrides the embedded logo; Remove restores it
   w.localStorage.setItem('clcPrintLogo','data:image/png;base64,AAAA');
-  ok(w.printLogoSrc()==='data:image/png;base64,AAAA'&&w.slipHtml(dp).includes('data:image/png;base64,AAAA'),'uploaded logo replaces the default on printouts');
-  w.clearLogo();ok(/pioneer-logo\.png$/.test(w.printLogoSrc()),'Remove logo restores default pioneer-logo.png');
-  // UI: print buttons only for Delivered Complete
+  ok(w.printLogoSrc()==='data:image/png;base64,AAAA'&&w.deliveryNoteHtml(dp).includes('data:image/png;base64,AAAA'),'uploaded logo overrides the embedded one');
+  w.clearLogo();ok(w.printLogoSrc()===LOGO,'Remove logo restores the embedded Pioneer logo');
+  // UI: print button only for Delivered Complete
   w.plans=[dp,P('DN-3','09:00')];w.renderBooking();
   const rowOf=id=>[...d.querySelectorAll('#bookTable tbody tr')].find(r=>r.textContent.includes(id));
-  ok(/Print/.test(rowOf('DN-1').textContent)&&!/Print/.test(rowOf('DN-3').textContent),'Delivery Booking: Print button only on Delivered Complete rows');
-  w.openBooking('DN-1');ok(d.getElementById('bkPrint').style.display==='','Booking modal shows Print Slip + ใบส่งงาน when Delivered Complete');
+  ok(/ใบส่งงาน/.test(rowOf('DN-1').textContent)&&!/ใบส่งงาน/.test(rowOf('DN-3').textContent),'Delivery Booking: Print ใบส่งงาน only on Delivered Complete rows');
+  w.openBooking('DN-1');ok(d.getElementById('bkPrint').style.display==='','Booking modal shows Print ใบส่งงาน when Delivered Complete');
   w.openBooking('DN-3');ok(d.getElementById('bkPrint').style.display==='none','Booking modal hides Print when not Delivered Complete');
   let opened=null;alerted='';w.alert=m=>{alerted=m};w.open=()=>({document:{open(){},write(h){opened=h},close(){}}});
-  w.printDelivered('DN-3');ok(!opened&&/Delivered Complete/.test(alerted),'printDelivered blocked for a plan that is not Delivered Complete');
-  w.printDelivered('DN-1');ok(opened&&/DELIVERY NOTE/.test(opened)&&/DELIVERED COMPLETE SLIP/.test(opened),'printDelivered opens slip + ใบส่งงาน');
-  ok(!!d.getElementById('logoCard')&&!!d.getElementById('logoFile'),'Management page has the Print Logo setting');
+  w.printDeliveryNote('DN-3');ok(!opened&&/Delivered Complete/.test(alerted),'printDeliveryNote blocked for a plan that is not Delivered Complete');
+  w.printDeliveryNote('DN-1');ok(opened&&/DELIVERY NOTE/.test(opened)&&!/DELIVERED COMPLETE SLIP/.test(opened),'printDeliveryNote opens ใบส่งงาน only');
+  ok(!!d.getElementById('logoCard')&&!!d.getElementById('logoFile')&&/Pioneer logo/.test(d.getElementById('logoCard').innerHTML),'Management page shows the Pioneer logo setting');
   w.alert=()=>{};
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
