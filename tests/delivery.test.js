@@ -41,6 +41,12 @@ setTimeout(async()=>{
   // outstanding trips without a status judgement
   w.plans.push(mk('J1','00:00',{requestDate:w.shiftDay(day,-3)}));w.renderDeliveryBoard();
   ok(d.getElementById('deliveryBoard').textContent.includes('ยังไม่มีการ Judge Status')&&d.getElementById('deliveryBoard').textContent.includes('J1'),'overdue outstanding plan listed as not yet judged');
+  const tbls=d.querySelectorAll('#deliveryBoard table');
+  ok(tbls.length===1,'Delivery Board shows a single table');
+  const bodyRows=[...d.querySelectorAll('#deliveryBoard tbody tr')];
+  const iJ=bodyRows.findIndex(r=>r.classList.contains('jrow')),iDay=bodyRows.findIndex(r=>r.classList.contains('grp')&&/Trip ประจำวันที่/.test(r.textContent));
+  ok(iJ>=0&&iJ<iDay&&bodyRows[0].classList.contains('warn'),'un-judged outstanding plans are highlighted and listed first, then the day trips');
+  ok(!d.getElementById('mParts')&&!d.getElementById('mPlans')&&!d.getElementById('mPallets')&&!d.getElementById('mGross')&&!/Part Master/.test(d.getElementById('dashboard').textContent),'Loading Overview summary cards (Part Master, Plans, Pallet, Gross) removed');
   w.plans.pop();
   // booking flow
   let saved=null;w.savePlanRecord=async p=>{saved=JSON.parse(JSON.stringify(p));return true};
