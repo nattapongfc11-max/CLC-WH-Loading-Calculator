@@ -1,0 +1,42 @@
+// Smoke / regression tests for the CLC calculator (runs index.html in jsdom, Supabase not loaded).
+const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://clc.test/'});
+const w=dom.window,d=w.document,errs=[];w.addEventListener('error',e=>errs.push(e.message));
+let fail=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fail++};
+const part=(model,o)=>Object.assign({model,description:model,qtyCarton:10,cartonD:40,cartonW:30,cartonH:25,qtyPallet:200,palletD:110,palletW:110,palletH:125,netPC:1.2,grossCarton:13,grossPallet:260},o);
+setTimeout(()=>{
+  w.parts=[part('A'),part('B',{qtyCarton:6,cartonD:55,cartonW:36,netPC:2.5}),part('C',{qtyCarton:4,cartonD:50,cartonW:40,cartonH:30,netPC:4})];
+  w.fillSelects();
+  // 1. Single model: 200 PCS = 1 physical pallet, tare 7 kg applied once
+  w.models=[{model:'A',planQty:200,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  ok(w.physicalPalletCount()===1,'single model -> 1 physical pallet');
+  ok(Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine,0)-(260+7))<1e-6,'gross = pallet gross + 7 kg tare');
+  // 2. Mix group counts as ONE physical pallet and tare is not duplicated
+  w.models=[{model:'A',planQty:50,actualQty:null,packingModel:'A'},{model:'B',planQty:30,actualQty:null,packingModel:'B'}];w.generateAllocations();
+  w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();w.renderCalc();
+  ok(w.physicalPalletCount()===1,'mix group of 2 models -> 1 physical pallet');
+  const tareTotal=w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0);ok(Math.abs(tareTotal-7)<1e-6,'tare counted once per mix group (7 kg)');
+  const lay=w.calculateMixPalletLayouts()[0];
+  ok(lay.cartons===10,'mix cartons = 5 (A) + 5 (B)');
+  ok(lay.totalHeight===7+lay.stackHeight,'total height = 7 cm base + sum of layer heights');
+  ok(d.querySelectorAll('#mixCalcPanel svg.topview').length>=1,'Top View SVG rendered for mix layers');
+  // 3. Different heights never share a layer
+  w.models=[{model:'A',planQty:20,actualQty:null,packingModel:'A'},{model:'C',planQty:8,actualQty:null,packingModel:'C'}];w.generateAllocations();
+  w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();
+  const l2=w.calculateMixPalletLayouts()[0];ok(l2.heightGroups.length===2,'25 cm and 30 cm cartons are separate height groups');
+  // 4. Dashboard / History
+  const today=new Date().toISOString().slice(0,10);
+  w.plans=[{planId:'P1',requestDate:today,etd:today,destination:'JP',port:'TKY',shipBy:'Sea',deliveryTime:'09:30',models:[{model:'A'}],summary:{models:1,pallets:3,qty:600,gross:900,cbm:4.2},updatedAt:today+'T01:00:00Z'},
+           {planId:'P2',requestDate:'2020-01-05',destination:'US',port:'LAX',models:[{model:'B'}],summary:{models:1,pallets:1,qty:60,gross:200,cbm:1}}];
+  w.eval('DASH.y='+new Date().getFullYear()+';DASH.m='+(new Date().getMonth()+1)+';DASH.g="dd"');w.renderAll();
+  ok(d.querySelectorAll('#dashChart .dash-bar').length>=28,'dashboard daily chart rendered');
+  ok(d.querySelector('#recentPlans').textContent.includes('P1')&&!d.querySelector('#recentPlans').textContent.includes('P2'),'daily plan table shows only the selected month');
+  w.setDash('g','mm');ok(d.querySelectorAll('#dashChart .dash-bar').length===12,'month view has 12 bars');
+  d.getElementById('histSearch').value='LAX';w.renderHistory();
+  ok(d.getElementById('historyTable').textContent.includes('P2')&&!d.getElementById('historyTable').textContent.includes('P1'),'history search filters by destination/port');
+  w.clearHistoryFilter();d.getElementById('histFrom').value=today;w.renderHistory();
+  ok(!d.getElementById('historyTable').textContent.includes('P2'),'history date filter works');
+  ok(errs.length===0,'no runtime errors '+errs.join(';'));
+  console.log(fail?fail+' FAILED':'ALL PASSED');process.exit(fail?1:0);
+},300);
