@@ -37,7 +37,15 @@ setTimeout(()=>{
   w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
   // 3c. 40HC floor capacity = 20 pallets
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
-  ok(w.physicalPalletCount()===21&&/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'21 pallets on 40HC -> floor capacity warning');
+  d.getElementById('stackPallet').checked=false;w.renderSummary();
+  ok(w.physicalPalletCount()===21&&/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'21 pallets on 40HC, stacking off -> floor capacity warning');
+  d.getElementById('stackPallet').checked=true;w.renderSummary();
+  let stk=w.planStacking();
+  ok(stk.pairs.length===1&&stk.floorUsed===20&&!/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'21 pallets, stacking on -> 1 stacked pair = 20 floor positions');
+  ok(stk.pairs[0].bottom.flat&&stk.pairs[0].bottom.gross>=stk.pairs[0].top.gross&&stk.pairs[0].bottom.h+stk.pairs[0].top.h<=269,'stack pair: flat heavier bottom, total height <= 269 cm');
+  w.models=[{model:'A',planQty:200*45,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  ok(w.planStacking().floorUsed>20&&/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'45 pallets cannot fit even stacked 2-high -> warning');
+  w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   w.models=[{model:'A',planQty:200*20,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(/20 \/ 20/.test(d.getElementById('floorStatus').textContent)&&/เหลือ 0/.test(d.getElementById('floorStatus').textContent),'20 pallets on 40HC -> exactly full, no warning');
   // 4. Dashboard / History

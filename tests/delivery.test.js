@@ -81,7 +81,7 @@ setTimeout(async()=>{
   ok(sim.innerHTML.includes('ว่าง'),'empty space shown');
   const fills=new Set([...sim.querySelectorAll('svg.simsvg rect[fill^="#"]')].map(x=>x.getAttribute('fill')));
   ok(fills.has(w.simColor('A'))&&fills.has(w.simColor('B'))&&w.simColor('A')!==w.simColor('B'),'pallets coloured per model');
-  w.models=[{model:'A',planQty:200*22,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  w.models=[{model:'A',planQty:200*45,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(d.getElementById('simLayout').textContent.includes('เกินความจุพื้นตู้'),'over 20 floor positions flagged in simulation');
   // Mix calculation: flat stacking order, pallets <= 130 (125+5), Save blocked above floor capacity
   w.parts=[part('A',{cartonH:25,cartonD:50,cartonW:40,qtyCarton:4,qtyPallet:100}),part('B',{cartonH:30,cartonD:55,cartonW:36,qtyCarton:6,qtyPallet:100})];
@@ -93,8 +93,19 @@ setTimeout(async()=>{
   ok(gs.every(g=>g.stack.every((x,i)=>x.level===i+1&&(i===0||x.cum>g.stack[i-1].cum))),'levels numbered bottom to top with cumulative height');
   const hs=gs.map(g=>g.totalHeight);ok(hs.length<2||Math.max(...hs)-Math.min(...hs)<=Math.max(...gs.map(g=>g.stack[0].h)),'split pallets have balanced heights ('+hs.join(',')+')');
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.parts=[part('A')];w.generateAllocations();w.renderCalc();
-  ok(w.physicalPalletCount()>20&&d.getElementById('savePlanBtn').disabled===true,'Physical Pallet > 20 disables Save button');
+  d.getElementById('stackPallet').checked=false;w.renderSummary();
+  ok(w.physicalPalletCount()>20&&d.getElementById('savePlanBtn').disabled===true,'floor positions > 20 disables Save button');
   let alerted='';w.alert=m=>alerted=m;w.savePlan();ok(/ไม่สามารถบันทึกได้/.test(alerted),'savePlan() is blocked with a message when over floor capacity');
+  d.getElementById('stackPallet').checked=true;w.renderSummary();
+  ok(d.getElementById('savePlanBtn').disabled===false&&w.floorOver().pairs===1,'21 pallets with a stacked pair = 20 floor positions -> Save allowed');
+  w.models=[{model:'A',planQty:200*45,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
+  alerted='';w.savePlan();ok(d.getElementById('savePlanBtn').disabled===true&&/ไม่สามารถบันทึกได้/.test(alerted),'45 pallets: still blocked after stacking');
+  // stability: a pallet with an incomplete top layer is never the bottom of a stack
+  w.parts=[part('A'),part('X',{qtyCarton:10,cartonD:40,cartonW:30,qtyPallet:200})];
+  w.models=[{model:'A',planQty:200*20,actualQty:null,packingModel:'A'},{model:'X',planQty:70,actualQty:null,packingModel:'X'}];w.generateAllocations();
+  w.allocations.forEach(a=>{if(a.shipmentModel==='X'){a.mixGroup='N';a.skidNo=1}});w.recalcDerived();w.renderCalc();
+  const sp=w.planStacking();
+  ok(sp.pairs.every(p=>p.bottom.flat),'stack bottoms always have a flat top surface');
   w.models=[{model:'A',planQty:200*20,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(w.physicalPalletCount()===20&&d.getElementById('savePlanBtn').disabled===false,'exactly 20 pallets: Save allowed');
   w.alert=()=>{};
@@ -110,6 +121,13 @@ setTimeout(async()=>{
   ok(/Air \/ Sea/.test(st),'Shipment by month · Air / Sea card');
   const tot=[...d.querySelectorAll('#dashShipType tbody tr:last-child td')].map(x=>x.textContent);
   ok(tot[1]==='3'&&tot[2]==='1'&&tot[3]==='2'&&tot[5]==='1'&&tot[6]==='1'&&tot[7]==='1','totals: 3 shipments, 1 Air, 2 Sea, 1 Delivered, 1 Slide, 1 Cancel ('+tot.join(',')+')');
+  // Management page
+  ok(!!d.querySelector('[data-page="mgmt"]')&&!!d.querySelector('#mgmt #dashControls')&&!!d.querySelector('#mgmt #dashChart')&&!!d.querySelector('#mgmt #dashShipType')&&!!d.querySelector('#mgmt #recentPlans'),'Plan Overview moved to its own Management page');
+  ok(!d.querySelector('#dashboard #dashControls')&&!!d.querySelector('#dashboard #deliveryBoard'),'Dashboard keeps only the Delivery Board (no Plan Overview)');
+  w.showPage('mgmt');ok(d.getElementById('mgmt').classList.contains('active')&&!d.getElementById('dashboard').classList.contains('active'),'Management nav opens the page');
+  ok(/On plan %/.test(d.getElementById('mgmtPerf').textContent)&&/Delivery Performance/.test(d.getElementById('mgmtPerf').textContent),'Management shows Delivery Performance On plan');
+  const tr=[...d.querySelectorAll('#mgmtPerf tbody tr:last-child td')].map(x=>x.textContent);
+  ok(tr[1]==='3'&&tr[2]==='1'&&tr[3]==='1'&&tr[5]==='1'&&tr[6]==='1','performance totals: 3 trips, 1 delivered, 1 on time, 1 slide, 1 cancel ('+tr.join(',')+')');
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
 },500);
