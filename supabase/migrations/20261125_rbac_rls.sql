@@ -9,6 +9,9 @@ create table if not exists public.user_roles (
   created_at timestamptz not null default now()
 );
 alter table public.user_roles enable row level security;
+-- Table privileges are required in addition to RLS (without them the app gets "permission denied for table user_roles").
+revoke all on public.user_roles from anon, authenticated;
+grant select, insert, update, delete on public.user_roles to authenticated;
 
 -- Role lookup used by every policy. SECURITY DEFINER so it can read user_roles without recursion.
 create or replace function public.clc_role()
