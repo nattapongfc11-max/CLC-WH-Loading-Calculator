@@ -52,3 +52,7 @@ Open `index.html` through any static server (`python -m http.server 8080`). Work
 - **Delivery Board**: a trip is counted on its *current* schedule date (the last Slide, any number of Slides); On time / Delay is still measured against the original booking date. Count/Trip = Delivered Complete + Slide (waiting) + Cancel + Outstanding. Outstanding trips past their scheduled time without any status are listed under *ยังไม่ Judge Status*.
 - **Mix Pallet calculation**: full layers at the bottom (tallest cartons first), the incomplete layer on top (flat surface below); pallet height target 125 ± 5 cm (max 130). Taller mixes are split into the fewest pallets with balanced heights.
 - **Save is blocked** when Physical Pallet exceeds the container floor capacity (20 for 40HC).
+
+### Rules added in v2.4
+- **Stacking pallets in the container**: when Physical Pallet exceeds the floor capacity, pallets are stacked 2-high automatically (option *ซ้อน Pallet 2 ชั้น*, on by default). A stacked pair counts as **one floor position**. Stability rules: the bottom pallet must have a flat top (every layer complete) and be the heavier one, each pallet ≤ 130 cm (125 ± 5), and the pair ≤ container inner height (269 cm for 40HC). Save is blocked only if the floor positions still exceed capacity after stacking. Tare stays 7 kg per physical pallet.
+- **Management Overview** page: Plan Overview (Month / Week / Day), Delivery Performance (On plan % by original booking date), Shipment by Month Air / Sea, Slide / Cancel. The Dashboard keeps the Delivery Board.
