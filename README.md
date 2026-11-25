@@ -56,3 +56,11 @@ Open `index.html` through any static server (`python -m http.server 8080`). Work
 ### Rules added in v2.4
 - **Stacking pallets in the container**: when Physical Pallet exceeds the floor capacity, pallets are stacked 2-high automatically (option *ซ้อน Pallet 2 ชั้น*, on by default). A stacked pair counts as **one floor position**. Stability rules: the bottom pallet must have a flat top (every layer complete) and be the heavier one, each pallet ≤ 130 cm (125 ± 5), and the pair ≤ container inner height (269 cm for 40HC). Save is blocked only if the floor positions still exceed capacity after stacking. Tare stays 7 kg per physical pallet.
 - **Management Overview** page: Plan Overview (Month / Week / Day), Delivery Performance (On plan % by original booking date), Shipment by Month Air / Sea, Slide / Cancel. The Dashboard keeps the Delivery Board.
+
+## v2.5 – Print templates (Slip · Delivered Complete · ใบส่งงาน)
+- **Shipment Slip** (WH Calculate → Print Shipment Slip): new A4 layout with the Pioneer logo top-left, shipment information cards, KPI strip (models / qty / pallet / net / gross / CBM), model detail and colour-banded pallet allocation, remark and sign-off. Up to ~12 models / 18 pallets fit on one page; longer lists continue on the next page with repeated table headers.
+- **Delivered Complete package** (Delivery Booking → `🖨 Print` on a Delivered Complete row, or the button inside the booking dialog):
+  1. *Delivered Complete Slip* – status banner (On time / Delay vs the **original** Firm booking), plan vs actual loading, booking details (container, seal, invoice, loading by, driver, sub truck, plate), Slide history, shipment totals and model summary.
+  2. *ใบส่งงาน / Delivery Note* – exactly **one A4 page**: From / To, truck and container data, item list with pallet numbers, receiving check and four signature boxes (Warehouse, Driver, Logistics, Receiver). With many models the list switches to a compact two-column layout so it never spills onto a second page.
+  The preview window has checkboxes to print either page on its own, then *Print / Save PDF*.
+- **Logo**: put `pioneer-logo.png` next to `index.html`, or upload one under *Management → Print Logo* (or the `🖼 Print logo` button in Delivery Booking; stored in that browser). Without a logo file the printouts show a plain `PIONEER` text mark.
