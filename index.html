@@ -72,7 +72,7 @@ td input,td select{padding:5px 6px;border:1px solid #d9c3ca;border-radius:5px;wi
 .mix-group-card{border:1px solid var(--line);border-left:5px solid var(--mid);border-radius:9px;padding:12px;margin:10px 0;background:#fffafb}
 .mix-metrics{display:flex;gap:18px;flex-wrap:wrap;margin:7px 0}.mix-metrics b{font-size:15px;color:var(--navy)}
 .mix-status{font-weight:700}.mix-ok{color:#166534}.mix-warn{color:#92400e}.mix-bad{color:#991b1b}
-.topview{display:block;border:1px solid #94a3b8;background:#fff}
+.topview{display:block;border:1px solid #94a3b8;background:#fff}.mixrow3{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.mix3d{width:330px;flex:0 0 330px;margin-top:8px}.pal3d{display:block;width:330px;height:290px;touch-action:none;cursor:grab;border:1px solid #bcd3ea;border-radius:8px;user-select:none}.pal3d:active{cursor:grabbing}
 .topview-legend{font-size:11px;margin-top:3px}.topview-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 3px 0 8px;vertical-align:-1px}
 /* ---------- dashboard chart ---------- */
 .dash-chart{display:flex;align-items:flex-end;gap:5px;height:190px;overflow-x:auto;padding-top:8px}
@@ -124,6 +124,8 @@ i.pl{background:#d9a3b2}i.dl{background:var(--navy)}i.lg{display:inline-block;wi
 .s3wrap{padding:0;overflow:hidden;background:#eef5fc;border-color:#bcd3ea}.sim3d{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.sim3d:active{cursor:grabbing}
 .s3head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.s3head .btn.small{padding:3px 9px;font-size:12px}
 .mix-group-card td .chip{display:block;width:max-content;margin-top:4px;white-space:nowrap}
+td.seqcell{text-align:center;min-width:92px}td.seqcell b{font-size:15px;color:var(--navy)}td.seqcell .chip{display:block;width:max-content;margin:3px auto 0;font-size:11px;padding:1px 8px}.chip.mixc{background:#fff1b8;color:#5a3a00}.chip.remc{background:#ffe3cf;color:#8a2c00}
+tr.grp td:first-child{box-shadow:inset 4px 0 0 #d9a21b}tr.grp td.seqcell{background:#fffaf0}
 .stkhow{background:#fffaf0;border:1px solid #ecd9a6;border-radius:8px;padding:8px 12px;font-size:12.5px;margin:8px 0}.stkhow ul{margin:4px 0 0 18px;padding:0}.stkhow li{margin:2px 0}
 table.stk tr.pair td{background:#fff8d6}table.stk tr.outpos td{background:#fdecec}table.stk td,table.stk th{white-space:normal;vertical-align:top;font-size:12.5px}table.stk td.r{white-space:nowrap}.stkpair{display:inline-block;margin:0 10px 0 0;font-weight:600}.stkpair i{font-weight:400;font-style:normal;color:var(--muted,#6e5b62)}.stkdet summary{cursor:pointer;font-weight:600;color:var(--navy);margin:6px 0}
 .s3look{display:flex;gap:6px;align-items:center;margin:2px 0 6px;flex-wrap:wrap}.s3look button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 12px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}.s3look button.on{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -177,7 +179,7 @@ tr.newrow td{background:#fff8d6!important;box-shadow:inset 0 0 0 1px #ecd47a}td 
 เช่น
 ABC-001	1200
 ABC-002	500"></textarea><div class="toolbar" style="margin-top:6px"><button class="btn" onclick="importModels($('pasteBox').value)">Import Models</button><button class="btn secondary" onclick="$('pasteBox').value='';$('pasteResult').innerHTML=''">Clear</button><span class="sub">หรือวางหลายบรรทัดลงช่อง Model Code ได้โดยตรง · Model ที่มีอยู่แล้วจะอัปเดต Qty</span></div></div><div id="pasteResult"></div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Model Code</th><th>Description</th><th>Plan Qty</th><th>Actual WH Qty</th><th>WH Calculate Qty</th><th></th></tr></thead><tbody id="shipmentModels"></tbody></table></div></div>
-<div class="card" style="margin-top:14px"><div class="section"><span class="tag">3</span> Pallet Allocation <span class="tag mid">Warehouse / Hybrid</span></div><div class="note">Reference Rev.01: Pallet capacity follows Part Master Qty/Pallet × 2 when Pallet Stack = Y. Net weight uses Net Weight/PC. Gross weight uses Part Master Gross Weight/Carton and Gross Weight/Pallet. Pallet Tare = <b>7 kg per physical pallet</b>; a shared Mix Pallet group counts once.</div><div class="toolbar" style="margin:12px 0"><button class="btn secondary" onclick="recalculateAll()">↻ Recalculate from Master</button><button class="btn secondary" onclick="addManualAllocation()">＋ Add Manual Pallet Row</button><button class="btn secondary" id="packingToggle" onclick="togglePackingDetails()">＋ Show Packing Details</button><button class="btn green" onclick="printShipmentSlip()">▤ Print Shipment Slip</button></div><div class="tablewrap" id="allocationWrap"><table class="allocation"><thead><tr><th>Separate Type Model</th><th class="col-pack">Name</th><th class="col-pack">Pack STD</th><th class="col-pack">Net kg/CTN</th><th class="col-pack">Gross kg/CTN</th><th class="col-pack">Carton D×W×H</th><th title="ลำดับ Pallet ของ Model นั้น / จำนวน Pallet ทั้งหมดของ Model">Skid Pallet No. (No./Total)</th><th>Stack</th><th>Group Mix</th><th>Qty Before</th><th>Qty/Pallet</th><th>BL Diff</th><th>Net kg/Pallet</th><th>Gross kg/Pallet</th><th>Gross incl. Tare</th><th>Pallet D×W×H</th><th>Remark</th><th></th></tr></thead><tbody id="allocations"></tbody></table></div><div id="mixCalcPanel" class="mix-summary"></div></div>
+<div class="card" style="margin-top:14px"><div class="section"><span class="tag">3</span> Pallet Allocation <span class="tag mid">Warehouse / Hybrid</span></div><div class="note">Reference Rev.01: Pallet capacity follows Part Master Qty/Pallet × 2 when Pallet Stack = Y. Net weight uses Net Weight/PC. Gross weight uses Part Master Gross Weight/Carton and Gross Weight/Pallet. Pallet Tare = <b>7 kg per physical pallet</b>; a shared Mix Pallet group counts once.</div><div class="toolbar" style="margin:12px 0"><button class="btn secondary" onclick="recalculateAll()">↻ Recalculate from Master</button><button class="btn secondary" onclick="addManualAllocation()">＋ Add Manual Pallet Row</button><button class="btn secondary" id="packingToggle" onclick="togglePackingDetails()">＋ Show Packing Details</button><button class="btn green" onclick="printShipmentSlip()">▤ Print Shipment Slip</button></div><div class="tablewrap" id="allocationWrap"><table class="allocation"><thead><tr><th>Separate Type Model</th><th class="col-pack">Name</th><th class="col-pack">Pack STD</th><th class="col-pack">Net kg/CTN</th><th class="col-pack">Gross kg/CTN</th><th class="col-pack">Carton D×W×H</th><th title="ลำดับ Pallet ของ Model นั้น / จำนวน Pallet ทั้งหมดของ Model">Skid Pallet No. (No./Total)</th><th>Stack</th><th title="ลำดับ Pallet จริงในตู้ (เลขเดียวกับป้ายบนภาพ 3D / ใบ Slip) · แถวที่อยู่บน Pallet เดียวกัน (Mix Pallet) นับ Seq ซ้ำ · Stack = Y ซ้อน 2 ใบ นับเป็น 1">Pallet Seq</th><th>Qty Before</th><th>Qty/Pallet</th><th>BL Diff</th><th>Net kg/Pallet</th><th>Gross kg/Pallet</th><th>Gross incl. Tare</th><th>Pallet D×W×H</th><th>Remark</th><th></th></tr></thead><tbody id="allocations"></tbody></table></div><div id="mixCalcPanel" class="mix-summary"></div></div>
 <div class="card" style="margin-top:14px"><div class="section"><span class="tag">4</span> Container Summary</div><div class="grid"><div class="kpi"><div class="sub">Total Model</div><div class="metric" id="sModels">0</div></div><div class="kpi"><div class="sub">Total CTN</div><div class="metric" id="sCtn">0</div></div><div class="kpi"><div class="sub">Physical Pallet</div><div class="metric" id="sPallet">0</div></div><div class="kpi"><div class="sub">Total Qty</div><div class="metric" id="sQty">0</div></div><div class="kpi"><div class="sub">Net Weight</div><div class="metric" id="sNet">0 kg</div></div><div class="kpi"><div class="sub">Gross Weight</div><div class="metric" id="sGross">0 kg</div></div><div class="kpi"><div class="sub">Total CBM</div><div class="metric" id="sCbm">0 m³</div></div><div class="kpi"><div class="sub">Tare Applied</div><div class="metric" id="sTare">0 kg</div></div></div><div class="row" style="margin-top:12px"><div class="field"><label>Container Type</label><select id="containerType" onchange="setContainerType()"><option value="40HC">40HC</option><option value="Other">Other (กำหนดเอง)</option></select></div><div class="field"><label>Floor capacity · Layer 1 (ตำแหน่ง)</label><input id="floorCap" type="number" min="1" value="20" disabled onchange="renderSummary()"></div><div class="field"><label>ความสูงภายในตู้ (cm)</label><input id="contH" type="number" min="100" value="269" disabled onchange="renderSummary()"></div><div class="field"><label>ซ้อน Pallet 2 ชั้น</label><label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="stackPallet" checked onchange="renderSummary()" style="width:auto"> ซ้อนเมื่อเกินพื้น (Layer 1 = ผิวเรียบ/หนักกว่า · ตัวบนไม่ต้องเรียบ ขอแค่สูงรวมไม่เกินตู้)</label></div></div><div id="floorStatus"></div><div class="sub" style="margin-top:10px">Gross Weight = Total Net Weight + (7 kg × Physical Pallet Count). For Mix Pallet groups, tare is counted once per unique group.</div></div>
 <div class="card" style="margin-top:14px"><div class="section"><span class="tag">5</span> Simulate Layout – จำลองการจัดวาง Container</div><div id="simLayout"></div></div>
 </section>
@@ -252,22 +254,26 @@ function addModel(){let code=$('modelSearch').value.trim(),p=partFor(code),qty=n
 function effectiveQty(m){return m.actualQty===null||m.actualQty===undefined?m.planQty:n(m.actualQty)}
 function generateAllocations(){allocations=[];for(const m of models){const p=partFor(m.packingModel)||partFor(m.model);if(!p)continue;const qty=Math.max(0,effectiveQty(m));const stack=String(p.palletStack||'N').toUpperCase()==='Y'?'Y':'N';const baseCap=n(p.qtyPallet)||n(p.qtyCarton)||qty;const cap=baseCap*(stack==='Y'?2:1);if(!qty||!cap)continue;const total=Math.ceil(qty/cap);let remain=qty,idx=1;while(remain>0){const before=remain;const allocated=Math.min(cap,remain);allocations.push(makeAlloc(m,p,idx,before,allocated,stack,'N',total));remain-=allocated;idx++;}}
   // Default all remainder rows to a common Mix Pallet 1 for Warehouse review.
-  allocations.filter(a=>a.isRemainder).forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1';});recalcDerived();}
+  allocations.filter(a=>a.isRemainder&&!isDoubled(a)).forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1';});recalcDerived();}
 function makeAlloc(m,p,idx,qtyBefore,qty,stack,group,total){const baseCap=n(p.qtyPallet)||qty;const rem=qty<(baseCap*(stack==='Y'?2:1));return {shipmentModel:m.model,packingModel:p.model,name:p.description,packStd:n(p.qtyCarton),netKgCtn:n(p.netPC)*n(p.qtyCarton),grossKgCtn:n(p.grossCarton),cartonD:n(p.cartonD),cartonW:n(p.cartonW),cartonH:n(p.cartonH),stack,mixGroup:group,ctnNo:n(p.qtyCarton)?Math.ceil(qty/n(p.qtyCarton)):0,skidTotal:total,skidNo:idx,qtyBefore,qtyPallet:qty,blDiff:Math.max(0,qtyBefore-qty),netKg:n(p.netPC)*qty,grossKgPallet:n(p.qtyPallet)?n(p.grossPallet)/n(p.qtyPallet)*qty:0,grossLine:0,palletD:n(p.palletD),palletW:n(p.palletW),palletH:n(p.palletH)*(stack==='Y'?2:1),remark:'',isRemainder:rem};}
 function recalcDerived(){allocations.forEach(a=>{delete a.topFree});autoSplitMixGroups();let remainingByModel={};allocations.forEach(a=>{const p=partFor(a.packingModel)||{};const q=effectiveQty(models.find(m=>m.model===a.shipmentModel)||{planQty:0});const prev=remainingByModel[a.shipmentModel]??q;a.qtyBefore=prev;a.blDiff=Math.max(0,prev-n(a.qtyPallet));remainingByModel[a.shipmentModel]=a.blDiff;a.netKg=n(p.netPC)*n(a.qtyPallet);a.netKgCtn=n(p.netPC)*n(p.qtyCarton);a.grossKgCtn=n(p.grossCarton);a.grossKgPallet=n(p.qtyPallet)?n(p.grossPallet)/n(p.qtyPallet)*n(a.qtyPallet):0;a.ctnNo=n(p.qtyCarton)?Math.ceil(n(a.qtyPallet)/n(p.qtyCarton)):0;});const seen=new Set();allocations.forEach((a,i)=>{const g=String(a.mixGroup||'').trim();const key=(g&& !['n','no'].includes(g.toLowerCase()))?'mix:'+g:'row:'+i;const addTare=!seen.has(key);seen.add(key);a.grossLine=n(a.grossKgPallet)+(addTare?7:0);});
   allocations.forEach(a=>{if(!isMixAllocation(a)&&!a.hManual){const h=unitHeightFor(a);if(h>0)a.palletH=h}});
   renumberSkids();applyMixPalletDimensions();relaxTopMixGroups();renumberMixGroups();renumberSkids();}
-// Pallet height from the quantity on it (single-model pallet; Stack = Y = two pallets stacked). A full pallet keeps the Part Master height;
+// Pallet height from the quantity on it. Stack = Y = two pallets of the SAME Model stacked (counted as 1 position): the bottom pallet is filled first
+// (Qty/Pallet STD), the top pallet carries the rest; up to one pallet of quantity there is no top pallet. A full pallet keeps the Part Master height;
 // a partial pallet = base + layers x layer thickness, so editing Qty/Pallet re-calculates the height (Mix pallets use the layer stack instead).
-function unitHeightFor(a){
-  const p=partFor(a.packingModel)||partFor(a.shipmentModel);if(!p)return 0;
+function unitHeights(a){
+  const p=partFor(a.packingModel)||partFor(a.shipmentModel);if(!p)return [];
   const ph=n(p.palletH),ch=n(p.cartonH),qc=n(p.qtyCarton),qp=n(p.qtyPallet),q=n(a.qtyPallet);
-  if(!(ph>MIX_BASE_H&&qc>0&&qp>0&&q>0))return 0;
-  const units=String(a.stack).toUpperCase()==='Y'?2:1,per=q/units,span=ph-MIX_BASE_H;
-  const Lfull=Math.max(1,Math.round(span/(ch>0?ch:span))),layerH=span/Lfull,perLayer=(qp/qc)/Lfull;
-  const layers=Math.max(1,Math.ceil((per/qc)/perLayer-1e-9));
-  return Math.round(units*(MIX_BASE_H+layers*layerH)*10)/10;
+  if(!(ph>MIX_BASE_H&&qc>0&&qp>0&&q>0))return [];
+  const span=ph-MIX_BASE_H,Lfull=Math.max(1,Math.round(span/(ch>0?ch:span))),layerH=span/Lfull,perLayer=(qp/qc)/Lfull;
+  const hOf=x=>{const layers=Math.max(1,Math.ceil((x/qc)/perLayer-1e-9));return Math.round((MIX_BASE_H+layers*layerH)*10)/10};
+  if(String(a.stack).toUpperCase()!=='Y'||q<=qp+1e-9)return [hOf(q)];
+  return [hOf(qp),hOf(q-qp)];
 }
+function unitHeightFor(a){return Math.round(unitHeights(a).reduce((s,x)=>s+x,0)*10)/10}
+// Stack = Y row that really carries a second pallet (Qty above one pallet of the Part Master): 2 physical pallets, ONE floor position / ONE Pallet Seq
+function isDoubled(a){if(isMixAllocation(a)||String(a.stack).toUpperCase()!=='Y')return false;const p=partFor(a.packingModel)||partFor(a.shipmentModel)||{},qp=n(p.qtyPallet);return qp>0?n(a.qtyPallet)>qp+1e-9:n(a.qtyPallet)>0}
 // Skid Pallet No. / Total follow the rows automatically (single-model pallets are numbered per model; Mix pallets keep their group name)
 function renumberSkids(){
   const per={},seen={};
@@ -277,11 +283,15 @@ function renumberSkids(){
 }
 // "3/4" = this is the 3rd of 4 pallets that carry this Model (single-model pallets first, then the Mix Pallets the Model is in)
 function skidLabel(a){return (a.skidSeq||a.skidNo||'-')+'/'+(a.skidTotal||'-')}
-// Mix Pallets run in one sequence in the order they appear: Mix Pallet 1, 2, 3 … (split pieces get their own number; custom-named groups keep their name)
+// Mix Pallets run in one sequence in the order they appear: Mix Pallet 1, 2, 3 … Only a pallet that carries >= 2 different Models is a Mix Pallet.
+// A grouped pallet with ONE Model is a "Pallet เศษ" (remainder pallet, not placed with another Model); internally it is "Mix Rem n" and never takes a Mix Pallet number.
+// Split pieces get their own number; custom-named groups keep their name.
+const MIX_AUTO=/^mix (?:pallet|rem)\s*\d+(?:\s*\(\d+\))?$/i;
 function renumberMixGroups(){
-  const auto=/^mix pallet\s*\d+(\s*\(\d+\))?$/i,norm=s=>s.toLowerCase().replace(/\s+/g,' '),map=new Map();let k=0;
-  allocations.forEach(a=>{if(!isMixAllocation(a))return;const g=String(a.mixGroup||a.skidNo||'').trim();if(auto.test(g)&&!map.has(norm(g)))map.set(norm(g),'Mix Pallet '+(++k))});
-  allocations.forEach(a=>{if(!isMixAllocation(a))return;const nm=map.get(norm(String(a.mixGroup||a.skidNo||'').trim()));if(nm){a.mixGroup=nm;a.skidNo=nm}});
+  const norm=s=>s.toLowerCase().replace(/\s+/g,' '),gname=a=>String(a.mixGroup||a.skidNo||'').trim(),ms=new Map(),map=new Map();let k=0,r=0;
+  allocations.forEach(a=>{if(!isMixAllocation(a))return;const g=gname(a);if(!MIX_AUTO.test(g))return;const key=norm(g);if(!ms.has(key))ms.set(key,new Set());ms.get(key).add(String(a.shipmentModel||'').toLowerCase())});
+  allocations.forEach(a=>{if(!isMixAllocation(a))return;const g=gname(a),key=norm(g);if(!MIX_AUTO.test(g)||map.has(key))return;map.set(key,ms.get(key).size>1?'Mix Pallet '+(++k):'Mix Rem '+(++r))});
+  allocations.forEach(a=>{if(!isMixAllocation(a))return;const nm=map.get(norm(gname(a)));if(nm){a.mixGroup=nm;a.skidNo=nm}});
 }
 // Leveling (flat top, 125 ± 5 cm, max 130 cm, balanced split) is only needed for Layer 1 (floor) pallets. A Mix group that was split only to keep every
 // piece <= 130 cm is joined back into ONE taller pallet when that pallet can sit on top of a flat Layer-1 pallet (total height <= container height)
@@ -505,30 +515,31 @@ function applyMixPalletDimensions(){
   });
 }
 const MIX_COLORS=['#A90533','#d97706','#15803d','#be185d','#6d28d9','#c2410c','#0f766e','#854d0e'];
+// (2D Top View of a layer — no longer shown; replaced by the 3D per pallet)
 function mixLayerSvg(layer,colorOf){const K=1.5,S=110*K;return '<svg class="topview" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'">'+(layer.placements||[]).map(p=>'<rect x="'+p.x*K+'" y="'+p.y*K+'" width="'+p.w*K+'" height="'+p.d*K+'" fill="'+colorOf(p.model)+'" fill-opacity=".85" stroke="#fff" stroke-width="1"><title>'+esc(p.model)+' '+p.w+'×'+p.d+(p.rotated?' (90°)':'')+'</title></rect>'+(p.rotated?'<text x="'+(p.x+p.w/2)*K+'" y="'+(p.y+p.d/2)*K+'" font-size="10" fill="#fff" text-anchor="middle" dominant-baseline="central">↻</text>':'')).join('')+'</svg>'}
 function renderMixCalcPanel(){
-  const el=$('mixCalcPanel');if(!el)return;
+  const el=$('mixCalcPanel');if(!el)return;PAL3.cards=[];
   const layouts=calculateMixPalletLayouts(),roles=new Map();
   let stk=null;if(layouts.length){stk=planStacking();stk.pairs.forEach(x=>{roles.set(x.top.key,'L2');roles.set(x.bottom.key,'L1')})}
-  if(!layouts.length){el.innerHTML='<div class="sub">Mix Pallet Dimension Calculation · กำหนด Group Mix เพื่อเริ่มคำนวณ</div>';return;}
+  if(!layouts.length){el.innerHTML='<div class="sub">Mix Pallet Dimension Calculation · ยังไม่มี Mix Pallet / Pallet เศษ ที่ต้องคำนวณ</div>';return;}
   const cards=layouts.map(g=>{
     const modelNames=[...new Set(g.heightGroups.flatMap(hg=>hg.types.map(t=>t.model)))];const colorOf=m=>MIX_COLORS[modelNames.indexOf(m)%MIX_COLORS.length];
     const role=roles.get('mix:'+g.group.toLowerCase()),isL2=role==='L2'||g.topFree,pal=stk&&stk.pls.find(x=>x.key==='mix:'+g.group.toLowerCase()),sp=pal&&stackPartner(stk,pal),
-      stackNote=sp?(sp.role==='L2'?'▲ ซ้อนบน Pallet #'+sp.other.seq+' ('+esc(sp.other.mix?sp.other.mixName:sp.other.rows[0].shipmentModel)+' · ล่าง สูง '+fmt(sp.other.h)+' cm)':'▼ รับ Pallet #'+sp.other.seq+' ('+esc(sp.other.mix?sp.other.mixName:sp.other.rows[0].shipmentModel)+' · บน สูง '+fmt(sp.other.h)+' cm) ซ้อนด้านบน')+' · สูงรวมคู่ = '+fmt(sp.pair.bottom.h)+' + '+fmt(sp.pair.top.h)+' = '+fmt(sp.pair.bottom.h+sp.pair.top.h)+' cm (ตู้ '+stk.H+' cm)':'',statusClass=!g.valid?'mix-bad':(g.inRange||isL2)?'mix-ok':'mix-warn';
+      stackNote=sp?(sp.role==='L2'?'▲ ซ้อนบน Pallet #'+sp.other.seq+' ('+esc(palTitle(sp.other))+' · ล่าง สูง '+fmt(sp.other.h)+' cm)':'▼ รับ Pallet #'+sp.other.seq+' ('+esc(palTitle(sp.other))+' · บน สูง '+fmt(sp.other.h)+' cm) ซ้อนด้านบน')+' · สูงรวมคู่ = '+fmt(sp.pair.bottom.h)+' + '+fmt(sp.pair.top.h)+' = '+fmt(sp.pair.bottom.h+sp.pair.top.h)+' cm (ตู้ '+stk.H+' cm)':'',statusClass=!g.valid?'mix-bad':(g.inRange||isL2)?'mix-ok':'mix-warn';
     const rows=g.stack.map(x=>{const layer=x.layer;
       const detail=layer.byModel.map(m=>esc(m.model)+' × '+fmt(m.count)).join('<br>');
       const orient=layer.byOrientation.map(o=>esc(o.model)+' · '+fmt(o.width)+' × '+fmt(o.depth)+' cm · กว้าง '+fmt(o.across)+' × ยาว '+fmt(o.along)+' (Grid '+fmt(o.gridCapacity)+') · จัดจริง '+fmt(o.count)+(o.rotated?' (หมุน 90°)':'')).join('<br>');
-      return '<tr><td><b>Level '+x.level+'</b></td><td>'+fmt(x.h)+' cm</td><td>'+fmt(x.cum)+' cm</td><td>'+fmt(layer.cartons)+'</td><td>'+fmt(layer.fillPercent)+'%'+(x.partial?' <span class="chip bad">ไม่เต็ม · บนสุด</span>':'')+'</td><td>'+detail+'<div class="sub" style="margin-top:4px">'+orient+'</div></td><td>'+mixLayerSvg(layer,colorOf)+'</td></tr>'});
-    const legend='<div class="topview-legend">'+modelNames.map(m=>'<i style="background:'+colorOf(m)+'"></i>'+esc(m)).join('')+' · ↻ = หมุน 90° · Grid ใช้ประเมินแนวเดียว, ภาพนี้คือการจัดวางจริง</div>';
+      return '<tr><td><b>Level '+x.level+'</b></td><td>'+fmt(x.h)+' cm</td><td>'+fmt(x.cum)+' cm</td><td>'+fmt(layer.cartons)+'</td><td>'+fmt(layer.fillPercent)+'%'+(x.partial?' <span class="chip bad">ไม่เต็ม · บนสุด</span>':'')+'</td><td>'+detail+'<div class="sub" style="margin-top:4px">'+orient+'</div></td></tr>'});
+    const legend='<div class="topview-legend">'+modelNames.map(m=>'<i style="background:'+colorOf(m)+'"></i>'+esc(m)).join('')+' · Grid ใช้ประเมินแนวเดียว, ภาพ 3D คือการจัดวางจริง (กล่องที่หมุน 90° ถูกวางตามที่ระบบคำนวณ)</div>';
     const issues=[...g.invalid.map(x=>esc(x.model)+': '+esc(x.reason)),...g.unplaced.map(x=>esc(x.model)+' ('+fmt(x.count)+' CTN): '+esc(x.reason))];
-    return '<div class="mix-group-card"><b>'+esc(g.group)+'</b>'+(pal?' <span class="chip">Pallet No. #'+pal.seq+'</span>':'')+(stackNote?' <span class="chip new" style="white-space:normal">'+stackNote+'</span>':'')+'<div class="mix-metrics"><span>Cartons: <b>'+fmt(g.cartons)+'</b></span><span>Total Layers: <b>'+fmt(g.layers)+'</b></span><span>Calculated Height: <b>'+fmt(g.totalHeight)+' cm</b></span><span class="mix-status '+statusClass+'">'+esc(isL2&&g.valid?'Layer 2 · วางซ้อนบน ไม่ต้องปรับเรียบ (สูง '+fmt(g.totalHeight)+' cm · สูงรวมกับตัวล่าง ≤ ความสูงตู้)':role==='L1'?g.status+' · Layer 1 รับ Pallet ซ้อน':g.status)+'</span><span class="mix-status '+(g.flatOk?'mix-ok':'mix-warn')+'">'+esc(g.flat)+'</span></div><div class="sub">พื้นที่ Pallet 110 × 110 cm · คำนวณทั้งแนวกว้างและแนวยาว พร้อมหมุนกล่อง 90° · ระบบเลือกการจัดเรียงที่วางได้มากที่สุดในแต่ละชั้น · เรียงชั้นเต็มไว้ล่าง ชั้นไม่เต็มไว้บนสุดเพื่อให้ผิวหน้าเรียบ · ความสูง Pallet เป้าหมาย 125 ± 5 cm (สูงสุด 130 cm เกินจะแตกเป็นหลาย Pallet และกระจายความสูงให้ใกล้เคียงกัน) · การปรับเรียบ/125 ± 5 ใช้กับ Pallet Layer 1 (พื้นตู้) เท่านั้น — Pallet ที่ซ้อนข้างบน (Layer 2) ไม่ต้องปรับเรียบ ขอแค่สูงรวมไม่เกินความสูงตู้</div><div class="tablewrap" style="margin-top:8px"><table><thead><tr><th>Level (ล่าง→บน)</th><th>Carton Height</th><th>ความสูงสะสม (รวม Base 7)</th><th>Cartons / Layer</th><th>Layer Area Fill</th><th>Model &amp; Orientation (Width × Length)</th><th>Top View 110×110 cm</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+legend+(issues.length?'<div class="note" style="margin-top:8px">'+issues.join('<br>')+'</div>':'')+'</div>';
+    return '<div class="mix-group-card"><b>'+esc(pal?palTitle(pal):g.group)+'</b>'+(pal?' <span class="chip">Pallet Seq #'+pal.seq+'</span>':'')+(stackNote?' <span class="chip new" style="white-space:normal">'+stackNote+'</span>':'')+'<div class="mix-metrics"><span>Cartons: <b>'+fmt(g.cartons)+'</b></span><span>Total Layers: <b>'+fmt(g.layers)+'</b></span><span>Calculated Height: <b>'+fmt(g.totalHeight)+' cm</b></span><span class="mix-status '+statusClass+'">'+esc(isL2&&g.valid?'Layer 2 · วางซ้อนบน ไม่ต้องปรับเรียบ (สูง '+fmt(g.totalHeight)+' cm · สูงรวมกับตัวล่าง ≤ ความสูงตู้)':role==='L1'?g.status+' · Layer 1 รับ Pallet ซ้อน':g.status)+'</span><span class="mix-status '+(g.flatOk?'mix-ok':'mix-warn')+'">'+esc(g.flat)+'</span></div><div class="sub">พื้นที่ Pallet 110 × 110 cm · คำนวณทั้งแนวกว้างและแนวยาว พร้อมหมุนกล่อง 90° · ระบบเลือกการจัดเรียงที่วางได้มากที่สุดในแต่ละชั้น · เรียงชั้นเต็มไว้ล่าง ชั้นไม่เต็มไว้บนสุดเพื่อให้ผิวหน้าเรียบ · ความสูง Pallet เป้าหมาย 125 ± 5 cm (สูงสุด 130 cm เกินจะแตกเป็นหลาย Pallet และกระจายความสูงให้ใกล้เคียงกัน) · การปรับเรียบ/125 ± 5 ใช้กับ Pallet Layer 1 (พื้นตู้) เท่านั้น — Pallet ที่ซ้อนข้างบน (Layer 2) ไม่ต้องปรับเรียบ ขอแค่สูงรวมไม่เกินความสูงตู้</div><div class="mixrow3"><div style="min-width:0;flex:1"><div class="tablewrap" style="margin-top:8px"><table><thead><tr><th>Level (ล่าง→บน)</th><th>Carton Height</th><th>ความสูงสะสม (รวม Base 7)</th><th>Cartons / Layer</th><th>Layer Area Fill</th><th>Model &amp; Orientation (Width × Length)</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>'+(pal?'<div class="mix3d"><svg class="pal3d" data-i="'+(PAL3.cards.push({pl:pal,g,colorOf})-1)+'" viewBox="0 0 330 290" role="img" aria-label="3D Pallet" onpointerdown="p3down(event)" onpointermove="p3move(event)" onpointerup="p3up()" onpointercancel="p3up()"></svg><div class="sub">3D / Pallet · ลากเพื่อหมุน</div></div>':'')+'</div>'+legend+(issues.length?'<div class="note" style="margin-top:8px">'+issues.join('<br>')+'</div>':'')+'</div>';
   }).join('');
   const splitNote=allocations.some(a=>a.mixFam)?'<div class="note" style="margin:8px 0">Mix Group ที่สูงเกิน 130 cm ถูกแตกเป็นหลาย Physical Pallet อัตโนมัติ (แตกแล้วรันเลข Mix Pallet ต่อเนื่อง 1, 2, 3 …) · แต่ละ Pallet คิด Tare 7 kg</div>':'';
-  el.innerHTML=splitNote+'<div class="section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Mix Pallet Dimension Calculation<button class="btn secondary small" id="dimToggle" onclick="toggleDims()">'+(DIMS_HIDDEN?'▣ Show Pallet Dimensions':'▢ Hide Pallet Dimensions')+'</button></div>'+(DIMS_HIDDEN?'<div class="sub">ซ่อนอยู่ ('+layouts.length+' Mix Pallet) · กด Show Pallet Dimensions เพื่อดูรายละเอียดการคำนวณ</div>':'<div class="sub">แยกชั้นตามความสูง Carton เดียวกัน · เติมแต่ละ Layer ให้ได้จำนวนกล่องสูงสุดก่อนขึ้น Layer ถัดไป</div>'+cards);
+  setTimeout(pal3dAll,0);el.innerHTML=splitNote+'<div class="section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Mix Pallet Dimension Calculation<button class="btn secondary small" id="dimToggle" onclick="toggleDims()">'+(DIMS_HIDDEN?'▣ Show Pallet Dimensions':'▢ Hide Pallet Dimensions')+'</button></div>'+(DIMS_HIDDEN?'<div class="sub">ซ่อนอยู่ ('+layouts.length+' Mix Pallet) · กด Show Pallet Dimensions เพื่อดูรายละเอียดการคำนวณ</div>':'<div class="sub">แยกชั้นตามความสูง Carton เดียวกัน · เติมแต่ละ Layer ให้ได้จำนวนกล่องสูงสุดก่อนขึ้น Layer ถัดไป</div>'+cards);
 }
 
-function renderCalc(){sortAllocationsForMix();applyMixPalletDimensions();$('shipmentModels').innerHTML=models.map((m,i)=>`<tr><td><b>${esc(m.model)}</b></td><td>${esc(partFor(m.model)?.description||'')}</td><td>${fmt(m.planQty)}</td><td><input type="number" min="0" value="${m.actualQty??''}" placeholder="Same as plan" onchange="setActual(${i},this.value)"></td><td>${fmt(effectiveQty(m))}</td><td><button class="btn danger small" onclick="removeModel(${i})">Remove</button></td></tr>`).join('');$('allocations').innerHTML=allocations.map((a,i)=>allocRow(a,i)).join('');renderMixCalcPanel();renderSummary();}
-function allocRow(a,i){const input=(field,val,type='text',width='80px',cls='')=>`<input class="${cls}" type="${type}" value="${esc(val)}" onchange="editAlloc(${i},'${field}',this.value)">`;return `<tr><td><input class="model-input" list="modelList" value="${esc(a.packingModel)}" onchange="changePacking(${i},this.value)"></td><td class="col-pack">${esc(a.name)}</td><td class="col-pack">${fmt(a.packStd)}</td><td class="col-pack">${fmt(a.netKgCtn)}</td><td class="col-pack">${fmt(a.grossKgCtn)}</td><td class="col-pack">${fmt(a.cartonD)}×${fmt(a.cartonW)}×${fmt(a.cartonH)}</td><td class="skidcell" title="${esc(isMixAllocation(a)?a.mixGroup:'')}">${esc(skidLabel(a))}</td><td><select class="stack-select" onchange="setStack(${i},this.value)"><option ${a.stack==='N'?'selected':''}>N</option><option ${a.stack==='Y'?'selected':''}>Y</option></select></td><td><input style="width:108px;min-width:108px" value="${esc(a.mixGroup)}" placeholder="N / Mix Pallet 1" onchange="editMix(${i},this.value)"></td><td>${fmt(a.qtyBefore)}</td><td>${input('qtyPallet',a.qtyPallet,'number')}</td><td>${fmt(a.blDiff)}</td><td>${fmt(a.netKg)}</td><td>${fmt(a.grossKgPallet)}</td><td>${fmt(a.grossLine)}</td><td>${input('palletD',a.palletD,'number','46px','dim-input')} × ${input('palletW',a.palletW,'number','46px','dim-input')} × ${input('palletH',a.palletH,'number','46px','dim-input')}</td><td>${input('remark',a.remark,'text','112px','remark-input')}</td><td><button class="btn danger small" onclick="removeAlloc(${i})">×</button></td></tr>`}
+function renderCalc(){sortAllocationsForMix();renumberMixGroups();renumberSkids();applyMixPalletDimensions();$('shipmentModels').innerHTML=models.map((m,i)=>`<tr><td><b>${esc(m.model)}</b></td><td>${esc(partFor(m.model)?.description||'')}</td><td>${fmt(m.planQty)}</td><td><input type="number" min="0" value="${m.actualQty??''}" placeholder="Same as plan" onchange="setActual(${i},this.value)"></td><td>${fmt(effectiveQty(m))}</td><td><button class="btn danger small" onclick="removeModel(${i})">Remove</button></td></tr>`).join('');const PI=palletInfoOf(allocations);$('allocations').innerHTML=allocations.map((a,i)=>allocRow(a,i,PI.byRow.get(i))).join('');renderMixCalcPanel();renderSummary();}
+function allocRow(a,i,g){g=g||{seq:'-',kind:'full',label:'',rows:[a]};const input=(field,val,type='text',width='80px',cls='')=>`<input class="${cls}" type="${type}" value="${esc(val)}" onchange="editAlloc(${i},'${field}',this.value)">`;return `<tr class="${g.rows.length>1?'grp'+(g.rows[0]===a?' grp1':''):''}"><td><input class="model-input" list="modelList" value="${esc(a.packingModel)}" onchange="changePacking(${i},this.value)"></td><td class="col-pack">${esc(a.name)}</td><td class="col-pack">${fmt(a.packStd)}</td><td class="col-pack">${fmt(a.netKgCtn)}</td><td class="col-pack">${fmt(a.grossKgCtn)}</td><td class="col-pack">${fmt(a.cartonD)}×${fmt(a.cartonW)}×${fmt(a.cartonH)}</td><td class="skidcell" title="${esc(g.label)}">${esc(skidLabel(a))}</td><td><select class="stack-select" onchange="setStack(${i},this.value)"><option ${a.stack==='N'?'selected':''}>N</option><option ${a.stack==='Y'?'selected':''}>Y</option></select></td><td class="seqcell" title="${esc(g.kind==='mix'?g.label+' · '+g.models.join(' + '):g.kind==='rem'?'Pallet เศษ · '+g.models.join(', '):'')}"><b>${g.seq}</b>${g.kind==='mix'?'<span class="chip mixc">'+esc(g.label)+'</span>':g.kind==='rem'?'<span class="chip remc">Pallet เศษ</span>':''}</td><td>${fmt(a.qtyBefore)}</td><td>${input('qtyPallet',a.qtyPallet,'number')}</td><td>${fmt(a.blDiff)}</td><td>${fmt(a.netKg)}</td><td>${fmt(a.grossKgPallet)}</td><td>${fmt(a.grossLine)}</td><td>${input('palletD',a.palletD,'number','46px','dim-input')} × ${input('palletW',a.palletW,'number','46px','dim-input')} × ${input('palletH',a.palletH,'number','46px','dim-input')}</td><td>${input('remark',a.remark,'text','112px','remark-input')}</td><td><button class="btn danger small" onclick="removeAlloc(${i})">×</button></td></tr>`}
 function setActual(i,v){models[i].actualQty=v===''?null:n(v);generateAllocations();renderCalc()}
 function togglePackingDetails(){const wrap=$('allocationWrap');wrap.classList.toggle('packing-details-collapsed');const hidden=wrap.classList.contains('packing-details-collapsed');$('packingToggle').textContent=hidden?'＋ Show Packing Details':'− Hide Packing Details';}
 /* ---------- Print templates: Shipment Slip · Delivered Complete summary · ใบส่งงาน (Delivery Note, 1 page) ---------- */
@@ -652,10 +663,10 @@ function noteItems(p){
 
 /* Shipment Detail Slip (A4 portrait, flows to more pages when there are many pallets) */
 function slipHtml(p){
-  const al=p.allocations||[],sm=p.summary||{},seq=palletSeqOf(al);
+  const al=p.allocations||[],sm=p.summary||{},seq=palletSeqOf(al),PI=palletInfoOf(al);
   let prev=null,gi=0;
   const rows=al.map((a,i)=>{if(prev!==null&&a.shipmentModel!==prev)gi++;prev=a.shipmentModel;
-    return '<tr class="g'+(gi%2)+'"><td class="ctr">'+(i+1)+'</td><td><b>'+esc(a.shipmentModel||'-')+'</b></td><td class="ctr">'+esc(a.stack||'N')+'</td><td class="r">'+fmt(a.qtyPallet)+'</td><td class="ctr">'+fmt(seq.get(i))+'</td><td>'+esc(isMixAllocation(a)?(a.mixGroup||a.skidNo||''):(a.skidTotal?(a.skidNo+'/'+a.skidTotal):(a.skidNo||'')))+'</td><td class="ctr">'+fmt(a.palletD)+' × '+fmt(a.palletW)+' × '+fmt(a.palletH)+'</td><td class="r">'+fmt(a.grossLine)+'</td><td>'+esc(a.remark||'')+'</td></tr>'}).join('');
+    return '<tr class="g'+(gi%2)+'"><td class="ctr">'+(i+1)+'</td><td><b>'+esc(a.shipmentModel||'-')+'</b></td><td class="ctr">'+esc(a.stack||'N')+'</td><td class="r">'+fmt(a.qtyPallet)+'</td><td class="ctr">'+fmt(seq.get(i))+'</td><td>'+esc((()=>{const g=PI.byRow.get(i);if(g.kind==='mix')return g.label;const t=a.skidTotal?((a.skidSeq||a.skidNo)+'/'+a.skidTotal):String(a.skidNo||'');return (g.kind==='rem'?'Pallet เศษ ':'')+t})())+'</td><td class="ctr">'+fmt(a.palletD)+' × '+fmt(a.palletW)+' × '+fmt(a.palletH)+'</td><td class="r">'+fmt(a.grossLine)+'</td><td>'+esc(a.remark||'')+'</td></tr>'}).join('');
   const items=noteItems(p);
   const mrows=items.map(r=>'<tr><td class="ctr">'+r.no+'</td><td><b>'+esc(r.model)+'</b></td><td>'+esc(r.desc)+'</td><td class="r">'+fmt(r.plan)+'</td><td class="r">'+fmt(r.qty)+'</td></tr>').join('');
   const dens=(items.length+al.length)>20?' sm2':(items.length+al.length)>14?' sm1':'';
@@ -744,7 +755,7 @@ async function printDeliveryNote(id){
 }
 
 function removeModel(i){let code=models[i].model;models.splice(i,1);allocations=allocations.filter(a=>a.shipmentModel!==code);recalcDerived();renderCalc()}
-function setStack(i,value){const current=allocations[i];if(!current)return;const code=current.shipmentModel,packing=current.packingModel;const rows=allocations.filter(a=>a.shipmentModel===code&&a.packingModel===packing);const total=rows.reduce((s,a)=>s+n(a.qtyPallet),0);const p=partFor(packing)||partFor(code)||{};const cap=(n(p.qtyPallet)||n(p.qtyCarton)||total)*(value==='Y'?2:1);if(!cap)return;allocations=allocations.filter(a=>!(a.shipmentModel===code&&a.packingModel===packing));let remain=total,idx=1,count=Math.ceil(total/cap);while(remain>0){const q=Math.min(cap,remain);const row=makeAlloc(models.find(m=>m.model===code)||{model:code},p,idx,remain,q,value,'N',count);if(q<cap){row.mixGroup='Mix Pallet 1';row.skidNo='Mix Pallet 1';}allocations.push(row);remain-=q;idx++;}recalcDerived();renderCalc();}
+function setStack(i,value){const current=allocations[i];if(!current)return;const code=current.shipmentModel,packing=current.packingModel;const rows=allocations.filter(a=>a.shipmentModel===code&&a.packingModel===packing);const total=rows.reduce((s,a)=>s+n(a.qtyPallet),0);const p=partFor(packing)||partFor(code)||{};const cap=(n(p.qtyPallet)||n(p.qtyCarton)||total)*(value==='Y'?2:1);if(!cap)return;allocations=allocations.filter(a=>!(a.shipmentModel===code&&a.packingModel===packing));let remain=total,idx=1,count=Math.ceil(total/cap);while(remain>0){const q=Math.min(cap,remain);const row=makeAlloc(models.find(m=>m.model===code)||{model:code},p,idx,remain,q,value,'N',count);if(q<cap&&!isDoubled(row)){row.mixGroup='Mix Pallet 1';row.skidNo='Mix Pallet 1';}allocations.push(row);remain-=q;idx++;}recalcDerived();renderCalc();}
 function editAlloc(i,f,v){const a=allocations[i];if(!a)return;a[f]=['ctnNo','skidTotal','qtyPallet','palletD','palletW','palletH'].includes(f)?n(v):v;
   if(f==='qtyPallet')delete a.hManual;      // Qty changed -> the system calculates the pallet height again
   if(f==='palletH')a.hManual=true;          // height typed by the user stays until the Qty is edited
@@ -1259,16 +1270,29 @@ document.addEventListener('paste',e=>{
 /* ---------- Simulate Layout (container top view + side view) ---------- */
 const SIM_PAL=['#A90533','#2563eb','#15803d','#d97706','#7c3aed','#0891b2','#be185d','#65a30d','#9a3412','#475569'];
 function simColor(model){const i=[...new Set(models.map(m=>m.model))].indexOf(model);return i<0?'#888':i<SIM_PAL.length?SIM_PAL[i]:'hsl('+((i*47)%360)+',60%,45%)'}
+// One physical pallet = rows sharing a Mix group (repeat the same Pallet Seq) or a single row. kind: mix = >= 2 Models · rem = ONE Model, partial pallet ("Pallet เศษ") · full.
+function palletInfoOf(al){
+  const groups=new Map(),order=[],byRow=new Map();
+  al.forEach((a,i)=>{const k=isMixAllocation(a)?'mix:'+mixKey(a):'row:'+i;let g=groups.get(k);if(!g){g={key:k,rows:[],idx:[]};groups.set(k,g);order.push(g)}g.rows.push(a);g.idx.push(i);byRow.set(i,g)});
+  let mixNo=0;
+  order.forEach((g,s)=>{
+    g.seq=s+1;g.models=[...new Set(g.rows.map(a=>String(a.shipmentModel||'')))];g.nModels=g.models.length;g.mixNo=0;
+    const a0=g.rows[0],nm=String(a0.mixGroup||a0.skidNo||'').trim();
+    if(g.nModels>1){g.kind='mix';if(isMixAllocation(a0)&&!MIX_AUTO.test(nm)&&nm)g.label=nm;else{g.mixNo=++mixNo;g.label='Mix Pallet '+g.mixNo}}
+    else{const p=partFor(a0.packingModel)||partFor(a0.shipmentModel)||{},qp=n(p.qtyPallet),cap=qp*(String(a0.stack).toUpperCase()==='Y'?2:1),tot=g.rows.reduce((t,a)=>t+n(a.qtyPallet),0);
+      g.kind=cap>0?(tot<cap-1e-9?'rem':'full'):(isMixAllocation(a0)?'rem':'full');g.label=g.kind==='rem'?'Pallet เศษ':''}
+  });
+  return {groups:order,byRow};
+}
 function simPallets(){
-  const map=new Map(),seq=[];
-  allocations.forEach((a,i)=>{const mix=isMixAllocation(a),key=mix?'mix:'+String(a.mixGroup||a.skidNo||'').trim().toLowerCase():'row:'+i;
-    let pl=map.get(key);if(!pl){pl={key,seq:seq.length+1,mix,rows:[],h:0};map.set(key,pl);seq.push(pl)}
-    pl.rows.push(a);pl.h=Math.max(pl.h,n(a.palletH))});
+  const PI=palletInfoOf(allocations),seq=PI.groups.map(g=>({key:g.key,seq:g.seq,mix:g.rows.some(isMixAllocation),kind:g.kind,label:g.label,mixNo:g.mixNo,nModels:g.nModels,rows:g.rows,h:g.rows.reduce((m,a)=>Math.max(m,n(a.palletH)),0)}));
   seq.forEach(pl=>{const q={};pl.rows.forEach(a=>q[a.shipmentModel]=(q[a.shipmentModel]||0)+n(a.qtyPallet));
     pl.byModel=Object.entries(q).map(([model,qty])=>({model,qty}));pl.h=pl.h||125;
-    pl.skid=pl.mix?String(pl.rows[0].mixGroup||pl.rows[0].skidNo):skidLabel(pl.rows[0]);pl.mixName=pl.mix?String(pl.rows[0].mixGroup||pl.rows[0].skidNo):''});
+    pl.skid=pl.kind==='mix'?pl.label:skidLabel(pl.rows[0]);pl.mixName=pl.mix?String(pl.rows[0].mixGroup||pl.rows[0].skidNo):'';
+    pl.units=null;if(pl.rows.length===1&&isDoubled(pl.rows[0])){let u=unitHeights(pl.rows[0]);if(u.length<2){const hh=pl.h/2;u=[hh,hh]}const s=u[0]+u[1];pl.units=u.map(x=>Math.round(x*pl.h/s*10)/10)}});
   return seq;
 }
+function palTitle(pl){return pl.kind==='mix'?pl.label:pl.kind==='rem'?'Pallet เศษ · '+pl.byModel.map(m=>m.model).join(', '):pl.rows[0].shipmentModel}
 /* ---------- Pallet stacking in the container (2-high): a stacked pair uses ONE floor position ---------- */
 function contHeight(){return $('containerType').value==='40HC'?269:(n($('contH')&&$('contH').value)||269)}
 // Is the top surface of this physical pallet flat (every layer complete)? Only flat pallets can carry another pallet.
@@ -1282,7 +1306,7 @@ function unitFlat(pl,layouts){
 function planStacking(){
   const pls=simPallets(),layouts=calculateMixPalletLayouts(),H=contHeight(),cap=Math.max(1,n($('floorCap').value)||20);
   pls.forEach(pl=>{pl.gross=pl.rows.reduce((s,a)=>s+n(a.grossLine),0);pl.flat=unitFlat(pl,layouts);
-    pl.doubled=pl.rows.some(a=>!isMixAllocation(a)&&String(a.stack).toUpperCase()==='Y');pl.canStack=!pl.doubled&&pl.h<=MIX_MAX_H;pl.canBottom=!pl.doubled&&pl.flat&&pl.h<=MIX_MAX_H;pl.canTop=!pl.doubled});
+    pl.doubled=pl.rows.some(isDoubled);pl.canStack=!pl.doubled&&pl.h<=MIX_MAX_H;pl.canBottom=!pl.doubled&&pl.flat&&pl.h<=MIX_MAX_H;pl.canTop=!pl.doubled});
   const on=!$('stackPallet')||$('stackPallet').checked,needed=on?Math.max(0,pls.length-cap):0,pairs=[],used=new Set();
   if(needed){
     const bottoms=pls.filter(p=>p.canBottom).sort((a,b)=>b.gross-a.gross);
@@ -1309,7 +1333,7 @@ function renderFloorStatus(){
 }
 /* ---------- Stacking plan: which pallet sits on which, with the stacked dimension ---------- */
 // "#12" = Pallet No. (loading order, the same number printed on the 3D view); Layer 1 = on the container floor, Layer 2 = stacked on top
-function palName(pl){return '<b>#'+pl.seq+'</b> '+(pl.mix?esc(pl.mixName):esc(pl.rows[0].shipmentModel)+' <span class="sub">'+esc(pl.skid)+'</span>')}
+function palName(pl){return '<b>#'+pl.seq+'</b> '+(pl.kind==='mix'?esc(pl.label):esc(pl.rows[0].shipmentModel)+' <span class="sub">'+esc((pl.kind==='rem'?'Pallet เศษ · ':'')+pl.skid)+'</span>')+(pl.units?' <span class="chip new">Stack × 2 Pallet</span>':'')}
 function palSub(pl){return pl.byModel.map(m=>esc(m.model)+' ×'+fmt(m.qty)).join(', ')+' · '+fmt(pl.h)+' cm · '+fmt(pl.gross)+' kg'}
 function stackPartner(st,pl){const pr=st.pairs.find(x=>x.bottom===pl||x.top===pl);return pr?{pair:pr,role:pr.top===pl?'L2':'L1',other:pr.top===pl?pr.bottom:pr.top}:null}
 function stackPlanHtml(st){
@@ -1370,6 +1394,27 @@ function s3order(items,v,P){
   }
   return out;
 }
+// One physical pallet as boxes: skid(s) + cartons (Mix layout) or a cargo block. Stack = Y (pl.units) = two pallets, the top one standing on the bottom one's load.
+function s3addPallet(add,pl,g,x0,yy,z0,o){
+  const PW=110,sw=o.sw,swv=o.swv,pid=o.pid,cargoColor=o.cargoColor;
+  const cartons=g&&g.valid&&g.stack&&g.stack.reduce((s,x)=>s+(x.layer.placements||[]).length,0)<=(o.maxCartons||90)?g:null;
+  if(cartons){
+    const bh=Math.min(MIX_BASE_H,pl.h*.18);
+    add([x0+2,yy+2,z0,x0+PW-2,yy+PW-2,z0+bh],S3_WOOD,{k:'skid',pid});
+    let z=z0+MIX_BASE_H;
+    cartons.stack.forEach(lv=>{(lv.layer.placements||[]).forEach(p=>{add([x0+p.x+.4,yy+p.y+.4,z,x0+p.x+p.w-.4,yy+p.y+p.d-.4,z+lv.h],cargoColor(p.model),{k:'carton',pid,model:p.model,stroke:sw,sw:swv})});z+=lv.h});
+    return z;
+  }
+  let z=z0;const us=pl.units||[Math.min(pl.h,o.maxH||pl.h)];
+  us.forEach(hu=>{
+    const bh=Math.min(MIX_BASE_H,hu*.18);
+    add([x0+2,yy+2,z,x0+PW-2,yy+PW-2,z+bh],S3_WOOD,{k:'skid',pid});
+    const tot=pl.byModel.reduce((s,m)=>s+m.qty,0)||1,cw=PW-6,layers=Math.max(1,Math.round((hu-bh)/26));let cx=x0+3;
+    pl.byModel.forEach(m=>{const wd=cw*m.qty/tot;add([cx,yy+3,z+bh,cx+wd,yy+PW-3,z+hu],cargoColor(m.model),{k:'cargo',pid,model:m.model,layers,stroke:sw,sw:swv});cx+=wd});
+    z+=hu;
+  });
+  return z;
+}
 // Geometry of the scene (cm): x = container length (0 = front/head, L = doors), y = width, z = up
 function s3items(sc,v){
   const it=[],L=sc.L,W=sc.W,H=sc.H,t=4,kraft=SIM3.look==='kraft';
@@ -1392,32 +1437,15 @@ function s3items(sc,v){
   const PW=110,y0=(W-220)/2,over=sc.over,mixOf=pl=>sc.layouts.find(g=>g.group.toLowerCase()===pl.key.slice(4));
   const cargoColor=m=>kraft?S3_KRAFT:simColor(m);
   let pidc=0;sc.labels=[];
-  const addPallet=(pl,x0,yy,z0,bad,pid)=>{
-    const sw=bad?'#dc2626':null,swv=bad?1.6:.6;
-    const bh=Math.min(MIX_BASE_H,pl.h*.18);
-    add([x0+2,yy+2,z0,x0+PW-2,yy+PW-2,z0+bh],S3_WOOD,{k:'skid',pid});
-    const g=pl.mix?mixOf(pl):null;
-    let top=z0+Math.min(pl.h,sc.H),lastBox=null;
-    const cartons=g&&g.valid&&g.stack&&g.stack.reduce((s,x)=>s+(x.layer.placements||[]).length,0)<=90?g:null;
-    if(cartons){
-      let z=z0+MIX_BASE_H;
-      cartons.stack.forEach(lv=>{(lv.layer.placements||[]).forEach(p=>{lastBox=add([x0+p.x+.4,yy+p.y+.4,z,x0+p.x+p.w-.4,yy+p.y+p.d-.4,z+lv.h],cargoColor(p.model),{k:'carton',pid,model:p.model,stroke:sw,sw:swv})});z+=lv.h});
-      top=z;
-    }else{
-      const tot=pl.byModel.reduce((s,m)=>s+m.qty,0)||1,cw=PW-6;let cx=x0+3;
-      const layers=Math.max(1,Math.round((pl.h-bh)/26));
-      pl.byModel.forEach(m=>{const wd=cw*m.qty/tot;lastBox=add([cx,yy+3,z0+bh,cx+wd,yy+PW-3,z0+Math.min(pl.h,sc.H)],cargoColor(m.model),{k:'cargo',pid,model:m.model,layers,stroke:sw,sw:swv});cx+=wd});
-    }
-    return top;
-  };
+  const addPallet=(pl,x0,yy,z0,bad,pid)=>s3addPallet(add,pl,pl.mix?mixOf(pl):null,x0,yy,z0,{cargoColor,sw:bad?'#dc2626':null,swv:bad?1.6:.6,pid,maxH:sc.H});
   // one label per floor position (a stacked pair gets ONE label: ▲ top pallet / ▼ bottom pallet / total height)
-  const mixTag=pl=>{if(!pl.mix)return '';const m=String(pl.mixName||'').match(/^mix pallet\s*(\d+)/i);return m?'Mix '+m[1]:String(pl.mixName||'Mix').slice(0,8)};
+  const mixTag=pl=>pl.kind==='mix'?(pl.mixNo?'Mix '+pl.mixNo:String(pl.label||'Mix').slice(0,8)):pl.kind==='rem'?'เศษ':'';
   const addPos=(ps,x0,yy,bad)=>{
     let z=0;const pids=[];ps.forEach(pl=>{const pid=++pidc;pids.push(pid);z=addPallet(pl,x0,yy,z,bad,pid)});
-    const lines=ps.length>1?[{t:'▲ '+ps[1].seq+(ps[1].mix?' · '+mixTag(ps[1]):''),sz:12.5,b:1},{t:'▼ '+ps[0].seq+(ps[0].mix?' · '+mixTag(ps[0]):''),sz:12.5,b:1}]
-      :[{t:String(ps[0].seq),sz:13.5,b:1}].concat(ps[0].mix?[{t:mixTag(ps[0]),sz:10}]:[]);
-    const nm=pl=>'#'+pl.seq+' '+(pl.mix?pl.mixName:pl.rows[0].shipmentModel)+' · '+fmt(pl.h)+' cm · '+fmt(pl.gross)+' kg',title=ps.length>1?'ซ้อนบน '+nm(ps[1])+'\nล่าง '+nm(ps[0])+'\nสูงรวม '+fmt(ps[0].h+ps[1].h)+' cm':nm(ps[0]);
-    sc.labels.push({pids,box:[x0,yy,0,x0+PW,yy+PW,z],lines,title,kind:ps.length>1?'pair':ps[0].mix?'mix':'solo',bad});
+    const lines=ps.length>1?[{t:'▲ '+ps[1].seq+(mixTag(ps[1])?' · '+mixTag(ps[1]):''),sz:12.5,b:1},{t:'▼ '+ps[0].seq+(mixTag(ps[0])?' · '+mixTag(ps[0]):''),sz:12.5,b:1}]
+      :[{t:String(ps[0].seq),sz:13.5,b:1}].concat(mixTag(ps[0])?[{t:mixTag(ps[0]),sz:10}]:[]).concat(ps[0].units?[{t:'Stack ×2',sz:10}]:[]);
+    const nm=pl=>'#'+pl.seq+' '+palTitle(pl)+(pl.units?' (Stack: '+fmt(pl.units[0])+' + '+fmt(pl.units[1])+' cm)':'')+' · '+fmt(pl.h)+' cm · '+fmt(pl.gross)+' kg',title=ps.length>1?'ซ้อนบน '+nm(ps[1])+'\nล่าง '+nm(ps[0])+'\nสูงรวม '+fmt(ps[0].h+ps[1].h)+' cm':nm(ps[0]);
+    sc.labels.push({pids,box:[x0,yy,0,x0+PW,yy+PW,z],lines,title,kind:ps.length>1?'pair':ps[0].kind==='mix'?'mix':ps[0].kind==='rem'?'rem':'solo',bad});
     return z;
   };
   sc.placed.forEach((ps,k)=>{addPos(ps,Math.floor(k/2)*PW,y0+(k%2)*PW,false)});
@@ -1451,7 +1479,7 @@ function s3labels(sc,v,Q,VW,VH){
     let x=o.q[0]+best[0]*(o.w+3),y=o.q[1]+best[1]*(o.h+3);x=Math.max(o.w/2+2,Math.min(VW-o.w/2-2,x));y=Math.max(o.h/2+2,Math.min(VH-o.h/2-18,y));
     placed.push({x,y,w:o.w,h:o.h});res.push({o,x,y});
   });
-  const pal={solo:['#ffffff','#244f8e','#14315e'],mix:['#fff1b8','#b7791f','#5a3a00'],pair:['#d7ecff','#1f6fb5','#0c3a66']};
+  const pal={solo:['#ffffff','#244f8e','#14315e'],mix:['#fff1b8','#b7791f','#5a3a00'],rem:['#ffe3cf','#c2410c','#5a2200'],pair:['#d7ecff','#1f6fb5','#0c3a66']};
   let s='';
   res.forEach(r=>{
     const o=r.o,l=o.l,c=pal[l.kind],moved=Math.hypot(r.x-o.q[0],r.y-o.q[1])>o.h*.6;
@@ -1463,25 +1491,10 @@ function s3labels(sc,v,Q,VW,VH){
   });
   return s;
 }
-function s3draw(freeze){
-  const sc=SIM3.scene,svg=document.getElementById('sim3d');if(!sc||!svg)return;
-  const cam=SIM3.cam,VW=1000,VH=520,th=cam.yaw*Math.PI/180,ph=cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph);
-  const v=[-cp*st,-cp*ct,sp],cx=sc.L/2,cy=sc.W/2,cz=sc.H/2;
-  const P=(x,y,z)=>{const dx=x-cx,dy=y-cy,dz=z-cz;return [dx*ct-dy*st,-(dz*cp+(dx*st+dy*ct)*sp)]};
-  const items=s3order(s3items(sc,v),v,P);
-  let f=freeze&&SIM3.fit;
-  if(!f){
-    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const pt=(x,y,z)=>{const q=P(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])};
-    items.forEach(i=>{const b=i.b;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>pt(x,y,z))))});
-    pt(-75,sc.W/2,-30);pt(sc.L+75,sc.W/2,-30);if(sc.over.length)pt(0,sc.W+160,0);
-    const k=Math.min((VW-50)/Math.max(1,x1-x0),(VH-60)/Math.max(1,y1-y0))*cam.zoom;
-    f=SIM3.fit={k,ox:VW/2-(x0+x1)/2*k,oy:VH/2-(y0+y1)/2*k+6};
-  }
-  const Q=(x,y,z)=>{const q=P(x,y,z);return [f.ox+q[0]*f.k,f.oy+q[1]*f.k]},pts=a=>a.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
+function s3paint(items,v,Q){
+  const pts=a=>a.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
   const line=(a,b,c,w)=>{const p=Q(a[0],a[1],a[2]),q=Q(b[0],b[1],b[2]);return '<line x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'" stroke="'+c+'" stroke-width="'+(w||.6)+'" stroke-linecap="round"/>'};
-  let o='<rect width="'+VW+'" height="'+VH+'" rx="10" fill="url(#s3bg)"/>';
-  // soft ground shadow
-  o+='<polygon points="'+pts([Q(-4+34,-4+30,-7),Q(sc.L+4+34,-4+30,-7),Q(sc.L+4+34,sc.W+4+30,-7),Q(-4+34,sc.W+4+30,-7)])+'" fill="#1d3f73" opacity=".13"/>';
+  let o='';
   items.forEach(i=>{
     const b=i.b;let g='';
     S3_FACES.forEach(fc=>{
@@ -1505,6 +1518,27 @@ function s3draw(freeze){
     });
     o+=g;
   });
+  return o;
+}
+function s3draw(freeze){
+  const sc=SIM3.scene,svg=document.getElementById('sim3d');if(!sc||!svg)return;
+  const cam=SIM3.cam,VW=1000,VH=520,th=cam.yaw*Math.PI/180,ph=cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph);
+  const v=[-cp*st,-cp*ct,sp],cx=sc.L/2,cy=sc.W/2,cz=sc.H/2;
+  const P=(x,y,z)=>{const dx=x-cx,dy=y-cy,dz=z-cz;return [dx*ct-dy*st,-(dz*cp+(dx*st+dy*ct)*sp)]};
+  const items=s3order(s3items(sc,v),v,P);
+  let f=freeze&&SIM3.fit;
+  if(!f){
+    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const pt=(x,y,z)=>{const q=P(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])};
+    items.forEach(i=>{const b=i.b;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>pt(x,y,z))))});
+    pt(-75,sc.W/2,-30);pt(sc.L+75,sc.W/2,-30);if(sc.over.length)pt(0,sc.W+160,0);
+    const k=Math.min((VW-50)/Math.max(1,x1-x0),(VH-60)/Math.max(1,y1-y0))*cam.zoom;
+    f=SIM3.fit={k,ox:VW/2-(x0+x1)/2*k,oy:VH/2-(y0+y1)/2*k+6};
+  }
+  const Q=(x,y,z)=>{const q=P(x,y,z);return [f.ox+q[0]*f.k,f.oy+q[1]*f.k]},pts=a=>a.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
+  let o='<rect width="'+VW+'" height="'+VH+'" rx="10" fill="url(#s3bg)"/>';
+  // soft ground shadow
+  o+='<polygon points="'+pts([Q(-4+34,-4+30,-7),Q(sc.L+4+34,-4+30,-7),Q(sc.L+4+34,sc.W+4+30,-7),Q(-4+34,sc.W+4+30,-7)])+'" fill="#1d3f73" opacity=".13"/>';
+  o+=s3paint(items,v,Q);
   const a=Q(0,sc.W/2,-7),b=Q(sc.L,sc.W/2,-7),halo='style="paint-order:stroke;stroke:#eef5fc;stroke-width:4px;font-weight:700"';
   if(Math.abs(v[1])>=.35)o+='<text x="'+a[0].toFixed(1)+'" y="'+(a[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>หัวตู้ (Front)</text><text x="'+b[0].toFixed(1)+'" y="'+(b[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>ประตู (Door)</text>';
   if(sc.over.length&&sc.overLabel){const q=Q(sc.overLabel.x,sc.overLabel.y,sc.overLabel.z);o+='<text x="'+q[0].toFixed(1)+'" y="'+q[1].toFixed(1)+'" font-size="12" fill="#dc2626" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:4px;font-weight:700">นอกตู้ · ไม่มีที่ '+sc.over.length+' ตำแหน่ง'+(sc.over.length>8?' (แสดง 8)':'')+'</text>'}
@@ -1512,6 +1546,29 @@ function s3draw(freeze){
   o+='<text x="12" y="'+(VH-10)+'" font-size="11" fill="#5b7396">ลากเพื่อหมุน · ล้อเมาส์ = ซูม · '+Math.round(cam.yaw)+'° / '+Math.round(cam.pitch)+'°</text>';
   svg.innerHTML='<defs><linearGradient id="s3bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4e7f8"/><stop offset="1" stop-color="#eef5fc"/></linearGradient></defs>'+o;
 }
+/* ---------- Per-pallet 3D (Mix Pallet Dimension Calculation): the cartons of ONE pallet, drag to rotate (all cards turn together) ---------- */
+const PAL3={cam:{yaw:-34,pitch:28},cards:[],drag:null};
+function pal3dItems(c){
+  const it=[],add=(b,fill,o)=>{it.push(Object.assign({b,fill},o||{}))};
+  add([-6,-6,-3,116,116,0],'#d9e2ee',{k:'ground'});
+  s3addPallet(add,c.pl,c.g,0,0,0,{cargoColor:c.colorOf,sw:null,swv:.6,pid:1,maxH:400,maxCartons:400});
+  return it;
+}
+function pal3dDraw(svg){
+  const c=PAL3.cards[+svg.dataset.i];if(!c)return;
+  const W=330,H=290,th=PAL3.cam.yaw*Math.PI/180,ph=PAL3.cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph),v=[-cp*st,-cp*ct,sp],ch=c.pl.h;
+  const P=(x,y,z)=>{const dx=x-55,dy=y-55,dz=z-ch/2;return [dx*ct-dy*st,-(dz*cp+(dx*st+dy*ct)*sp)]};
+  const items=s3order(it=pal3dItems(c),v,P);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;items.forEach(i=>{const b=i.b;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>{const q=P(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])})))});
+  const k=Math.min((W-30)/Math.max(1,x1-x0),(H-46)/Math.max(1,y1-y0)),ox=W/2-(x0+x1)/2*k,oy=H/2-(y0+y1)/2*k-4,Q=(x,y,z)=>{const q=P(x,y,z);return [ox+q[0]*k,oy+q[1]*k]};
+  let o='<rect width="'+W+'" height="'+H+'" rx="8" fill="#eef5fc"/>'+s3paint(items,v,Q);
+  const q=Q(55,-6,ch+3);o+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="11" text-anchor="middle" fill="#244f8e" style="font-weight:700">110 × 110 × '+fmt(ch)+' cm</text>';
+  svg.innerHTML=o;
+}
+function pal3dAll(){document.querySelectorAll('svg.pal3d').forEach(pal3dDraw)}
+function p3down(e){if(e.button>0)return;const c=PAL3.cam;PAL3.drag={x:e.clientX,y:e.clientY,yaw:c.yaw,pitch:c.pitch};try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}}
+function p3move(e){const d=PAL3.drag;if(!d)return;const c=PAL3.cam;c.yaw=d.yaw+(e.clientX-d.x)*.5;c.pitch=Math.max(6,Math.min(88,d.pitch+(e.clientY-d.y)*.4));if(!PAL3.raf)PAL3.raf=requestAnimationFrame(()=>{PAL3.raf=0;pal3dAll()})}
+function p3up(){PAL3.drag=null}
 function s3down(e){if(e.button>0)return;const c=SIM3.cam;SIM3.drag={x:e.clientX,y:e.clientY,yaw:c.yaw,pitch:c.pitch};try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}}
 function s3move(e){const d=SIM3.drag;if(!d)return;const c=SIM3.cam;c.yaw=d.yaw+(e.clientX-d.x)*.45;c.pitch=Math.max(4,Math.min(88,d.pitch+(e.clientY-d.y)*.35));
   if(!SIM3.raf){SIM3.raf=requestAnimationFrame(()=>{SIM3.raf=0;if(SIM3.drag)s3draw(true)})}}
@@ -1538,7 +1595,7 @@ function renderSimLayout(){
     (over.length?'<div class="note" style="margin-bottom:8px"><b>เกินความจุพื้นตู้:</b> Pallet No. '+over.map(label).join(', ')+' ('+over.length+' ตำแหน่ง) ไม่มีที่ในตู้นี้ · ต้องแยกตู้'+(st.on&&st.pairs.length<st.needed?' (ซ้อนเพิ่มไม่ได้: ตัวล่าง Layer 1 ต้องผิวหน้าเรียบ/หนักกว่า สูง ≤ '+MIX_MAX_H+' cm · ตัวบนไม่ต้องเรียบแต่สูงรวม ≤ '+H+' cm)':'')+'</div>':'')+
     '<div class="s3look"><span class="sub">สีกล่อง:</span><button data-look="model" class="'+(SIM3.look==='model'?'on':'')+'" onclick="s3look(\'model\')">ตาม Model</button><button data-look="kraft" class="'+(SIM3.look==='kraft'?'on':'')+'" onclick="s3look(\'kraft\')">Kraft (กล่องน้ำตาล · ป้ายสีตาม Model)</button></div>'+
     v3+legend+
-    '<div class="sub" style="margin-top:6px"><b>วิธีอ่านป้ายเลขบนภาพ 3D:</b> ป้ายขาว = Pallet No. (ตามลำดับโหลด) · ป้ายเหลือง = Mix Pallet (เช่น <b>5</b> / Mix 2 = Pallet No. 5 คือ Mix Pallet 2) · ป้ายฟ้า = คู่ซ้อน: <b>▲</b> ตัวบน / <b>▼</b> ตัวล่าง และความสูงรวม · ป้ายเส้นประ = ถูกบังจากมุมนี้ (หมุนภาพเพื่อดู) · ภาพ 3D เป็นภาพจำลองเพื่อประกอบการตัดสินใจ ไม่ใช่แผนวางจริง</div>'+
+    '<div class="sub" style="margin-top:6px"><b>วิธีอ่านป้ายเลขบนภาพ 3D:</b> ป้ายขาว = Pallet Seq (ตามลำดับโหลด) · ป้ายเหลือง = Mix Pallet (เช่น <b>5</b> / Mix 2 = Seq 5 คือ Mix Pallet 2 มี ≥ 2 Model) · ป้ายส้ม = <b>Pallet เศษ</b> (เศษของ Model เดียว ไม่ได้วางรวมกับ Model อื่น) · <b>Stack ×2</b> = Pallet Model เดียวกันซ้อน 2 ใบ นับเป็น 1 Seq · ป้ายฟ้า = คู่ซ้อน: <b>▲</b> ตัวบน / <b>▼</b> ตัวล่าง และความสูงรวม · ป้ายเส้นประ = ถูกบังจากมุมนี้ (หมุนภาพเพื่อดู) · ภาพ 3D เป็นภาพจำลองเพื่อประกอบการตัดสินใจ ไม่ใช่แผนวางจริง</div>'+
     stackPlanHtml(st);
   s3draw(false);
 }

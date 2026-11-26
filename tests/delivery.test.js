@@ -92,10 +92,10 @@ setTimeout(async()=>{
   // Mix dimension toggle only affects Mix Pallet Dimension Calculation
   w.models=[{model:'A',planQty:50,actualQty:null,packingModel:'A'},{model:'B',planQty:30,actualQty:null,packingModel:'B'}];w.generateAllocations();
   w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();w.renderCalc();
-  ok(d.querySelectorAll('#mixCalcPanel svg.topview').length>=1,'mix calc shown by default');
-  w.toggleDims();ok(d.querySelectorAll('#mixCalcPanel svg.topview').length===0&&d.getElementById('dimToggle').textContent.includes('Show'),'Hide Pallet Dimensions hides Mix Pallet Dimension Calculation');
+  ok(d.querySelectorAll('#mixCalcPanel svg.pal3d').length>=1,'mix calc shown by default');
+  w.toggleDims();ok(d.querySelectorAll('#mixCalcPanel svg.pal3d').length===0&&d.getElementById('dimToggle').textContent.includes('Show'),'Hide Pallet Dimensions hides Mix Pallet Dimension Calculation');
   ok(d.querySelectorAll('#allocations tr').length>0&&!d.getElementById('allocationWrap').className.includes('hidden'),'allocation table unaffected');
-  w.toggleDims();ok(d.querySelectorAll('#mixCalcPanel svg.topview').length>=1,'Show restores it');
+  w.toggleDims();ok(d.querySelectorAll('#mixCalcPanel svg.pal3d').length>=1,'Show restores it');
   ok(!w.eval("typeof localStorage!=='undefined'&&localStorage.getItem('clcDimsHidden')"),'no browser-remembered dimension state');
   // simulate layout
   w.models=[{model:'A',planQty:600,actualQty:null,packingModel:'A'},{model:'B',planQty:100,actualQty:null,packingModel:'B'}];w.generateAllocations();w.renderCalc();
