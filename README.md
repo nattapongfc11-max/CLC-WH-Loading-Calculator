@@ -61,3 +61,24 @@ Open `index.html` through any static server (`python -m http.server 8080`). Work
 - **Shipment Slip** (WH Calculate → Print Shipment Slip): new A4 layout with the Pioneer logo top-left, shipment information cards, KPI strip (models / qty / pallet / net / gross / CBM), model detail and colour-banded pallet allocation, remark and sign-off. Up to ~12 models / 18 pallets fit on one page; longer lists continue on the next page with repeated table headers.
 - **ใบส่งงาน / Delivery Note** (Delivery Booking → `🖨 ใบส่งงาน` on a Delivered Complete row, or the button inside the booking dialog): prints **only** the delivery note, exactly **one A4 page** – From / To, container, seal, invoice, driver, sub truck and plate, item list with pallet numbers (Shipment Qty), receiving check and four signature boxes (Warehouse, Driver, Logistics, Receiver). With many models the list switches to a compact two-column layout so it never spills onto a second page.
 - **Logo**: the Pioneer logo (from `Pioneer_logo.svg`, brand colour `#A90533`) is embedded in the app and printed top-left on every slip. A different logo can be uploaded under *Management → Print Logo* (or the `🖼 Print logo` button in Delivery Booking); it is stored in that browser only and *Remove* restores the Pioneer logo.
+
+## v2.6 – Container photos (Cloudflare R2)
+Some customers require photos of the container. Tick **Customer ต้องการรูป** in the *Delivery Booking* dialog of that trip and five slots appear:
+1 ก่อนโหลด (Cargo Empty) · 2 กลางตู้ 50% (Loading on Cargo 50%) · 3 โหลดเสร็จ (Loading complete) · 4 ปิดตู้ (Close Cargo door) · 5 Seal / Lock cargo.
+
+- **From a digital camera (Canon etc.)**: copy the JPEGs to the PC, press *เลือกรูปจากกล้อง* and select several files at once – they are sorted by file name and put into the empty slots in order; or use *เลือกรูป / เปลี่ยน* on a single slot. Photos are shrunk in the browser (long edge 2048 px, JPEG ≈ 0.3–0.6 MB) before upload. RAW (CR2/CR3) is not accepted – set the camera to JPEG.
+- The table in *Delivery Booking* shows `📷 n/5` on trips that require photos (green = complete) and the status filter has **📷 รูปยังไม่ครบ**. Photos are optional – nothing blocks *Delivered Complete*.
+- Files are stored in a **private** Cloudflare R2 bucket, not in Supabase: the database keeps only a small row per photo (`delivery_photos`). The browser uploads/downloads with short-lived presigned links created by the Supabase Edge Function `photos` after it checks the user's role (admin / logistics / warehouse may upload and delete; every role can view). Deleting a plan also deletes its photos.
+
+### One-time setup (Cloudflare + Supabase)
+1. Cloudflare dashboard → **R2** → create a bucket (e.g. `clc-photos`). Keep *public access* OFF.
+2. R2 → **Manage API tokens** → create a token with **Object Read & Write** limited to that bucket. Note the *Access Key ID*, *Secret Access Key* and your *Account ID*.
+3. Bucket → **Settings → CORS policy**:
+   ```json
+   [{"AllowedOrigins":["https://nattapongfc11-max.github.io"],"AllowedMethods":["PUT","GET","HEAD"],"AllowedHeaders":["content-type"],"MaxAgeSeconds":3600}]
+   ```
+4. Bucket → **Settings → Object lifecycle rules**: delete objects after the retention you need (e.g. 365 days). The photo rows stay in the database until the plan is deleted; expired files simply show an empty thumbnail.
+5. Supabase → **Edge Functions → photos → Secrets** (never paste these in chat or commit them): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`.
+6. Open a trip, tick *Customer ต้องการรูป*: until step 5 is done the dialog says “ยังไม่ได้ตั้งค่า Cloudflare R2”.
+
+Code: `supabase/functions/photos/` (function), `supabase/migrations/20261126_delivery_photos.sql` (table + RLS; rollback file next to it). The function is deployed with `verify_jwt=false` because it authenticates the caller itself (`auth.getUser()`) and runs every database call with the caller's token, so RLS stays in force.
