@@ -243,17 +243,12 @@ setTimeout(async()=>{
   cfg=false;await w.bkPhotosLoad('PH-1');
   ok(/ยังไม่ได้ตั้งค่า Cloudflare R2/.test(d.getElementById('bkPhotoMsg').textContent)&&d.querySelectorAll('#bkPhotoGrid button').length===0,'R2 not configured: clear message and no upload buttons');
   cfg=true;
-  // R2 secrets self-check: names the wrong secret, "🔧 ตรวจ R2" button, diagnosis when the browser cannot reach R2
+  // R2 secrets: names the wrong secret; the "🔧 ตรวจ R2" button was removed (v3.1) - diagnosis still runs by itself when an upload cannot reach R2
   const msgT=()=>d.getElementById('bkPhotoMsg').textContent;
   cfg=false;probs=[{name:'R2_ACCOUNT_ID',message:'ต้องเป็นรหัส 32 ตัว แต่ค่าที่ตั้งไว้ยาว 40 ตัว'}];await w.bkPhotosLoad('PH-1');
   ok(/R2_ACCOUNT_ID: ต้องเป็นรหัส 32 ตัว/.test(msgT())&&!/ยังไม่ได้ตั้งค่า Cloudflare R2/.test(msgT()),'wrong secret: the message names it (R2_ACCOUNT_ID) and what is wrong');
-  ok(d.getElementById('bkPhotoCheckBtn').style.display==='','🔧 ตรวจ R2 button is shown to writers even when R2 is mis-configured');
-  chkRes={ok:false,code:'config',message:'ตั้งค่า secrets ของ R2 ไม่ครบหรือรูปแบบไม่ถูกต้อง',problems:probs};await w.bkPhotoCheck();
-  ok(/⚠/.test(msgT())&&/R2_ACCOUNT_ID/.test(msgT()),'ตรวจ R2 shows the problem');
-  cfg=true;probs=[];chkRes={ok:true,message:'✅ ฟังก์ชันต่อ R2 ได้ — Account ID, bucket และ Access Key ถูกต้อง'};await w.bkPhotosLoad('PH-1');await w.bkPhotoCheck();
-  ok(/✅/.test(msgT())&&/CORS/.test(msgT()),'ตรวจ R2 OK: still reminds to check the bucket CORS');
-  d.body.dataset.role='viewer';await w.bkPhotosLoad('PH-1');
-  ok(d.getElementById('bkPhotoCheckBtn').style.display==='none','viewer role: no ตรวจ R2 button');delete d.body.dataset.role;
+  ok(!d.getElementById('bkPhotoCheckBtn')&&!/ตรวจ R2/.test(d.getElementById('bookModal').textContent),'no "🔧 ตรวจ R2" button in the booking dialog');
+  cfg=true;probs=[];
   // upload where the browser cannot reach R2 (DNS / CORS): ONE server check, one explanation for all failed files
   const realFetch=w.fetch;w.fetch=async()=>{throw new TypeError('Failed to fetch')};
   store['PH-1']={};await w.bkPhotosLoad('PH-1');w.eval('phDiag=null');calls.length=0;
