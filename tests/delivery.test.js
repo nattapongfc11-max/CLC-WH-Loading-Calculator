@@ -31,7 +31,7 @@ setTimeout(async()=>{
   ok(d.querySelector('#deliveryBoard .tripbar')&&/Count\/Trip/.test(d.getElementById('deliveryBoard').textContent),'Count/Trip breakdown shown with Delivered, Slide, Cancel');
   w.setBoardDay(w.shiftDay(day,2));
   const k2=[...d.querySelectorAll('#deliveryBoard .kpi b')].map(x=>x.textContent);
-  ok(k2[0]==='1'&&k2[4]==='1 / 0'&&d.querySelector('#deliveryBoard').textContent.includes(day),'slid trip is counted on the NEW date, original date still shown ('+k2.join(',')+')');
+  ok(k2[0]==='1'&&k2[4]==='1 / 0'&&d.querySelector('#deliveryBoard').textContent.includes('เดิม '+w.dayLabel(day)),'slid trip is counted on the NEW date, original date still shown ('+k2.join(',')+')');
   w.setBoardDay(day);
   // slid 3 times: counted only on the last date
   const multi=mk('M1','08:00',{slides:[{fromDate:day,fromTime:'08:00',toDate:w.shiftDay(day,1),toTime:'08:00'},{fromDate:w.shiftDay(day,1),fromTime:'08:00',toDate:w.shiftDay(day,2),toTime:'08:00'},{fromDate:w.shiftDay(day,2),fromTime:'08:00',toDate:w.shiftDay(day,5),toTime:'10:00'}]});
@@ -307,6 +307,31 @@ setTimeout(async()=>{
   await w.openBooking('PRN-2');
   ok(d.getElementById('bkPrint').textContent==='🖨 Print ใบส่งงาน','booking dialog: plain label when the customer does not need photos');
   w.closeModal('bookModal');
+  // ---- Delivery Board table: วันที่ส่ง | เวลา | คันที่ | Order Type | จุดส่ง | ขนาดตู้ | Pallet | สถานะ, status = coloured circle
+  {const day=w.localDay(),far=w.shiftDay(day,3),Q=(id,t,e)=>P(id,t,Object.assign({requestDate:far,orderType:'Firm',summary:{pallets:7,gross:500,cbm:3,containerType:'40HC'}},e||{}));
+   w.plans=[Q('S-DONE','08:00',{booking:full(far,'07:30')}),Q('S-READY','09:00',{prep:'ready'}),Q('S-SHORT','10:00',{prep:'short'}),Q('S-NONE','11:00'),
+     Q('S-CANCEL','12:00',{cancel:{reason:'x'}}),Q('S-SLIDE','13:00',{slides:[{fromDate:far,fromTime:'13:00',toDate:far,toTime:'15:00'}]}),
+     Q('S-DELAY','14:00',{requestDate:w.shiftDay(day,-1)})];
+   w.setBoardDay(far);
+   const th=[...d.querySelectorAll('#deliveryBoard table.btable thead th')].map(x=>x.textContent);
+   ok(th.join('|')==='วันที่ส่ง|เวลา|คันที่|Order Type|จุดส่ง (Destination · Port)|ขนาดตู้|Pallet|สถานะ (Status)','Delivery Board columns: '+th.join(' | '));
+   const rowOf=id=>[...d.querySelectorAll('#deliveryBoard tr.brow')].find(r=>r.textContent.includes(id));
+   const lab=id=>{const r=rowOf(id);return r?r.querySelector('.bst b').textContent+'/'+r.querySelector('.sdot').style.background:'-'};
+   const want={'S-DONE':'สำเร็จ','S-READY':'จัดเตรียมชิ้นงานแล้ว','S-SHORT':'ชิ้นงานไม่พอจัดส่ง','S-NONE':'ยังไม่จัดเตรียม','S-CANCEL':'Cancel','S-SLIDE':'Slide'};
+   Object.keys(want).forEach(id=>ok(lab(id).split('/')[0]===want[id],id+' -> '+want[id]+' ('+lab(id)+')'));
+   w.setBoardDay(w.shiftDay(day,-1));ok(/Delay/.test((rowOf('S-DELAY')||{textContent:''}).querySelector?rowOf('S-DELAY').querySelector('.bst b').textContent:''),'a trip past its plan time that is not delivered -> Delay');
+   w.setBoardDay(far);
+   const cols=BS=>BS;const colors=new Set(Object.keys(want).map(id=>lab(id).split('/')[1]));ok(colors.size===6,'every status has its own circle colour ('+[...colors].join(' ')+')');
+   const leg=d.getElementById('statusLegend');ok(leg&&leg.querySelectorAll('.sdot').length===7&&['สำเร็จ','จัดเตรียมชิ้นงานแล้ว','ชิ้นงานไม่พอจัดส่ง','ยังไม่จัดเตรียม','Delay','Cancel','Slide'].every(s=>leg.textContent.includes(s)),'Status Symbol legend lists all 7 statuses with a circle each');
+   const r=rowOf('S-READY');ok(r.children.length===8&&/40HC/.test(r.textContent)&&/Firm/.test(r.textContent)&&/X · Y/.test(r.textContent)&&r.children[5].textContent==='40HC'&&r.children[6].textContent==='7','a row shows Order Type, Destination · Port, container size and Pallet');
+   const tn=[...d.querySelectorAll('#deliveryBoard tr.brow:not(.jrow)')].map(x=>x.querySelector('.tno').textContent);ok(tn.join()==='1,2,3,4,5,6','คันที่ runs 1..n by time within the day ('+tn.join()+')');
+   ok(rowOf('S-SLIDE').children[1].textContent.includes('15:00')&&rowOf('S-SLIDE').children[1].textContent.includes('เดิม 13:00'),'Slide: the NEW time is shown, the original time as a small note');
+   // Warehouse sets the preparation status in the booking dialog; it lands on the board
+   await w.openBooking('S-NONE');ok(d.getElementById('bk_prep').value==='','booking dialog starts at "ยังไม่จัดเตรียม"');
+   d.getElementById('bk_prep').value='short';await w.savePrep('short');w.closeModal('bookModal');
+   ok(w.plans.find(p=>p.planId==='S-NONE').prep==='short'&&lab('S-NONE').split('/')[0]==='ชิ้นงานไม่พอจัดส่ง','savePrep: the board shows "ชิ้นงานไม่พอจัดส่ง" for that trip');
+   ok(w.eval("makePlan0().planId")!==undefined,'makePlan0 still builds');
+   w.plans=[];w.renderDeliveryBoard();}
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
 },500);
