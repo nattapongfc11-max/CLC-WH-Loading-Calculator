@@ -20,7 +20,8 @@ setTimeout(()=>{
   const lay=w.calculateMixPalletLayouts()[0];
   ok(lay.cartons===10,'mix cartons = 5 (A) + 5 (B)');
   ok(lay.totalHeight===7+lay.stackHeight,'total height = 7 cm base + sum of layer heights');
-  ok(d.querySelectorAll('#mixCalcPanel svg.topview').length>=1,'Top View SVG rendered for mix layers');
+  ok(d.querySelectorAll('#mixCalcPanel svg.pal3d').length>=1&&!d.querySelector('#mixCalcPanel svg.topview')&&!/Top View/.test(d.getElementById('mixCalcPanel').textContent),'3D per pallet rendered in the Mix card (no 2D Top View)');
+  w.pal3dAll();{const sv=d.querySelector('#mixCalcPanel svg.pal3d');ok(sv.querySelectorAll('polygon').length>=20&&/110 × 110 ×/.test(sv.textContent),'the 3D pallet draws its cartons and prints 110 × 110 × H');const y0=w.eval('PAL3.cam.yaw');w.eval('PAL3.cam.yaw=60');w.pal3dAll();ok(sv.innerHTML!==''&&w.eval('PAL3.cam.yaw')===60,'rotating the camera redraws the pallet');w.eval('PAL3.cam.yaw='+y0)}
   // 3. Different heights never share a layer
   w.models=[{model:'A',planQty:20,actualQty:null,packingModel:'A'},{model:'C',planQty:8,actualQty:null,packingModel:'C'}];w.generateAllocations();
   w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();
@@ -33,7 +34,7 @@ setTimeout(()=>{
   ok(gs.every(g=>g.totalHeight<=130),'every split pallet <= 130 cm ('+gs.map(g=>g.totalHeight).join(', ')+')');
   ok(w.allocations.reduce((s,a)=>s+a.ctnNo,0)===40&&w.allocations.reduce((s,a)=>s+a.qtyPallet,0)===400,'split keeps total cartons (40) and qty (400)');
   ok(w.physicalPalletCount()===2&&Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0)-14)<1e-6,'2 physical pallets -> tare 14 kg');
-  ok(gs[0].group==='Mix Pallet 1'&&gs[1].group==='Mix Pallet 2','split pieces run on as Mix Pallet 1, Mix Pallet 2 (no "(2)" names)');
+  ok(gs[0].group==='Mix Rem 1'&&gs[1].group==='Mix Rem 2','single-model split pieces are Pallet เศษ (internal Mix Rem 1, 2), never numbered as Mix Pallet, no "(2)" names');
   w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
   // 3c. 40HC floor capacity = 20 pallets
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();

@@ -31,7 +31,7 @@ begin
   -- defaults written by the trigger (old SQL that only passes the role keeps working)
   rep := rep || pg_temp.chk('tpl warehouse', (select array_length(perms,1)::text from public.user_roles where user_id=w1), '9');
   rep := rep || pg_temp.chk('tpl viewer', (select array_length(perms,1)::text from public.user_roles where user_id=v1), '4');
-  rep := rep || pg_temp.chk('tpl admin', (select array_length(perms,1)::text from public.user_roles where user_id=a1), '13');
+  rep := rep || pg_temp.chk('tpl admin', (select array_length(perms,1)::text from public.user_roles where user_id=a1), '15');  -- 13 before 20261127_plans_slide_permission.sql
   update public.user_roles set role='logistics' where user_id=v1;
   rep := rep || pg_temp.chk('role change follows template', (select (('masters.delete' = any(perms)) and not ('plans.delete' = any(perms)))::text from public.user_roles where user_id=v1), 'true');
   update public.user_roles set role='viewer', perms = public.clc_role_perms('viewer') where user_id=v1;

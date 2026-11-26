@@ -99,20 +99,34 @@ setTimeout(()=>{
   setup([['A',500],['B',300]],[part('A'),part('B',{qtyCarton:6,cartonD:55,cartonW:36,cartonH:30})]);
   ok(w.allocations.filter(a=>a.shipmentModel==='B').every(a=>w.skidLabel(a).split('/')[1]===String(a.skidTotal))&&[...d.querySelectorAll('#allocations td.skidcell')].every(x=>/^\d+\/\d+$/.test(x.textContent)),'every row shows No./Total, numbered per model');
   // ---- Mix Pallets run on as 1, 2, 3 (split pieces included, custom names kept)
-  {const C=part('C',{cartonH:25,qtyPallet:200,palletH:125}),D=part('D',{cartonH:20,qtyCarton:10,qtyPallet:100,palletH:60}),E=part('E',{cartonH:20,qtyCarton:10,qtyPallet:100,palletH:60});
+  {const C=part('C',{cartonH:25,qtyPallet:200,palletH:125}),D=part('D',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60}),E=part('E',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60});
    w.parts=[C,D,E];w.models=[{model:'C',planQty:400,actualQty:null,packingModel:'C'},{model:'D',planQty:100,actualQty:null,packingModel:'D'},{model:'E',planQty:100,actualQty:null,packingModel:'E'}];w.generateAllocations();
    w.allocations.forEach(a=>{if(a.shipmentModel==='C'){a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'}else if(a.shipmentModel==='D'){a.mixGroup='Mix Pallet 2';a.skidNo='Mix Pallet 2'}else{a.mixGroup='Mix Special';a.skidNo='Mix Special'}});
    w.recalcDerived();w.renderCalc();
    const names=[...new Set(w.allocations.map(a=>a.mixGroup))];
-   ok(names.join()==='Mix Pallet 1,Mix Pallet 2,Mix Pallet 3,Mix Special','split Mix group (2 pieces) + next group run on as Mix Pallet 1, 2, 3; a custom name is kept ('+names.join(' | ')+')');
+   ok(names.join()==='Mix Rem 1,Mix Rem 2,Mix Rem 3,Mix Special','groups with ONE Model are Pallet เศษ (Mix Rem 1, 2, 3 internally) and never take a Mix Pallet number; a custom name is kept ('+names.join(' | ')+')');
+   {const PI=w.palletInfoOf(w.allocations);ok(PI.groups.every(g=>g.kind!=='mix')&&PI.groups.filter(g=>g.kind==='rem').length===3&&PI.groups.filter(g=>g.kind==='rem').every(g=>g.label==='Pallet เศษ'),'a one-Model pallet below its Qty/Pallet is displayed as "Pallet เศษ"; a one-Model group is never a Mix Pallet');}
    ok(!w.allocations.some(a=>/\(\d+\)/.test(a.mixGroup)),'no "(2)" style names remain');
    ok(w.allocations.every(a=>!w.isMixAllocation(a)||a.skidNo===a.mixGroup),'Skid No. of Mix rows follows the new group name');
-   ok(w.allocations.find(a=>a.shipmentModel==='D').mixGroup==='Mix Pallet 3','the group that came after the split group moved from 2 to 3');
+   ok(w.allocations.find(a=>a.shipmentModel==='D').mixGroup==='Mix Rem 3','the group that came after the split group moved from 2 to 3');
    w.recalcDerived();ok([...new Set(w.allocations.map(a=>a.mixGroup))].join()===names.join(),'recalculating again keeps the same numbers (stable)');
-   // user regroups one row by hand -> numbers stay consecutive
-   const i=w.allocations.findIndex(a=>a.shipmentModel==='D');w.editMix(i,'Mix Pallet 9');
-   ok([...new Set(w.allocations.filter(a=>/^Mix Pallet/.test(a.mixGroup)).map(a=>a.mixGroup))].join()==='Mix Pallet 1,Mix Pallet 2,Mix Pallet 3','typing Mix Pallet 9 is renumbered to the next running number');
-   ok(/Mix Pallet 1/.test(d.getElementById('mixCalcPanel').textContent)&&/Mix Pallet 3/.test(d.getElementById('mixCalcPanel').textContent),'Mix cards use the running numbers');
+   // D and E share one pallet (2 Models) -> the FIRST true Mix Pallet is "Mix Pallet 1"; the one-Model pieces stay Pallet เศษ
+   w.allocations.forEach(a=>{if(a.shipmentModel==='D'||a.shipmentModel==='E'){a.mixGroup='Mix Pallet 7';a.skidNo='Mix Pallet 7'}});w.recalcDerived();w.renderCalc();
+   ok([...new Set(w.allocations.map(a=>a.mixGroup))].join()==='Mix Rem 1,Mix Rem 2,Mix Pallet 1','a pallet carrying 2 Models becomes Mix Pallet 1; the one-Model pieces stay Mix Rem ('+[...new Set(w.allocations.map(a=>a.mixGroup))].join(' | ')+')');
+   {const PI=w.palletInfoOf(w.allocations),mx=PI.groups.filter(g=>g.kind==='mix');ok(mx.length===1&&mx[0].label==='Mix Pallet 1'&&mx[0].models.join()==='D,E','display label of the true mix = "Mix Pallet 1" (D + E)');
+    const seqCells=[...d.querySelectorAll('#allocations td.seqcell')],txt=seqCells.map(x=>x.textContent);
+    const iD=w.allocations.findIndex(a=>a.shipmentModel==='D'),iE=w.allocations.findIndex(a=>a.shipmentModel==='E');
+    ok(seqCells[iD].querySelector('b').textContent===seqCells[iE].querySelector('b').textContent&&/Mix Pallet 1/.test(seqCells[iD].textContent)&&/Mix Pallet 1/.test(seqCells[iE].textContent),'Pallet Seq column: D and E sit on ONE pallet -> the same Seq is repeated on both rows ('+txt.join(' | ')+')');
+    ok(seqCells.filter(x=>/Pallet เศษ/.test(x.textContent)).length===1,'one-Model partial pallets are tagged "Pallet เศษ" in the Pallet Seq column');
+    ok(!/Group Mix/.test(d.querySelector('table.allocation thead').textContent)&&/Pallet Seq/.test(d.querySelector('table.allocation thead').textContent),'Group Mix column is gone, Pallet Seq is there');
+    ok(!d.querySelector('#allocations input[onchange^="editMix"]'),'no free-text Group Mix input in the rows any more');
+    ok(/Mix Pallet 1/.test(d.getElementById('mixCalcPanel').textContent)&&/Pallet เศษ/.test(d.getElementById('mixCalcPanel').textContent),'Mix cards are titled Mix Pallet 1 / Pallet เศษ');}
+   // a custom-named group with 2 Models keeps its name
+   w.allocations.forEach(a=>{if(a.shipmentModel==='D'||a.shipmentModel==='E'){a.mixGroup='Mix Special';a.skidNo='Mix Special'}});w.recalcDerived();w.renderCalc();
+   ok(w.palletInfoOf(w.allocations).groups.some(g=>g.kind==='mix'&&g.label==='Mix Special'),'a custom-named 2-Model group keeps its own name');
+   // legacy plan data ("Mix Pallet 1 (6)") is cleaned on load
+   w.allocations.forEach(a=>{if(a.shipmentModel==='C'){a.mixGroup='Mix Pallet 1 (6)';a.skidNo='Mix Pallet 1 (6)';delete a.skidSeq;delete a.skidTotal}});w.renderCalc();
+   ok(![...d.querySelectorAll('#allocations td.skidcell')].some(x=>/\(\d+\)|Mix/.test(x.textContent))&&!w.allocations.some(a=>/\(\d+\)/.test(a.mixGroup)),'old saved names such as "Mix Pallet 1 (6)" are renumbered when a plan is opened');
   }
   // ---- Stacking plan: which pallet is on top / bottom / paired with which
   {const lay=(cap,stackOn)=>{d.getElementById('floorCap').value=cap;d.getElementById('stackPallet').checked=stackOn};
@@ -130,11 +144,29 @@ setTimeout(()=>{
    ok(sim.textContent.includes('(บน) วางบน #'),'summary sentence: "#top (บน) วางบน #bottom (ล่าง)"');
    const mixPair=st.pairs.find(p=>p.top.mix||p.bottom.mix);
    ok(!!mixPair,'the scenario stacks a Mix pallet (so the Mix card partner text is exercised)');
-   if(mixPair){const mk=(mixPair.top.mix?mixPair.top:mixPair.bottom),other=mk===mixPair.top?mixPair.bottom:mixPair.top,card=[...d.querySelectorAll('#mixCalcPanel .mix-group-card')].find(c=>c.textContent.includes(mk.mixName));
-     ok(card&&card.textContent.includes('Pallet No. #'+mk.seq)&&card.textContent.includes('#'+other.seq)&&card.textContent.includes(mk===mixPair.top?'ซ้อนบน Pallet #':'รับ Pallet #'),'Mix card shows its Pallet No. and which pallet it is stacked with ('+mk.mixName+' ↔ #'+other.seq+')')}
+   if(mixPair){const mk=(mixPair.top.mix?mixPair.top:mixPair.bottom),other=mk===mixPair.top?mixPair.bottom:mixPair.top,card=[...d.querySelectorAll('#mixCalcPanel .mix-group-card')].find(c=>c.querySelector('.chip').textContent==='Pallet Seq #'+mk.seq);
+     ok(card&&card.textContent.includes('Pallet Seq #'+mk.seq)&&card.textContent.includes('#'+other.seq)&&card.textContent.includes(mk===mixPair.top?'ซ้อนบน Pallet #':'รับ Pallet #'),'Mix card shows its Pallet No. and which pallet it is stacked with ('+mk.mixName+' ↔ #'+other.seq+')')}
    lay(30,true);w.renderCalc();
    ok(d.getElementById('simLayout').querySelectorAll('table.stk tr.pair').length===0&&/ไม่มีการซ้อน Pallet/.test(d.getElementById('simLayout').textContent),'no stacking needed: the page says so');
    lay(20,true);}
+  // ---- Stack = Y = two pallets of the SAME Model stacked, counted as ONE (one Seq, one floor position); the sketch draws both pallets
+  {const ZY=part('ZY',{qtyCarton:8,qtyPallet:64,palletH:107,cartonH:25,palletStack:'Y'}),B=part('B',{palletStack:'N'});w.parts=[ZY,B];
+   const run=q=>{w.models=[{model:'ZY',planQty:q,actualQty:null,packingModel:'ZY'},{model:'B',planQty:60,actualQty:null,packingModel:'B'}];lay(40,false);w.generateAllocations();w.renderCalc();return w.simPallets().find(p=>p.rows.some(a=>a.shipmentModel==='ZY'&&!w.isMixAllocation(a)))};
+   function lay(cap,on){d.getElementById('floorCap').value=cap;d.getElementById('stackPallet').checked=on}
+   const skids=()=>w.eval("s3items(SIM3.scene,[0,-1,.5]).filter(i=>i.k==='skid').length");
+   let pl=run(128);
+   ok(pl&&pl.rows.length===1&&pl.rows[0].qtyPallet===128&&pl.units&&pl.units.length===2&&pl.units[0]===107&&pl.units[1]===107&&pl.h===214,'Stack = Y, Qty 128 (STD 64): ONE row / ONE Seq, two pallets 107 + 107 = 214 cm');
+   ok(pl.kind==='full','128 = two full pallets -> not a Pallet เศษ');
+   const nPal=w.simPallets().length;ok(skids()===nPal+1,'the 3D sketch draws BOTH pallets of the stack (a skid under each): '+skids()+' skids for '+nPal+' Seq');
+   ok(w.planStacking().floorUsed===nPal&&w.planStacking().pls.find(x=>x.key===pl.key).doubled,'the stack takes ONE floor position and is not stacked a third time');
+   pl=run(100);
+   ok(pl.units&&pl.units[0]===107&&pl.units[1]<107&&pl.units[1]>7&&pl.kind==='rem','Qty 100: bottom pallet filled first (full, 107 cm), top pallet carries the other 36 (lower: '+(pl.units&&pl.units[1])+' cm) -> Pallet เศษ');
+   ok(Math.abs(pl.h-(pl.units[0]+pl.units[1]))<0.11,'total height = bottom + top ('+pl.h+' cm)');
+   ok(!w.allocations.some(a=>a.shipmentModel==='ZY'&&w.isMixAllocation(a)),'a Stack remainder larger than one pallet stays its own stacked row (it is not pushed into a Mix pallet)');
+   const pl50=run(50);
+   ok(!pl50||!pl50.units,'Stack = Y with Qty up to ONE pallet: a single pallet, nothing on top');
+   lay(20,true);
+  }
   ok(errs.length===0,'no script errors ('+errs.join('; ')+')');
   console.log(fail?fail+' FAILED':'ALL PASSED');process.exit(fail?1:0);
 },300);

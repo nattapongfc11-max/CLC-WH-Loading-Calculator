@@ -51,16 +51,18 @@ function fill(s,etd,ship){
   const sel=d.getElementById('shipBy');sel.innerHTML='<option></option><option>Sea</option>';sel.value='Sea';
   w.plans=[{planId:'PTM-261130-S-001',etd:'2026-11-30',slides:[]}];
   w.savePlan();
-  ok(d.getElementById('planId').value==='PTM-261130-S-002'&&w.plans.some(p=>p.planId==='PTM-261130-S-002'),'local save: new plan gets the next running no. (PTM-261130-S-002)');
-  w.savePlan();ok(w.plans.filter(p=>p.planId==='PTM-261130-S-002').length===1&&d.getElementById('planId').value==='PTM-261130-S-002','saving the same plan again keeps its Plan ID (no new number)');
+  ok(w.plans.some(p=>p.planId==='PTM-261130-S-002'),'local save: new plan gets the next running no. (PTM-261130-S-002)');
+  ok(d.getElementById('planId').value===''&&/^New/.test(d.getElementById('planId').placeholder)&&!w.models.length&&!w.allocations.length&&d.getElementById('etd').value===''&&d.getElementById('shipBy').value==='','after Save Loading Plan the form is cleared and shows New (Plan ID empty, models / pallets / ETD / Ship by cleared)');
+  w.loadPlan('PTM-261130-S-002');ok(d.getElementById('planId').value==='PTM-261130-S-002','opening a saved plan shows its Plan ID');w.savePlan();ok(w.plans.filter(p=>p.planId==='PTM-261130-S-002').length===1&&d.getElementById('planId').value===''&&!w.models.length,'saving an opened plan again keeps its Plan ID (no new number) and clears the form again');
   // ---- cloud save: number is taken from the database, duplicates retry
   let s=await cloud(['PTM-261130-S-001','PTM-261130-S-002','PTM-261130-S-007'],0);fill(s,'2026-11-30','Sea');await s.w.savePlan();
   ok(s.inserts.length===1&&s.inserts[0].plan_id==='PTM-261130-S-008'&&s.upserts.length===0,'cloud: reads the highest running no. of the day from the database (not only what this browser sees) -> PTM-261130-S-008, inserted (not upserted)');
-  ok(s.d.getElementById('planId').value==='PTM-261130-S-008'&&s.alerts.some(a=>/PTM-261130-S-008/.test(a)&&/Delivery Board วันที่ 2026-11-30 \(ETD PTM\)/.test(a)),'cloud: Plan ID shown in the form and in the message; message names the ETD board day');
+  ok(s.alerts.some(a=>/PTM-261130-S-008/.test(a)&&/Delivery Board วันที่ 2026-11-30 \(ETD PTM\)/.test(a)),'cloud: Plan ID shown in the message; message names the ETD board day');
+  ok(s.d.getElementById('planId').value===''&&!s.w.models.length&&!s.w.allocations.length&&/^New/.test(s.d.getElementById('planId').placeholder),'cloud: after the save the form is cleared and shows New');
   s=await cloud([],2);fill(s,'2026-11-30','Air');await s.w.savePlan();
-  ok(s.inserts.map(x=>x.plan_id).join()==='PTM-261130-A-001,PTM-261130-A-002,PTM-261130-A-003'&&s.d.getElementById('planId').value==='PTM-261130-A-003','cloud: two duplicate-key rejections (someone saved at the same time) -> retries with 002, then 003');
-  s=await cloud([],0);fill(s,'2026-11-30','Sea');await s.w.savePlan();const first=s.d.getElementById('planId').value;
-  s.w.plans=s.w.plans;s.inserts.length=0;await s.w.savePlan();
+  ok(s.inserts.map(x=>x.plan_id).join()==='PTM-261130-A-001,PTM-261130-A-002,PTM-261130-A-003'&&s.alerts.some(a=>/PTM-261130-A-003/.test(a)),'cloud: two duplicate-key rejections (someone saved at the same time) -> retries with 002, then 003');
+  s=await cloud([],0);fill(s,'2026-11-30','Sea');await s.w.savePlan();const first=s.inserts[0].plan_id;
+  s.w.loadPlan(first);s.inserts.length=0;await s.w.savePlan();
   ok(s.inserts.length===0&&s.upserts.length===1&&s.upserts[0].plan_id===first,'cloud: editing an existing plan upserts under the same Plan ID');
   s=await cloud([],0);fill(s,'','Sea');s.d.getElementById('reqDate').value='2026-11-20';await s.w.savePlan();
   ok(s.inserts[0].plan_id==='PTM-261120-S-001'&&s.alerts.some(a=>/ไม่มี ETD PTM/.test(a)),'cloud: no ETD -> Plan ID from the request date and the message says the board uses the request date');
