@@ -70,7 +70,16 @@ setTimeout(async()=>{
   let saved=null;w.savePlanRecord=async p=>{saved=JSON.parse(JSON.stringify(p));return true};
   w.plans[1].booking={driver:'สมชาย',subTruck:'SUB-01',truckPlate:'1กข-1234',loadingBy:'Somchai',updatedAt:'2026-01-01'};
   w.openBooking('P2');
-  ok(d.getElementById('dl_driver').innerHTML.includes('สมชาย')&&d.getElementById('bkHistory').textContent.includes('SUB-01'),'booking shows history of previous entries');
+  ok(d.getElementById('dl_driver').innerHTML.includes('สมชาย')&&d.getElementById('dl_subTruck').innerHTML.includes('SUB-01')&&d.getElementById('dl_truckPlate').innerHTML.includes('1กข-1234'),'booking: type-ahead suggestions (datalist) from earlier entries');
+  ok(!d.getElementById('bkHistory')&&!/ประวัติที่เคยกรอก/.test(d.getElementById('bookModal').textContent)&&!d.querySelector('#bookModal button[onclick^="useBkHist"]'),'no history table / "Use" buttons in the booking dialog');
+  {const S=k=>d.getElementById('bk_'+k),clr=()=>['driver','subTruck','truckPlate','loadingBy'].forEach(k=>S(k).value='');
+   clr();S('driver').value='สมชาย';w.bkGuess('driver',{inputType:'insertText'});ok(S('subTruck').value===''&&S('truckPlate').value==='','typing a letter at a time does not auto-fill the other fields');
+   w.bkGuess('driver',{inputType:'insertReplacementText'});ok(S('subTruck').value==='SUB-01'&&S('truckPlate').value==='1กข-1234'&&S('loadingBy').value==='Somchai'&&/เติมให้จากครั้งก่อน/.test(d.getElementById('bkGuessMsg').textContent),'picking a known driver guesses sub truck, plate and loading by');
+   clr();S('driver').value='สมชาย';S('subTruck').value='MY-SUB';w.bkGuess('driver');ok(S('subTruck').value==='MY-SUB'&&S('truckPlate').value==='1กข-1234','already typed fields are never overwritten');
+   clr();S('truckPlate').value='1กข-1234';w.bkGuess('truckPlate');ok(S('driver').value==='สมชาย'&&S('subTruck').value==='SUB-01','picking a known plate guesses the driver and sub truck');
+   clr();S('driver').value='คนใหม่';w.bkGuess('driver');ok(S('subTruck').value===''&&d.getElementById('bkGuessMsg').textContent==='','unknown driver: nothing is guessed');
+   clr();S('loadingBy').value='Somchai';w.bkGuess('loadingBy');ok(S('driver').value==='','loading by only suggests its own name (a loader is not tied to one truck)');
+   w.openBooking('P2');}
   ok(!d.getElementById('bookModal').innerHTML.match(/Draft|Booking status/),'no Draft/Firm/Delivered status selector');
   await w.saveBooking();ok(d.getElementById('bkWarn').textContent.includes('Container No.'),'missing fields block Delivered Complete');
   const set=(k,v)=>d.getElementById('bk_'+k).value=v;
