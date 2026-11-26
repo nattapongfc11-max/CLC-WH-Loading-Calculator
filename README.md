@@ -70,7 +70,7 @@ Open `index.html` through any static server (`python -m http.server 8080`). Work
 ## v2.5 – Print templates (Slip · Delivered Complete · ใบส่งงาน)
 - **Shipment Slip** (WH Calculate → Print Shipment Slip): new A4 layout with the Pioneer logo top-left, shipment information cards, KPI strip (models / qty / pallet / net / gross / CBM), model detail and colour-banded pallet allocation, remark and sign-off. Up to ~12 models / 18 pallets fit on one page; longer lists continue on the next page with repeated table headers.
 - **ใบส่งงาน / Delivery Note** (Delivery Booking → `🖨 ใบส่งงาน` on a Delivered Complete row, or the button inside the booking dialog): prints **only** the delivery note, exactly **one A4 page** – From / To, container, seal, invoice, driver, sub truck and plate, item list with pallet numbers (Shipment Qty), receiving check and four signature boxes (Warehouse, Driver, Logistics, Receiver). With many models the list switches to a compact two-column layout so it never spills onto a second page.
-- **Logo**: the Pioneer logo (from `Pioneer_logo.svg`, brand colour `#A90533`) is embedded in the app and printed top-left on every slip. A different logo can be uploaded under *Management → Print Logo* (or the `🖼 Print logo` button in Delivery Booking); it is stored in that browser only and *Remove* restores the Pioneer logo.
+- **Logo**: the Pioneer logo (from `Pioneer_logo.svg`, brand colour `#A90533`) is embedded in the app and printed top-left on every slip. Since v3.0 the *Print Logo* card is **hidden on the web page** (the logo still works in the background: the Pioneer logo is used in the header and on every printout; a logo already saved in a browser under `clcPrintLogo` is still honoured).
 
 ## v2.6 – Container photos (Cloudflare R2)
 Some customers require photos of the container. Tick **Customer ต้องการรูป** in the *Delivery Booking* dialog of that trip and five slots appear:
@@ -138,3 +138,21 @@ Code: `supabase/functions/photos/` (function), `supabase/migrations/20261126_del
 - Enforced in the database by `20261127_plans_slide_permission.sql`: the insert policy accepts `plans.edit` **or** `plans.create`, and users with only `plans.slide` change a plan through the `SECURITY DEFINER` function `plan_delivery_update(plan_id, patch)` that accepts **only** `booking, slides, cancel, prep, photoReq` (everything else is refused). The migration also updates the admin row and any logistics user still on the old template; users with hand-customised permissions keep them.
 - Limit: Postgres RLS works on rows, not columns, so a user who has `plans.edit` can change every field of a plan; "Shipment Information only" cannot be separated from the rest of a plan in the database.
 - Tests: `tests/logistics.test.js` (page + save paths), `tests/users.test.js` (new checkboxes / templates / constraint), `supabase/tests/plans_slide_permission_test.sql` (SQL editor; simulates 7 users, always rolls back; expected message `PLANS_SLIDE_TEST FAILED=0`).
+
+## v3.0 – sticky header, Stack tags, Print Sketch, 3D in Booking
+**Header / menu**
+- Header + tab menu are **frozen** at the top while scrolling (`.topwrap`, `position: sticky`, below the pop-up dialogs). **Pioneer logo** at the left (on a white tile), title **Delivery Monitoring and CLC Container Loading**, sub title *Truckplan Delivery, Warehouse Container Loading · Logistics · Shipment*.
+- The *Print Logo · โลโก้บนใบพิมพ์* card is hidden on the web page (no UI to upload / remove any more; logic kept).
+
+**Skid Pallet No. (No./Total)** now also says **which pallet it is stacked with**: `Stack 18-19` (two different pallets – Mix Pallet, Pallet เศษ, or Stack = Y – sitting on each other; both rows show the same text, lower Pallet No. first, tooltip says which is on the bottom) or `Stack ×2` (one Pallet No. = two pallets of the same Model, e.g. 64 × 2 = 128). The tags follow the stacking plan (container type, floor capacity, *Stack Pallet* switch).
+
+**Print Sketch เตรียมงาน** (WH Calculate → *Print Sketch*, or *✎ Print Sketch* in Delivery Booking for a saved plan): **A4 landscape, one page** – container 3D picture (pallet no. labels, ▲/▼ pairs), plan information, model colour legend, list of `Stack a-b` pairs, and **a 3D drawing of how each pallet is built** (single-model pallet, Stack = Y drawn as two pallets, Mix Pallet with its cartons). Pallets that are built the same way are merged into one drawing with `No. 1–9 ×9`, so even 40+ pallets stay on one page (the grid picks the largest drawing size that fits). Signature boxes: จัดเตรียมโดย / ตรวจสอบโดย / โหลดโดย.
+
+**Delivery Booking dialog**
+- **3D View · ภาพจำลองการจัดวางในตู้** of the plan's own pallets (drag to rotate, wheel to zoom, preset views, Kraft / Model colours) with a one-line summary (pallets, floor use, stacked pairs). Drawn from the saved plan, so the open WH Calculate form is not touched.
+- The **history table was removed**. The four fields (พขร. · Sub control truck · ทะเบียน · Loading by) now **guess what you want to type**: suggestions come from earlier bookings, most used first (driver/sub truck/plate suggestions show the usual partner as a hint). Picking or completing a known **driver / plate / sub truck** fills the other **empty** fields from the latest booking that used it (never overwrites what you typed; a note says what was filled).
+
+**Delivery Board**: date boxes are smaller (84 px, day number 19 px); the 8 KPI cards are **one row** (scrolls sideways on a narrow screen).
+
+Internals: `s3svg()` / `pal3dSvg()` are pure renderers (scene → SVG text) shared by WH Calculate, the Booking dialog and the print sketch; `withPlanCtx(plan, fn)` loads a saved plan into the calculation globals and restores everything afterwards. No database change.
+Tests: `tests/sketch.test.js` (new), `tests/delivery.test.js` (type-ahead / auto-fill).

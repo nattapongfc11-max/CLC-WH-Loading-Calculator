@@ -4,7 +4,9 @@
 *{box-sizing:border-box}
 body{margin:0;font:14px/1.5 'Noto Sans Thai',Inter,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 /* ---------- header + top navigation ---------- */
-.top{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topwrap{position:sticky;top:0;z-index:15;box-shadow:0 2px 8px #3a081a33} /* header + menu stay visible while scrolling (below modals, z 20) */
+.top{background:var(--navy);color:#fff;padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.toplogo{height:38px;width:auto;max-width:190px;background:#fff;border-radius:8px;padding:5px 10px;display:block;flex:none}
 .top h1{margin:0;font-size:18px;font-weight:700}.top small{display:block;font-size:11px;font-weight:400;color:#e8c6cf}
 .top .badge{background:var(--yellow);color:var(--navy);font-weight:700;border-radius:6px;padding:2px 9px;font-size:12px}
 .status{font-size:12px;color:#f0d3db}
@@ -96,10 +98,10 @@ td input,td select{padding:5px 6px;border:1px solid #d9c3ca;border-radius:5px;wi
 .auth-actions{display:flex;gap:8px}.auth-actions button{flex:1}
 .auth-error{color:#b91c1c;font-size:12px;min-height:18px}
 .auth-hidden{display:none!important}
-.auth-screen:not(.auth-hidden)~header.top,.auth-screen:not(.auth-hidden)~.layout{display:none!important}
+.auth-screen:not(.auth-hidden)~.topwrap,.auth-screen:not(.auth-hidden)~.layout{display:none!important}
 /* ---------- responsive ---------- */
 #dashKpis{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:900px){.grid,#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:12px}.top{padding:12px}.top h1{font-size:16px}}
+@media(max-width:900px){.grid,#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:12px}.top{padding:8px 12px}.top h1{font-size:15px}.toplogo{height:30px}}
 @media(max-width:520px){.heading{align-items:flex-start;flex-direction:column}.field{min-width:100%}}
 
 /* Delivery board / booking / dimension toggle */
@@ -124,6 +126,7 @@ i.pl{background:#d9a3b2}i.dl{background:var(--navy)}i.lg{display:inline-block;wi
 .s3wrap{padding:0;overflow:hidden;background:#eef5fc;border-color:#bcd3ea}.sim3d{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}.sim3d:active{cursor:grabbing}
 .s3head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.s3head .btn.small{padding:3px 9px;font-size:12px}
 .mix-group-card td .chip{display:block;width:max-content;margin-top:4px;white-space:nowrap}
+td.skidcell{white-space:nowrap}td.skidcell .stkpair{display:block;margin-top:3px}td.skidcell .chip{font-size:11px;padding:1px 8px}.chip.stkp{background:#e1ecff;color:#1f4d9a;border:1px solid #b9cdf3}
 td.seqcell{text-align:center;min-width:92px}td.seqcell b{font-size:15px;color:var(--navy)}td.seqcell .chip{display:block;width:max-content;margin:3px auto 0;font-size:11px;padding:1px 8px}.chip.mixc{background:#fff1b8;color:#5a3a00}.chip.remc{background:#ffe3cf;color:#8a2c00}
 tr.grp td:first-child{box-shadow:inset 4px 0 0 #d9a21b}tr.grp td.seqcell{background:#fffaf0}
 .stkhow{background:#fffaf0;border:1px solid #ecd9a6;border-radius:8px;padding:8px 12px;font-size:12.5px;margin:8px 0}.stkhow ul{margin:4px 0 0 18px;padding:0}.stkhow li{margin:2px 0}
@@ -156,8 +159,11 @@ tr.newrow td{background:#fff8d6!important;box-shadow:inset 0 0 0 1px #ecd47a}td 
 #deliveryBoard tr.jrow td{background:#FFE9A8;border-bottom:1px solid #eac45a}#deliveryBoard tr.jrow td:first-child{box-shadow:inset 7px 0 0 #A90533}
 #deliveryBoard tr.grp td{background:var(--blue);color:var(--navy);font-weight:800;font-size:15px;padding:10px 12px;border-bottom:0}#deliveryBoard tr.grp.warn td{background:#A90533;color:#fff}
 #deliveryBoard .dt{background:#A90533;color:#fff;border-radius:5px;padding:1px 6px;font-size:13px;margin-right:4px}
-#deliveryBoard .kpis .kpi b{font-size:36px}#deliveryBoard .kpis .kpi span{font-size:14px;font-weight:700}
-#deliveryBoard .daycard{flex:0 0 138px;padding:10px 12px}#deliveryBoard .daycard .dn{font-size:30px}#deliveryBoard .daycard .dc{font-size:13px;font-weight:600}
+/* KPI cards: ONE row (scrolls sideways on a narrow screen); date boxes compact */
+#deliveryBoard .kpis{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(112px,1fr);gap:6px;overflow-x:auto;margin-top:6px}
+#deliveryBoard .kpis .kpi{padding:6px 9px;border-left-width:4px;gap:0;min-width:0}#deliveryBoard .kpis .kpi b{font-size:24px;line-height:1.15}#deliveryBoard .kpis .kpi span{font-size:11px;font-weight:700;line-height:1.25}
+#deliveryBoard .daystrip{gap:5px;padding:2px 2px 6px}
+#deliveryBoard .daycard{flex:0 0 84px;padding:4px 8px;border-radius:8px}#deliveryBoard .daycard .dw{font-size:10px;white-space:nowrap}#deliveryBoard .daycard .dn{font-size:19px;line-height:1.15}#deliveryBoard .daycard .dc{font-size:10.5px;font-weight:600;line-height:1.25;white-space:nowrap}#deliveryBoard .daycard .pg{height:3px;margin-top:3px}
 #deliveryBoard .btn{padding:8px 16px;font-size:15px}#deliveryBoard .chip{font-size:14px;padding:3px 12px}
 #booking .toolbar input,#booking .toolbar select{min-width:0;width:auto;padding:6px 8px;font-size:13px}#booking #bkSearch{flex:1 1 200px;max-width:340px}
 #booking table{min-width:0;font-size:12.5px}#booking th{font-size:12px;padding:7px 8px;white-space:normal}#booking td{padding:6px 8px;white-space:normal;word-break:break-word;vertical-align:top}#booking .tablewrap{max-height:none}#booking td:last-child,#booking td .btn,#booking td:nth-child(3) b{white-space:nowrap}#booking td .btn{padding:5px 10px;font-size:12px}#booking #bkSearch{flex:1 1 280px;max-width:420px}
@@ -173,9 +179,9 @@ tr.newrow td{background:#fff8d6!important;box-shadow:inset 0 0 0 1px #ecd47a}td 
 .pslot .th{height:78px;border-radius:6px;background:#f6eef1 center/cover no-repeat;display:grid;place-items:center;color:#b9a3ab;cursor:default}.pslot.has .th{cursor:zoom-in}
 .pslot .pbtn{display:flex;gap:4px;justify-content:center;margin-top:5px;flex-wrap:wrap}.pslot .pbtn .btn{padding:3px 7px;font-size:11px}
 @media(max-width:620px){.photogrid{grid-template-columns:repeat(3,1fr)}}
-</style></head><body><div id="authScreen" class="auth-screen"><div class="auth-card"><h2>CLC Warehouse</h2><div class="sub">Sign in to access shared warehouse data</div><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></div><div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div><div id="authError" class="auth-error"></div><div class="auth-actions"><button class="btn" onclick="clcSignIn()">Login</button><button class="btn secondary" onclick="clcSignUp()">Create account</button></div><button class="btn secondary" id="authLogout" onclick="clcSignOut()" style="display:none;width:100%;margin-top:10px">Logout</button><div class="sub" style="margin-top:14px">New accounts may require email confirmation.</div></div></div><header class="top"><div><h1>CLC – Container Loading Calculator</h1><small>Warehouse Calculate Process · Hybrid Pallet · Container Summary · Reference Rev.01</small></div><span class="badge">V2</span><div style="display:flex;align-items:center;gap:10px;margin-left:auto"><div class="status" id="connectionStatus">Connecting to Cloud...</div><button class="btn secondary small" id="clcLogout" onclick="clcSignOut()" style="display:none">Logout</button></div></header><div class="layout"><nav><button class="navbtn active" data-page="dashboard">▦ Dashboard</button><button class="navbtn" data-page="mgmt">◈ Management Overview</button><button class="navbtn" data-page="calculate">▤ WH Calculate</button><button class="navbtn" data-page="parts">▣ Part & Packing Master</button><button class="navbtn" data-page="dest">⌖ Destination-Port</button><button class="navbtn" data-page="booking">⛟ Delivery Booking</button><button class="navbtn" data-page="history">◷ Loading History</button><button class="navbtn" data-page="users" id="navUsers" style="display:none">👥 Users</button></nav><main>
+</style></head><body><div id="authScreen" class="auth-screen"><div class="auth-card"><h2>CLC Warehouse</h2><div class="sub">Sign in to access shared warehouse data</div><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></div><div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div><div id="authError" class="auth-error"></div><div class="auth-actions"><button class="btn" onclick="clcSignIn()">Login</button><button class="btn secondary" onclick="clcSignUp()">Create account</button></div><button class="btn secondary" id="authLogout" onclick="clcSignOut()" style="display:none;width:100%;margin-top:10px">Logout</button><div class="sub" style="margin-top:14px">New accounts may require email confirmation.</div></div></div><div class="topwrap"><header class="top"><img class="toplogo" id="topLogo" alt="Pioneer Manufacturing (Thailand)"><div><h1>Delivery Monitoring and CLC Container Loading</h1><small>Truckplan Delivery, Warehouse Container Loading · Logistics · Shipment</small></div><span class="badge">V2</span><div style="display:flex;align-items:center;gap:10px;margin-left:auto"><div class="status" id="connectionStatus">Connecting to Cloud...</div><button class="btn secondary small" id="clcLogout" onclick="clcSignOut()" style="display:none">Logout</button></div></header><nav><button class="navbtn active" data-page="dashboard">▦ Dashboard</button><button class="navbtn" data-page="mgmt">◈ Management Overview</button><button class="navbtn" data-page="calculate">▤ WH Calculate</button><button class="navbtn" data-page="parts">▣ Part & Packing Master</button><button class="navbtn" data-page="dest">⌖ Destination-Port</button><button class="navbtn" data-page="booking">⛟ Delivery Booking</button><button class="navbtn" data-page="history">◷ Loading History</button><button class="navbtn" data-page="users" id="navUsers" style="display:none">👥 Users</button></nav></div><div class="layout"><main>
 <section id="dashboard" class="page active"><div class="heading"><div><h2>Loading Overview</h2><div class="sub">Overview of Shipment and Warehouse loading plans</div></div><button class="btn" onclick="newPlan()">＋ New Shipment</button></div><div id="deliveryBoard"></div></section>
-<section id="mgmt" class="page"><div class="heading"><div><h2>Management Overview</h2><div class="sub">Plan Overview · By Month / Week / Day · สำหรับผู้บริหาร (Delivery Performance On plan, Air / Sea, Slide / Cancel)</div></div></div><div class="card"><div class="section" style="margin-top:0">Plan Overview · By Month / Week / Day</div><div class="row" id="dashControls"></div></div><div class="grid" style="margin-top:12px" id="dashKpis"></div><div id="mgmtPerf"></div><div class="card" style="margin-top:12px"><div class="section" id="dashChartTitle" style="margin-top:0">Chart</div><div id="dashChart" class="dash-chart"></div></div><div id="dashShipType"></div><div class="section" id="dashTableTitle">Daily Delivery Plan</div><div id="recentPlans" class="tablewrap"></div><div class="card" style="margin-top:14px"><div class="section" style="margin-top:0">Print Logo · โลโก้บนใบพิมพ์ (Slip / ใบส่งงาน)</div><div id="logoCard" class="logocard"></div><input type="file" id="logoFile" accept="image/*" hidden onchange="onLogoFile(event)"></div></section>
+<section id="mgmt" class="page"><div class="heading"><div><h2>Management Overview</h2><div class="sub">Plan Overview · By Month / Week / Day · สำหรับผู้บริหาร (Delivery Performance On plan, Air / Sea, Slide / Cancel)</div></div></div><div class="card"><div class="section" style="margin-top:0">Plan Overview · By Month / Week / Day</div><div class="row" id="dashControls"></div></div><div class="grid" style="margin-top:12px" id="dashKpis"></div><div id="mgmtPerf"></div><div class="card" style="margin-top:12px"><div class="section" id="dashChartTitle" style="margin-top:0">Chart</div><div id="dashChart" class="dash-chart"></div></div><div id="dashShipType"></div><div class="section" id="dashTableTitle">Daily Delivery Plan</div><div id="recentPlans" class="tablewrap"></div><div class="card" id="logoCardBox" style="margin-top:14px;display:none"><div class="section" style="margin-top:0">Print Logo · โลโก้บนใบพิมพ์ (Slip / ใบส่งงาน)</div><div id="logoCard" class="logocard"></div><input type="file" id="logoFile" accept="image/*" hidden onchange="onLogoFile(event)"></div></section>
 <section id="calculate" class="page"><div class="heading"><div><h2>WH Calculate Loading</h2><div class="sub">Logistics enters Shipment Information · Warehouse controls pallet allocation</div></div><div class="toolbar"><button class="btn secondary" onclick="newPlan()">New</button><button class="btn green" id="savePlanBtn" onclick="savePlan()">Save Loading Plan</button></div></div>
 <div class="note" id="planLockNote" style="display:none;margin-top:10px"><b>🔒 ดูอย่างเดียว:</b> สิทธิ์ของคุณแก้ <b>1. Shipment Information · 2. Shipment Model · 3. Pallet Allocation</b> ของแผนที่บันทึกแล้วไม่ได้ · ยังทำ <b>Slide / Cancel</b> ได้ที่ Loading Overview (คลิกแถวใน Delivery Board) หรือหน้า Delivery Booking · สร้างแผนใหม่กด New</div>
 <div class="card"><div class="section"><span class="tag">1</span> Shipment Information <span class="tag mid">Logistics</span></div><div class="row"><div class="field"><label>Log Request Container Date</label><input type="date" id="reqDate"></div><div class="field"><label>FG Ship Container Date (ETD PTM)</label><input type="date" id="etd"></div><div class="field"><label>Delivery Time</label><input type="time" id="deliveryTime" step="60" lang="th" aria-label="Delivery Time Thailand local time (UTC+7)"></div><div class="field"><label>Order Type</label><select id="orderType"></select></div><div class="field"><label>SHIP BY</label><select id="shipBy"></select></div><div class="field"><label>Type Shipment</label><select id="shipType"></select></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Destination-Port</label><select id="destination" onchange="syncPorts()"></select></div><div class="field"><label>Port</label><select id="port"></select></div><div class="field"><label>Shipment Remark</label><input id="shipRemark" placeholder="Remark"></div><div class="field"><label>Plan ID</label><input id="planId" readonly placeholder="New · Plan ID สร้างอัตโนมัติเมื่อ Save (เช่น PTM-261130-S-001)"></div></div></div>
@@ -183,7 +189,7 @@ tr.newrow td{background:#fff8d6!important;box-shadow:inset 0 0 0 1px #ecd47a}td 
 เช่น
 ABC-001	1200
 ABC-002	500"></textarea><div class="toolbar" style="margin-top:6px"><button class="btn" onclick="importModels($('pasteBox').value)">Import Models</button><button class="btn secondary" onclick="$('pasteBox').value='';$('pasteResult').innerHTML=''">Clear</button><span class="sub">หรือวางหลายบรรทัดลงช่อง Model Code ได้โดยตรง · Model ที่มีอยู่แล้วจะอัปเดต Qty</span></div></div><div id="pasteResult"></div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Model Code</th><th>Description</th><th>Plan Qty</th><th>Actual WH Qty</th><th>WH Calculate Qty</th><th></th></tr></thead><tbody id="shipmentModels"></tbody></table></div></div>
-<div class="card" style="margin-top:14px"><div class="section"><span class="tag">3</span> Pallet Allocation <span class="tag mid">Warehouse / Hybrid</span></div><div class="note">Reference Rev.01: Pallet capacity follows Part Master Qty/Pallet × 2 when Pallet Stack = Y. Net weight uses Net Weight/PC. Gross weight uses Part Master Gross Weight/Carton and Gross Weight/Pallet. Pallet Tare = <b>7 kg per physical pallet</b>; a shared Mix Pallet group counts once.</div><div class="toolbar" style="margin:12px 0"><button class="btn secondary" onclick="recalculateAll()">↻ Recalculate from Master</button><button class="btn secondary" onclick="addManualAllocation()">＋ Add Manual Pallet Row</button><button class="btn secondary" id="packingToggle" onclick="togglePackingDetails()">＋ Show Packing Details</button><button class="btn green" onclick="printShipmentSlip()">▤ Print Shipment Slip</button></div><div class="tablewrap" id="allocationWrap"><table class="allocation"><thead><tr><th>Separate Type Model</th><th class="col-pack">Name</th><th class="col-pack">Pack STD</th><th class="col-pack">Net kg/CTN</th><th class="col-pack">Gross kg/CTN</th><th class="col-pack">Carton D×W×H</th><th title="ลำดับ Pallet ของ Model นั้น / จำนวน Pallet ทั้งหมดของ Model">Skid Pallet No. (No./Total)</th><th>Stack</th><th title="ลำดับ Pallet จริงในตู้ (เลขเดียวกับป้ายบนภาพ 3D / ใบ Slip) · แถวที่อยู่บน Pallet เดียวกัน (Mix Pallet) นับ Seq ซ้ำ · Stack = Y ซ้อน 2 ใบ นับเป็น 1">Pallet Seq</th><th>Qty Before</th><th>Qty/Pallet</th><th>BL Diff</th><th>Net kg/Pallet</th><th>Gross kg/Pallet</th><th>Gross incl. Tare</th><th>Pallet D×W×H</th><th>Remark</th><th></th></tr></thead><tbody id="allocations"></tbody></table></div><div id="mixCalcPanel" class="mix-summary"></div></div>
+<div class="card" style="margin-top:14px"><div class="section"><span class="tag">3</span> Pallet Allocation <span class="tag mid">Warehouse / Hybrid</span></div><div class="note">Reference Rev.01: Pallet capacity follows Part Master Qty/Pallet × 2 when Pallet Stack = Y. Net weight uses Net Weight/PC. Gross weight uses Part Master Gross Weight/Carton and Gross Weight/Pallet. Pallet Tare = <b>7 kg per physical pallet</b>; a shared Mix Pallet group counts once.</div><div class="toolbar" style="margin:12px 0"><button class="btn secondary" onclick="recalculateAll()">↻ Recalculate from Master</button><button class="btn secondary" onclick="addManualAllocation()">＋ Add Manual Pallet Row</button><button class="btn secondary" id="packingToggle" onclick="togglePackingDetails()">＋ Show Packing Details</button><button class="btn green" onclick="printShipmentSlip()">▤ Print Shipment Slip</button><button class="btn green" id="printSketchBtn" onclick="printSketch()">✎ Print Sketch เตรียมงาน (1 หน้า)</button></div><div class="tablewrap" id="allocationWrap"><table class="allocation"><thead><tr><th>Separate Type Model</th><th class="col-pack">Name</th><th class="col-pack">Pack STD</th><th class="col-pack">Net kg/CTN</th><th class="col-pack">Gross kg/CTN</th><th class="col-pack">Carton D×W×H</th><th title="ลำดับ Pallet ของ Model นั้น / จำนวน Pallet ทั้งหมดของ Model">Skid Pallet No. (No./Total)</th><th>Stack</th><th title="ลำดับ Pallet จริงในตู้ (เลขเดียวกับป้ายบนภาพ 3D / ใบ Slip) · แถวที่อยู่บน Pallet เดียวกัน (Mix Pallet) นับ Seq ซ้ำ · Stack = Y ซ้อน 2 ใบ นับเป็น 1">Pallet Seq</th><th>Qty Before</th><th>Qty/Pallet</th><th>BL Diff</th><th>Net kg/Pallet</th><th>Gross kg/Pallet</th><th>Gross incl. Tare</th><th>Pallet D×W×H</th><th>Remark</th><th></th></tr></thead><tbody id="allocations"></tbody></table></div><div id="mixCalcPanel" class="mix-summary"></div></div>
 <div class="card" style="margin-top:14px"><div class="section"><span class="tag">4</span> Container Summary</div><div class="grid"><div class="kpi"><div class="sub">Total Model</div><div class="metric" id="sModels">0</div></div><div class="kpi"><div class="sub">Total CTN</div><div class="metric" id="sCtn">0</div></div><div class="kpi"><div class="sub">Physical Pallet</div><div class="metric" id="sPallet">0</div></div><div class="kpi"><div class="sub">Total Qty</div><div class="metric" id="sQty">0</div></div><div class="kpi"><div class="sub">Net Weight</div><div class="metric" id="sNet">0 kg</div></div><div class="kpi"><div class="sub">Gross Weight</div><div class="metric" id="sGross">0 kg</div></div><div class="kpi"><div class="sub">Total CBM</div><div class="metric" id="sCbm">0 m³</div></div><div class="kpi"><div class="sub">Tare Applied</div><div class="metric" id="sTare">0 kg</div></div></div><div class="row" style="margin-top:12px"><div class="field"><label>Container Type</label><select id="containerType" onchange="setContainerType()"><option value="40HC">40HC</option><option value="Other">Other (กำหนดเอง)</option></select></div><div class="field"><label>Floor capacity · Layer 1 (ตำแหน่ง)</label><input id="floorCap" type="number" min="1" value="20" disabled onchange="renderSummary()"></div><div class="field"><label>ความสูงภายในตู้ (cm)</label><input id="contH" type="number" min="100" value="269" disabled onchange="renderSummary()"></div><div class="field"><label>ซ้อน Pallet 2 ชั้น</label><label style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="stackPallet" checked onchange="renderSummary()" style="width:auto"> ซ้อนเมื่อเกินพื้น (Layer 1 = ผิวเรียบ/หนักกว่า · ตัวบนไม่ต้องเรียบ ขอแค่สูงรวมไม่เกินตู้)</label></div></div><div id="floorStatus"></div><div class="sub" style="margin-top:10px">Gross Weight = Total Net Weight + (7 kg × Physical Pallet Count). For Mix Pallet groups, tare is counted once per unique group.</div></div>
 <div class="card" style="margin-top:14px"><div class="section"><span class="tag">5</span> Simulate Layout – จำลองการจัดวาง Container</div><div id="simLayout"></div></div>
 </section>
@@ -207,14 +213,14 @@ ABC-002	500"></textarea><div class="toolbar" style="margin-top:6px"><button clas
 <div class="toolbar" style="justify-content:flex-end;margin-top:8px"><button class="btn secondary" onclick="uaApplyTemplate()">↺ ใช้ค่ามาตรฐานของ role</button><button class="btn secondary" onclick="closeModal('userModal')">Cancel</button><button class="btn green" id="uaSave" onclick="uaSave()">Save สิทธิ์</button></div></div></div>
 <div class="modal" id="manualModal"><div class="modalbox" style="max-width:860px"><div class="modalhead"><h3>＋ Add Manual Pallet · เลือก Model จาก Shipment Order</h3><button class="btn secondary" onclick="closeModal('manualModal')">✕</button></div><div class="sub">เลือกว่า Pallet ใหม่ต้องการ Model ไหน จำนวนเท่าไร จาก Shipment Order ด้านบน · ใส่หลาย Model = Mix Pallet</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Model</th><th>Description</th><th class="right">Shipment Qty</th><th class="right">จัดลง Pallet แล้ว</th><th class="right">เหลือ (BL)</th><th>Qty บน Pallet นี้</th></tr></thead><tbody id="manualRows"></tbody></table></div><div id="manualPreview"></div><div class="toolbar" style="justify-content:flex-end;margin-top:14px"><button class="btn secondary" onclick="closeModal('manualModal')">Cancel</button><button class="btn" id="manualOk" onclick="manualConfirm()">เพิ่ม Pallet</button></div></div></div>
 <div class="modal" id="partModal"><div class="modalbox"><div class="modalhead"><h3 id="partModalTitle">Part & Packing</h3><button class="btn secondary" onclick="closeModal('partModal')">✕</button></div><div id="partForm" class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div><div class="toolbar" style="justify-content:flex-end;margin-top:15px"><button class="btn secondary" onclick="closeModal('partModal')">Cancel</button><button class="btn" onclick="savePart()">Save Master</button></div></div></div>
-<div class="modal" id="bookModal"><div class="modalbox"><div class="modalhead"><h3 id="bkTitle">Delivery Booking</h3><button class="btn secondary" onclick="closeModal('bookModal')">✕</button></div><div class="note" id="bkPlanInfo"></div><div id="bkState" style="margin:8px 0"></div><div class="row" style="align-items:flex-end"><div class="field"><label>สถานะการจัดเตรียมชิ้นงาน (Warehouse) · แสดงบน Delivery Board</label><select id="bk_prep" onchange="savePrep(this.value)"><option value="">ยังไม่จัดเตรียม</option><option value="ready">จัดเตรียมชิ้นงานแล้ว</option><option value="short">ชิ้นงานไม่พอจัดส่ง</option></select></div><div class="sub" id="bkPrepMsg" style="padding-bottom:10px"></div></div><div class="section" style="font-size:13px;margin-top:6px">ข้อมูลรถ / ส่งมอบ · กรอกครบแล้วบันทึก = Delivered Complete</div><div class="row"><div class="field"><label>Container No.</label><input id="bk_containerNo" type="text" placeholder="ABCD1234567" style="text-transform:uppercase"></div><div class="field"><label>Seal No.</label><input id="bk_sealNo" type="text"></div><div class="field"><label>Invoice No.</label><input id="bk_invoiceNo" type="text"></div></div><div class="row"><div class="field"><label>Loading by</label><input id="bk_loadingBy" type="text" list="dl_loadingBy"></div><div class="field"><label>Loading date</label><input id="bk_loadDate" type="date"></div><div class="field"><label>Loading time</label><input id="bk_loadTime" type="time"></div></div><div class="row"><div class="field"><label>พขร. (Driver)</label><input id="bk_driver" type="text" list="dl_driver"></div><div class="field"><label>Sub control truck</label><input id="bk_subTruck" type="text" list="dl_subTruck"></div><div class="field"><label>ทะเบียนรถ (Plate)</label><input id="bk_truckPlate" type="text" list="dl_truckPlate"></div></div><datalist id="dl_loadingBy"></datalist><datalist id="dl_driver"></datalist><datalist id="dl_subTruck"></datalist><datalist id="dl_truckPlate"></datalist><div id="bkWarn"></div><div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bkPrint" style="display:none" onclick="printDeliveryNote($('bookModal').dataset.plan)">🖨 Print ใบส่งงาน</button><button class="btn secondary" onclick="closeModal('bookModal')">Close</button><button class="btn green" onclick="saveBooking()">Save · Delivered Complete</button></div><div class="section" style="font-size:13px;margin-top:6px">📷 รูปถ่ายตู้ <label class="chkline"><input type="checkbox" id="bk_photoReq" onchange="bkTogglePhotoReq()"> Customer ต้องการรูป (เฉพาะบางเที่ยว)</label></div><div id="bkPhotos" style="display:none"><div class="toolbar" style="margin:4px 0 8px"><button class="btn small" id="bkPhotoBulkBtn" onclick="bkPhotoBulk()">⬆ เลือกรูปจากกล้อง (หลายไฟล์ · วางช่องว่างตามลำดับชื่อไฟล์)</button><button class="btn small secondary" id="bkPhotoCheckBtn" onclick="bkPhotoCheck()" style="display:none" title="ตรวจ secrets ของ Cloudflare R2 ฝั่งเซิร์ฟเวอร์">🔧 ตรวจ R2</button><span class="sub" id="bkPhotoMsg"></span></div><div class="photogrid" id="bkPhotoGrid"></div><div class="sub" style="margin-top:6px">รูปจากกล้องถูกย่อในเบราว์เซอร์ก่อนอัปโหลด (JPEG ด้านยาว 2048 px) · เก็บใน Cloudflare R2 แบบ private</div><input type="file" id="bkPhotoFile" accept="image/*" hidden onchange="bkPhotoFileChosen(this)"><input type="file" id="bkPhotoMulti" accept="image/*" multiple hidden onchange="bkPhotoBulkChosen(this)"></div><div class="section" style="font-size:13px">ไม่ได้ส่งตามแผน → Slide เที่ยว หรือ Cancel ตู้ (เก็บวันที่ Booking เดิมไว้คิด KPI On plan)</div><div class="row"><div class="field"><label>Slide ไปวันที่</label><input id="bk_slideDate" type="date"></div><div class="field"><label>เวลา</label><input id="bk_slideTime" type="time"></div><div class="field"><label>เหตุผล</label><input id="bk_slideReason" placeholder="เช่น รถไม่มา / ตู้ไม่พอ"></div></div><div class="toolbar" style="margin-top:8px"><button class="btn" onclick="slideBooking()">↷ Slide เที่ยวส่ง</button><button class="btn danger" onclick="cancelBooking()">✕ Cancel ตู้</button><button class="btn secondary" id="bkReopen" onclick="reopenBooking()" style="display:none">↺ Re-open</button></div><div class="section" style="font-size:13px">ประวัติที่เคยกรอก (กด Use เพื่อเติม พขร. / Sub truck / ทะเบียน / Loading by)</div><div id="bkHistory" class="tablewrap" style="max-height:200px"></div></div></div>
+<div class="modal" id="bookModal"><div class="modalbox"><div class="modalhead"><h3 id="bkTitle">Delivery Booking</h3><button class="btn secondary" onclick="closeModal('bookModal')">✕</button></div><div class="note" id="bkPlanInfo"></div><div id="bkState" style="margin:8px 0"></div><div id="bk3dBox" style="display:none"><div class="section s3head" style="font-size:13px;margin-top:4px">3D View · ภาพจำลองการจัดวางในตู้ <span class="tag">3D</span><span style="flex:1"></span><button class="btn secondary small" onclick="bk3view(-34,30)">มุมเฉียง</button><button class="btn secondary small" onclick="bk3view(0,86)">มองจากด้านบน</button><button class="btn secondary small" onclick="bk3view(0,6)">ด้านข้าง</button><button class="btn secondary small" onclick="bk3view(-90,18)">จากประตูตู้</button><button class="btn secondary small" onclick="bk3Look()" id="bk3LookBtn">Kraft</button><button class="btn secondary small" onclick="printSketchPlan($('bookModal').dataset.plan)" title="พิมพ์ภาพการวางงานบน Pallet และตู้ 1 หน้า">✎ Print Sketch</button></div><div class="simwrap s3wrap" style="margin-bottom:4px"><svg id="bk3d" class="sim3d" viewBox="0 0 1000 520" role="img" aria-label="3D View" onpointerdown="bk3down(event)" onpointermove="bk3move(event)" onpointerup="bk3up()" onpointercancel="bk3up()" onwheel="bk3wheel(event)"></svg></div><div class="sub" id="bk3Info" style="margin-bottom:6px"></div></div><div class="row" style="align-items:flex-end"><div class="field"><label>สถานะการจัดเตรียมชิ้นงาน (Warehouse) · แสดงบน Delivery Board</label><select id="bk_prep" onchange="savePrep(this.value)"><option value="">ยังไม่จัดเตรียม</option><option value="ready">จัดเตรียมชิ้นงานแล้ว</option><option value="short">ชิ้นงานไม่พอจัดส่ง</option></select></div><div class="sub" id="bkPrepMsg" style="padding-bottom:10px"></div></div><div class="section" style="font-size:13px;margin-top:6px">ข้อมูลรถ / ส่งมอบ · กรอกครบแล้วบันทึก = Delivered Complete</div><div class="row"><div class="field"><label>Container No.</label><input id="bk_containerNo" type="text" placeholder="ABCD1234567" style="text-transform:uppercase"></div><div class="field"><label>Seal No.</label><input id="bk_sealNo" type="text"></div><div class="field"><label>Invoice No.</label><input id="bk_invoiceNo" type="text"></div></div><div class="row"><div class="field"><label>Loading by</label><input id="bk_loadingBy" type="text" list="dl_loadingBy" autocomplete="off" oninput="bkGuess('loadingBy',event)" onchange="bkGuess('loadingBy')"></div><div class="field"><label>Loading date</label><input id="bk_loadDate" type="date"></div><div class="field"><label>Loading time</label><input id="bk_loadTime" type="time"></div></div><div class="row"><div class="field"><label>พขร. (Driver)</label><input id="bk_driver" type="text" list="dl_driver" autocomplete="off" oninput="bkGuess('driver',event)" onchange="bkGuess('driver')"></div><div class="field"><label>Sub control truck</label><input id="bk_subTruck" type="text" list="dl_subTruck" autocomplete="off" oninput="bkGuess('subTruck',event)" onchange="bkGuess('subTruck')"></div><div class="field"><label>ทะเบียนรถ (Plate)</label><input id="bk_truckPlate" type="text" list="dl_truckPlate" autocomplete="off" oninput="bkGuess('truckPlate',event)" onchange="bkGuess('truckPlate')"></div></div><div class="sub" id="bkGuessMsg" style="min-height:16px"></div><datalist id="dl_loadingBy"></datalist><datalist id="dl_driver"></datalist><datalist id="dl_subTruck"></datalist><datalist id="dl_truckPlate"></datalist><div id="bkWarn"></div><div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bkPrint" style="display:none" onclick="printDeliveryNote($('bookModal').dataset.plan)">🖨 Print ใบส่งงาน</button><button class="btn secondary" onclick="closeModal('bookModal')">Close</button><button class="btn green" onclick="saveBooking()">Save · Delivered Complete</button></div><div class="section" style="font-size:13px;margin-top:6px">📷 รูปถ่ายตู้ <label class="chkline"><input type="checkbox" id="bk_photoReq" onchange="bkTogglePhotoReq()"> Customer ต้องการรูป (เฉพาะบางเที่ยว)</label></div><div id="bkPhotos" style="display:none"><div class="toolbar" style="margin:4px 0 8px"><button class="btn small" id="bkPhotoBulkBtn" onclick="bkPhotoBulk()">⬆ เลือกรูปจากกล้อง (หลายไฟล์ · วางช่องว่างตามลำดับชื่อไฟล์)</button><button class="btn small secondary" id="bkPhotoCheckBtn" onclick="bkPhotoCheck()" style="display:none" title="ตรวจ secrets ของ Cloudflare R2 ฝั่งเซิร์ฟเวอร์">🔧 ตรวจ R2</button><span class="sub" id="bkPhotoMsg"></span></div><div class="photogrid" id="bkPhotoGrid"></div><div class="sub" style="margin-top:6px">รูปจากกล้องถูกย่อในเบราว์เซอร์ก่อนอัปโหลด (JPEG ด้านยาว 2048 px) · เก็บใน Cloudflare R2 แบบ private</div><input type="file" id="bkPhotoFile" accept="image/*" hidden onchange="bkPhotoFileChosen(this)"><input type="file" id="bkPhotoMulti" accept="image/*" multiple hidden onchange="bkPhotoBulkChosen(this)"></div><div class="section" style="font-size:13px">ไม่ได้ส่งตามแผน → Slide เที่ยว หรือ Cancel ตู้ (เก็บวันที่ Booking เดิมไว้คิด KPI On plan)</div><div class="row"><div class="field"><label>Slide ไปวันที่</label><input id="bk_slideDate" type="date"></div><div class="field"><label>เวลา</label><input id="bk_slideTime" type="time"></div><div class="field"><label>เหตุผล</label><input id="bk_slideReason" placeholder="เช่น รถไม่มา / ตู้ไม่พอ"></div></div><div class="toolbar" style="margin-top:8px"><button class="btn" onclick="slideBooking()">↷ Slide เที่ยวส่ง</button><button class="btn danger" onclick="cancelBooking()">✕ Cancel ตู้</button><button class="btn secondary" id="bkReopen" onclick="reopenBooking()" style="display:none">↺ Re-open</button></div></div></div>
 <div class="modal" id="destModal"><div class="modalbox"><div class="modalhead"><h3>Destination-Port</h3><button class="btn secondary" onclick="closeModal('destModal')">✕</button></div><div class="row"><div class="field"><label>Destination-Port</label><input id="destCode"></div><div class="field"><label>Port</label><input id="destPort"></div></div><input type="hidden" id="destOld"><div class="toolbar" style="justify-content:flex-end;margin-top:15px"><button class="btn secondary" onclick="closeModal('destModal')">Cancel</button><button class="btn" onclick="saveDest()">Save</button></div></div></div>
 <script>
 const EMBED_PARTS=[];const EMBED_OPTIONS=[];const EMBED_DESTS=[];
 var parts=EMBED_PARTS.slice(),options=EMBED_OPTIONS.slice(),destinations=EMBED_DESTS.slice(),plans=[],models=[],allocations=[],editingPart=null,googleConnected=!!(window.google&&google.script&&google.script.run);
 window.CLC_STATE={get parts(){return parts},set parts(v){parts=v},get options(){return options},set options(v){options=v},get destinations(){return destinations},set destinations(v){destinations=v},get plans(){return plans},set plans(v){plans=v},get models(){return models},set models(v){models=v},get allocations(){return allocations},set allocations(v){allocations=v}};
 const $=id=>document.getElementById(id);const n=v=>Number(v)||0;const fmt=v=>Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2});const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function init(){document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$('connectionStatus').textContent=googleConnected?'Connected to Google Sheets':'Local Preview · SharePoint not connected';fillSelects();$('modelList').innerHTML=parts.map(p=>`<option value="${esc(p.model)}">${esc(p.description)}</option>`).join('');renderAll();if(googleConnected)refreshData();}
+function init(){renderHeaderLogo();document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$('connectionStatus').textContent=googleConnected?'Connected to Google Sheets':'Local Preview · SharePoint not connected';fillSelects();$('modelList').innerHTML=parts.map(p=>`<option value="${esc(p.model)}">${esc(p.description)}</option>`).join('');renderAll();if(googleConnected)refreshData();}
 function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='users')usersOpen();}
 function fillSelect(id,vals){let s=$(id),old=s.value;s.innerHTML='<option value="">Select...</option>'+vals.map(v=>`<option>${esc(v)}</option>`).join('');if(vals.includes(old))s.value=old;}
 function fillSelects(){for(const [id,cat] of [['orderType','Order Type'],['shipBy','SHIP BY'],['shipType','Type Shipment']])fillSelect(id,options.filter(x=>x.category===cat).map(x=>x.value));fillSelect('destination',[...new Set(destinations.map(x=>x.destination))]);syncPorts();}
@@ -556,7 +562,7 @@ function applyPlanAccess(){
 }
 function applyPartAccess(){const c=window.clcCan;if(!c)return;const a=$('partAddBtn');if(a)a.style.display=c('parts.edit')?'':'none'}
 function renderCalc(){sortAllocationsForMix();renumberMixGroups();renumberSkids();applyMixPalletDimensions();$('shipmentModels').innerHTML=models.map((m,i)=>`<tr><td><b>${esc(m.model)}</b></td><td>${esc(partFor(m.model)?.description||'')}</td><td>${fmt(m.planQty)}</td><td><input type="number" min="0" value="${m.actualQty??''}" placeholder="Same as plan" onchange="setActual(${i},this.value)"></td><td>${fmt(effectiveQty(m))}</td><td><button class="btn danger small" onclick="removeModel(${i})">Remove</button></td></tr>`).join('');const PI=palletInfoOf(allocations);$('allocations').innerHTML=allocations.map((a,i)=>allocRow(a,i,PI.byRow.get(i))).join('');applyPlanAccess();renderMixCalcPanel();renderSummary();}
-function allocRow(a,i,g){g=g||{seq:'-',kind:'full',label:'',rows:[a]};const input=(field,val,type='text',width='80px',cls='')=>`<input class="${cls}" type="${type}" value="${esc(val)}" onchange="editAlloc(${i},'${field}',this.value)">`;return `<tr class="${g.rows.length>1?'grp'+(g.rows[0]===a?' grp1':''):''}"><td><input class="model-input" list="modelList" value="${esc(a.packingModel)}" onchange="changePacking(${i},this.value)"></td><td class="col-pack">${esc(a.name)}</td><td class="col-pack">${fmt(a.packStd)}</td><td class="col-pack">${fmt(a.netKgCtn)}</td><td class="col-pack">${fmt(a.grossKgCtn)}</td><td class="col-pack">${fmt(a.cartonD)}×${fmt(a.cartonW)}×${fmt(a.cartonH)}</td><td class="skidcell" title="${esc(g.label)}">${esc(skidLabel(a))}</td><td><select class="stack-select" onchange="setStack(${i},this.value)"><option ${a.stack==='N'?'selected':''}>N</option><option ${a.stack==='Y'?'selected':''}>Y</option></select></td><td class="seqcell" title="${esc(g.kind==='mix'?g.label+' · '+g.models.join(' + '):g.kind==='rem'?'Pallet เศษ · '+g.models.join(', '):'')}"><b>${g.seq}</b>${g.kind==='mix'?'<span class="chip mixc">'+esc(g.label)+'</span>':g.kind==='rem'?'<span class="chip remc">Pallet เศษ</span>':''}</td><td>${fmt(a.qtyBefore)}</td><td>${input('qtyPallet',a.qtyPallet,'number')}</td><td>${fmt(a.blDiff)}</td><td>${fmt(a.netKg)}</td><td>${fmt(a.grossKgPallet)}</td><td>${fmt(a.grossLine)}</td><td>${input('palletD',a.palletD,'number','46px','dim-input')} × ${input('palletW',a.palletW,'number','46px','dim-input')} × ${input('palletH',a.palletH,'number','46px','dim-input')}</td><td>${input('remark',a.remark,'text','112px','remark-input')}</td><td><button class="btn danger small" onclick="removeAlloc(${i})">×</button></td></tr>`}
+function allocRow(a,i,g){g=g||{seq:'-',kind:'full',label:'',rows:[a]};const input=(field,val,type='text',width='80px',cls='')=>`<input class="${cls}" type="${type}" value="${esc(val)}" onchange="editAlloc(${i},'${field}',this.value)">`;return `<tr class="${g.rows.length>1?'grp'+(g.rows[0]===a?' grp1':''):''}"><td><input class="model-input" list="modelList" value="${esc(a.packingModel)}" onchange="changePacking(${i},this.value)"></td><td class="col-pack">${esc(a.name)}</td><td class="col-pack">${fmt(a.packStd)}</td><td class="col-pack">${fmt(a.netKgCtn)}</td><td class="col-pack">${fmt(a.grossKgCtn)}</td><td class="col-pack">${fmt(a.cartonD)}×${fmt(a.cartonW)}×${fmt(a.cartonH)}</td><td class="skidcell" title="${esc(g.label)}">${esc(skidLabel(a))}<span class="stkpair" data-seq="${g.seq}"></span></td><td><select class="stack-select" onchange="setStack(${i},this.value)"><option ${a.stack==='N'?'selected':''}>N</option><option ${a.stack==='Y'?'selected':''}>Y</option></select></td><td class="seqcell" title="${esc(g.kind==='mix'?g.label+' · '+g.models.join(' + '):g.kind==='rem'?'Pallet เศษ · '+g.models.join(', '):'')}"><b>${g.seq}</b>${g.kind==='mix'?'<span class="chip mixc">'+esc(g.label)+'</span>':g.kind==='rem'?'<span class="chip remc">Pallet เศษ</span>':''}</td><td>${fmt(a.qtyBefore)}</td><td>${input('qtyPallet',a.qtyPallet,'number')}</td><td>${fmt(a.blDiff)}</td><td>${fmt(a.netKg)}</td><td>${fmt(a.grossKgPallet)}</td><td>${fmt(a.grossLine)}</td><td>${input('palletD',a.palletD,'number','46px','dim-input')} × ${input('palletW',a.palletW,'number','46px','dim-input')} × ${input('palletH',a.palletH,'number','46px','dim-input')}</td><td>${input('remark',a.remark,'text','112px','remark-input')}</td><td><button class="btn danger small" onclick="removeAlloc(${i})">×</button></td></tr>`}
 function setActual(i,v){models[i].actualQty=v===''?null:n(v);generateAllocations();renderCalc()}
 function togglePackingDetails(){const wrap=$('allocationWrap');wrap.classList.toggle('packing-details-collapsed');const hidden=wrap.classList.contains('packing-details-collapsed');$('packingToggle').textContent=hidden?'＋ Show Packing Details':'− Hide Packing Details';}
 /* ---------- Print templates: Shipment Slip · Delivered Complete summary · ใบส่งงาน (Delivery Note, 1 page) ---------- */
@@ -567,8 +573,10 @@ const PIONEER_LOGO='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My
 function printLogoSrc(){return savedLogo()||PIONEER_LOGO}
 function chooseLogo(){const f=$('logoFile');if(f){f.value='';f.click()}}
 function clearLogo(){try{localStorage.removeItem(LOGO_KEY)}catch(e){}renderLogoCard()}
+function renderHeaderLogo(){const i=$('topLogo');if(i)i.src=printLogoSrc()}
+renderHeaderLogo();
 function renderLogoCard(){
-  const el=$('logoCard');if(!el)return;const d=savedLogo();
+  renderHeaderLogo();const el=$('logoCard');if(!el)return;const d=savedLogo();
   el.innerHTML='<div class="logoprev"><img src="'+esc(printLogoSrc())+'" alt="Pioneer logo"></div><div><div class="sub" style="margin-bottom:8px">'+(d?'ใช้โลโก้ที่อัปโหลดไว้ในเบราว์เซอร์นี้ (กด Remove เพื่อกลับไปใช้โลโก้ Pioneer มาตรฐาน)':'ใช้โลโก้ Pioneer มาตรฐานที่ฝังในระบบ — อัปโหลดเพื่อเปลี่ยนเฉพาะเบราว์เซอร์นี้ (ไม่จำเป็น)')+'</div><button class="btn secondary small" onclick="chooseLogo()">⬆ Upload logo</button> <button class="btn secondary small" onclick="clearLogo()"'+(d?'':' disabled')+'>Remove</button></div>';
 }
 function onLogoFile(ev){
@@ -753,6 +761,79 @@ function printShipmentSlip(){
   if(!models.length||!allocations.length)return alert('Please add Shipment Model and generate Pallet Allocation first.');
   const p=makePlan();openPrintDoc(slipHtml(p));
 }
+/* ---------- Print: Loading Sketch · เตรียมงาน (A4 landscape, ONE page): container 3D + how each pallet is built ---------- */
+const SKETCH_CSS=`
+@page{size:A4 landscape;margin:7mm}
+.sk.sheet{width:297mm;height:210mm;min-height:0;padding:7mm 8mm;overflow:hidden;margin:14px auto}
+.sk .hd{padding-bottom:4px;border-bottom-width:2px}.sk .logo{flex:0 0 44mm;height:11mm}.sk .logo img{max-width:44mm;max-height:11mm}.sk .ttl h1{font-size:16px}.sk .ttl .th{font-size:10.5px}
+.sk .top{display:flex;gap:3mm;margin-top:2.5mm;height:80mm}
+.sk .cont{flex:0 0 auto;border:1px solid var(--ln);border-radius:2mm;overflow:hidden;background:#eef5fc}.sk .cont svg{display:block;height:100%;width:auto}
+.sk .side{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.6mm;font-size:8.5px;overflow:hidden}
+.sk .info{display:grid;grid-template-columns:repeat(3,1fr);gap:1mm}
+.sk .info div{border:1px solid var(--ln);border-radius:1.2mm;padding:.8mm 1.6mm;line-height:1.25}.sk .info span{display:block;font-size:6.5px;letter-spacing:.05em;color:var(--mut);font-weight:600;text-transform:uppercase}.sk .info b{display:block;font-size:9.5px;font-weight:700;word-break:break-word}
+.sk .info .hl{background:var(--bt);border-color:#ecc3cf}
+.sk .lg{display:flex;flex-wrap:wrap;gap:.6mm 3mm;font-size:7.5px;line-height:1.3}.sk .lg i{display:inline-block;width:2.6mm;height:2.6mm;border-radius:.5mm;margin-right:1mm;vertical-align:-.3mm;border:1px solid #0003}
+.sk h4{margin:0;font-size:8.5px;color:var(--bd);font-weight:800}
+.sk .pairs{display:flex;flex-wrap:wrap;gap:.8mm;font-size:7.5px;line-height:1.3}.sk .pairs span{background:#e7efff;color:#244f8e;border:1px solid #b9cdf3;border-radius:2mm;padding:0 1.6mm;font-weight:700;white-space:nowrap}
+.sk .help{font-size:7px;color:var(--mut);line-height:1.35}
+.sk .gt{margin:2mm 0 1mm;font-size:9.5px;font-weight:800;color:var(--bd);display:flex;gap:2mm;align-items:baseline}.sk .gt small{font-weight:500;color:var(--mut);font-size:7.5px}
+.sk .pg{display:grid;gap:1.6mm;height:80mm;align-content:start}
+.sk .pc{border:1px solid var(--ln);border-radius:1.5mm;overflow:hidden;background:#fff;display:flex;flex-direction:column;min-width:0}
+.sk .pc svg{display:block;width:100%}
+.sk .pc .cp{padding:.5mm 1.2mm .7mm;font-size:6.8px;line-height:1.25;border-top:1px solid var(--ln);min-width:0}.sk .pc .cp b{display:block;font-size:7.6px;color:var(--bd)}.sk .pc .cp div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk .pc .cp .st{color:#244f8e;font-weight:700}
+.sk .sg2{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;margin-top:auto;padding-top:1.5mm}.sk .sg2 div{border-top:1px solid #555;text-align:center;font-size:7.5px;color:var(--mut);padding-top:.8mm}
+@media print{.sk.sheet{width:auto;height:196mm;margin:0;padding:0}}`;
+// Everything the sketch shows for a SAVED / current plan (computed with that plan loaded, then everything is put back)
+function sketchData(p){
+  return withPlanCtx(p,()=>{
+    const st=planStacking(),sc=buildScene(st),layouts=sc.layouts,pls=st.pls;
+    const container=s3svg(sc,{cam:{yaw:-34,pitch:30,zoom:1},look:'model',gid:'skbg',hint:false}).html;
+    const groups=[],byKey=new Map();
+    pls.forEach(pl=>{
+      const sig=pl.kind+'|'+Math.round(pl.h)+'|'+pl.rows.map(a=>[a.shipmentModel,a.packingModel,n(a.qtyPallet),n(a.ctnNo),n(a.palletH),a.stack].join(':')).join('/');
+      let g=byKey.get(sig);if(!g){g={sig,pl,seqs:[],tags:new Set()};byKey.set(sig,g);groups.push(g)}
+      g.seqs.push(pl.seq);const tg=stackTag(st,pl);if(tg)g.tags.add(tg.txt);
+    });
+    groups.forEach(g=>{const pl=g.pl,lay=pl.mix?layouts.find(x=>x.group.toLowerCase()===pl.key.slice(4)):null;
+      g.svg=pal3dSvg({pl,g:lay,colorOf:simColor},{yaw:-34,pitch:28},330,290,false)});
+    const models_=[...new Set(models.map(m=>m.model))].map(m=>({model:m,color:simColor(m),qty:pls.reduce((s,pl)=>s+(pl.byModel.find(x=>x.model===m)?.qty||0),0)}));
+    const pairs=st.pairs.map(x=>({a:Math.min(x.bottom.seq,x.top.seq),b:Math.max(x.bottom.seq,x.top.seq),bottom:x.bottom.seq,top:x.top.seq,h:x.bottom.h+x.top.h}));
+    return {st,sc,container,groups,models:models_,pairs,gross:pls.reduce((s,pl)=>s+pl.gross,0),type:$('containerType').value,H:st.H};
+  });
+}
+// columns that make the pallet drawings as large as possible inside W x H (mm); capH = caption height
+function sketchGrid(nItems,W,H,capH,gap){
+  let best={c:1,s:0};
+  for(let c=1;c<=Math.max(1,nItems);c++){const rows=Math.ceil(nItems/c),cw=(W-(c-1)*gap)/c,ch=(H-(rows-1)*gap)/rows-capH,s=Math.min(cw,ch*330/290);if(s>best.s)best={c,s,cw,rows}}
+  return best;
+}
+function sketchHtml(p){
+  const D=sketchData(p),sm=p.summary||{},C=D.sc,gridW=281,gridH=79,capH=10.5,gap=1.6;
+  const g=sketchGrid(D.groups.length,gridW,gridH,capH,gap),drawH=Math.max(8,Math.min((gridH-(g.rows-1)*gap)/g.rows-capH,g.cw*290/330));
+  const cell=(x)=>{const pl=x.pl,seq=rangeList(x.seqs.slice().sort((a,b)=>a-b)),cnt=x.seqs.length>1?' ×'+x.seqs.length:'';
+    const ttl=pl.kind==='mix'?pl.label:pl.kind==='rem'?'Pallet เศษ':pl.rows[0].shipmentModel;
+    const cont=pl.byModel.map(m=>m.model+' ×'+fmt(m.qty)).join(' + ');
+    const tl=[...x.tags],tags=tl.length?(tl.length>2?tl.slice(0,2).join(' · ')+' +'+(tl.length-2):tl.join(' · ')):(pl.units?'Stack ×2':'');
+    return '<div class="pc"><svg viewBox="0 0 330 290" style="height:'+drawH.toFixed(1)+'mm" preserveAspectRatio="xMidYMid meet">'+x.svg+'</svg><div class="cp"><b>No. '+esc(seq)+esc(cnt)+'</b><div>'+esc(ttl===pl.rows[0].shipmentModel?'':ttl+' · ')+esc(cont)+'</div><div>H '+fmt(pl.h)+' cm · '+fmt(pl.gross)+' kg'+(tags?' · <span class="st">'+esc(tags)+'</span>':'')+'</div></div></div>'};
+  const info=(l,v,c)=>'<div'+(c?' class="'+c+'"':'')+'><span>'+l+'</span><b>'+esc(v===undefined||v===null||v===''?'-':v)+'</b></div>';
+  const side='<div class="side"><div class="info">'+info('Request Date',p.requestDate,'hl')+info('ETD PTM',p.etd)+info('Delivery',(p.deliveryTime||'-')+' น.')+info('Destination · Port',(p.destination||'-')+' · '+(p.port||'-'))+info('Order / Ship',[p.orderType,p.shipBy].filter(Boolean).join(' · '))+info('Container',D.type+' · '+C.L+'×'+C.W+'×'+C.H+' cm')
+    +info('Physical Pallet',D.st.physical+' ใบ','hl')+info('พื้นตู้ใช้',D.st.floorUsed+' / '+D.st.cap+' ตำแหน่ง')+info('Gross',fmt(D.gross)+' kg')+'</div>'
+    +'<h4>Model (สีในภาพ)</h4><div class="lg">'+D.models.map(m=>'<span><i style="background:'+m.color+'"></i>'+esc(m.model)+' · '+fmt(m.qty)+' pcs</span>').join('')+'</div>'
+    +(D.pairs.length?'<h4>Pallet ซ้อน 2 ชั้น (Stack) · ล่าง ▼ / บน ▲</h4><div class="pairs">'+D.pairs.map(x=>'<span>Stack '+x.a+'-'+x.b+' <small>▼'+x.bottom+' ▲'+x.top+' · '+fmt(x.h)+' cm</small></span>').join('')+'</div>':'')
+    +'<div class="help">ป้ายเลขในภาพ = Pallet No. (ลำดับโหลดเข้าตู้) · <b>Mix n</b> = Mix Pallet · <b>เศษ</b> = Pallet เศษ · <b>Stack ×2</b> = Model เดียวกัน 2 ใบซ้อนกัน (นับ 1 ตำแหน่ง) · ป้ายฟ้า ▲/▼ = คู่ที่ซ้อนกัน · หัวตู้อยู่ซ้าย ประตูอยู่ขวา'+(D.sc.over.length?' · <b style="color:#b42318">เกินตู้ '+D.sc.over.length+' ตำแหน่ง</b>':'')+'</div></div>';
+  const body='<main class="sheet sk">'+slipHeader('LOADING SKETCH','ภาพการจัดวางงาน · สำหรับเตรียมชิ้นงาน (Pallet + ตู้)',p.planId||'-','Request '+(p.requestDate||'-'))
+    +'<div class="top"><div class="cont"><svg viewBox="0 0 1000 520">'+D.container+'</svg></div>'+side+'</div>'
+    +'<div class="gt">รูปการวางงานบน Pallet <small>Pallet ที่หน้าตาเหมือนกันรวมเป็นใบเดียว (×จำนวน) · '+D.groups.length+' แบบ จาก '+D.st.physical+' Pallet</small></div>'
+    +'<div class="pg" style="grid-template-columns:repeat('+g.c+',minmax(0,1fr))">'+D.groups.map(cell).join('')+'</div>'
+    +'<div class="sg2"><div>จัดเตรียมโดย (Warehouse)</div><div>ตรวจสอบโดย</div><div>โหลดโดย / Loading by</div></div>'+slipFoot()+'</main>';
+  return docShell('Loading Sketch '+(p.planId||''),body,'A4 แนวนอน · 1 หน้า').replace('</style>',SKETCH_CSS+'</style>');
+}
+function printSketch(){
+  if(!models.length||!allocations.length)return alert('Please add Shipment Model and generate Pallet Allocation first.');
+  openPrintDoc(sketchHtml(makePlan()));
+}
+function printSketchPlan(id){const p=plans.find(x=>x.planId===id);if(!p)return;if(!(p.allocations||[]).length)return alert('แผนนี้ไม่มีข้อมูล Pallet Allocation');openPrintDoc(sketchHtml(p))}
 // Photos for the print: fresh signed URLs from the "photos" function (valid 15 min; the print window waits for them to load)
 async function phForPrint(id){
   const a=phApi();if(!a)return {error:'ต้องล็อกอินและเชื่อม Supabase จึงจะดึงรูปมาพิมพ์ได้'};
@@ -986,15 +1067,51 @@ function renderDeliveryBoard(){
 
 /* ---------- Delivery Booking: order = Firm; filling truck data = Delivered Complete ---------- */
 function bkHist(){const rows=[];plans.forEach(p=>{const b=p.booking;if(b&&(b.driver||b.subTruck||b.truckPlate||b.loadingBy))rows.push({b,pid:p.planId})});rows.sort((a,c)=>String(c.b.updatedAt||'').localeCompare(String(a.b.updatedAt||'')));return rows}
+// Type-ahead instead of a history table: every field suggests what was typed before (most used first). When a known value is picked / completed,
+// the related fields that are still empty are filled from the latest booking that used it (driver <-> sub truck <-> plate, + loading by). Always editable.
+const BK_FIELDS=['driver','subTruck','truckPlate','loadingBy'],BK_LINK=['driver','subTruck','truckPlate'];
 let BKH=[];
 function bkFillHistory(){
-  const h=bkHist();
-  [['loadingBy','dl_loadingBy'],['driver','dl_driver'],['subTruck','dl_subTruck'],['truckPlate','dl_truckPlate']].forEach(([k,id])=>{const e=$(id);if(e)e.innerHTML=[...new Set(h.map(r=>r.b[k]).filter(Boolean))].map(v=>'<option value="'+esc(v)+'">').join('')});
-  const seen=new Map();h.forEach(r=>{const key=[r.b.driver,r.b.subTruck,r.b.truckPlate,r.b.loadingBy].join('|');if(!seen.has(key))seen.set(key,{b:r.b,count:0,last:r.b.loadDate||''});seen.get(key).count++});
-  BKH=[...seen.values()].slice(0,10);
-  $('bkHistory').innerHTML=BKH.length?'<table><thead><tr><th>พขร.</th><th>Sub control truck</th><th>ทะเบียน</th><th>Loading by</th><th>ครั้ง</th><th>ล่าสุด</th><th></th></tr></thead><tbody>'+BKH.map((r,i)=>'<tr><td>'+esc(r.b.driver||'-')+'</td><td>'+esc(r.b.subTruck||'-')+'</td><td>'+esc(r.b.truckPlate||'-')+'</td><td>'+esc(r.b.loadingBy||'-')+'</td><td>'+r.count+'</td><td>'+esc(r.last||'-')+'</td><td><button class="btn secondary small" onclick="useBkHist('+i+')">Use</button></td></tr>').join('')+'</tbody></table>':'<div class="sub" style="padding:10px">ยังไม่มีประวัติการกรอก</div>';
+  const h=bkHist(),cnt={};
+  BKH=h.map(r=>r.b);                                         // newest first
+  BK_FIELDS.forEach(k=>{const m=new Map();BKH.forEach(b=>{const v=String(b[k]||'').trim();if(!v)return;const e=m.get(v)||{v,c:0,b};e.c++;m.set(v,e)});cnt[k]=[...m.values()].sort((x,y)=>y.c-x.c)});
+  const el=k=>$('dl_'+k);
+  BK_FIELDS.forEach(k=>{const e=el(k);if(!e)return;
+    e.innerHTML=cnt[k].map(x=>{const hint=k==='driver'?[x.b.subTruck,x.b.truckPlate].filter(Boolean).join(' · '):k==='subTruck'?[x.b.driver,x.b.truckPlate].filter(Boolean).join(' · '):k==='truckPlate'?[x.b.driver,x.b.subTruck].filter(Boolean).join(' · '):'';
+      return '<option value="'+esc(x.v)+'"'+(hint?' label="'+esc(x.v+' — '+hint)+'"':'')+'>'}).join('')});
+  const m=$('bkGuessMsg');if(m)m.textContent='';
 }
-function useBkHist(i){const r=BKH[i];if(!r)return;['driver','subTruck','truckPlate','loadingBy'].forEach(k=>{if(r.b[k])$('bk_'+k).value=r.b[k]})}
+function bkGuess(key,ev){
+  // an <input> event from typing has ev.inputType 'insertText'/'deleteContent…'; picking a datalist option gives 'insertReplacementText' (or no inputType)
+  if(ev&&ev.inputType&&ev.inputType!=='insertReplacementText')return;
+  if(!BK_LINK.includes(key)&&key!=='loadingBy')return;
+  const e=$('bk_'+key);if(!e)return;const v=String(e.value||'').trim().toLowerCase(),gm=$('bkGuessMsg');if(gm)gm.textContent='';if(!v)return;
+  const rec=BKH.find(b=>String(b[key]||'').trim().toLowerCase()===v);if(!rec)return;
+  if(key==='loadingBy')return;                                // a loader is not tied to one truck: suggestion only
+  const filled=[];
+  BK_FIELDS.forEach(k=>{if(k===key||!rec[k])return;const t=$('bk_'+k);if(t&&!String(t.value||'').trim()){t.value=rec[k];filled.push(({driver:'พขร.',subTruck:'Sub control truck',truckPlate:'ทะเบียน',loadingBy:'Loading by'})[k])}});
+  const m=$('bkGuessMsg');if(m)m.textContent=filled.length?'💡 เติมให้จากครั้งก่อน: '+filled.join(', ')+' (แก้ไขได้)':'';
+}
+/* ---------- 3D View inside the Delivery Booking dialog (the plan's own pallets, drag to rotate) ---------- */
+const BK3={plan:null,sc:null,cam:{yaw:-34,pitch:30,zoom:1},look:'model',fit:null,drag:null,raf:0};
+function bk3Render(p){
+  const box=$('bk3dBox');if(!box)return;BK3.plan=null;BK3.sc=null;
+  if(!(p.allocations||[]).length){box.style.display='none';return}
+  BK3.plan=p;BK3.cam=Object.assign({},S3_CAM);BK3.look='model';BK3.fit=null;$('bk3LookBtn').textContent='Kraft';
+  const info=withPlanCtx(p,()=>{const st=planStacking(),sc=buildScene(st);BK3.sc=sc;return {used:st.floorUsed,cap:st.cap,phys:st.physical,pairs:st.pairs.length,over:sc.over.length,type:$('containerType').value,L:sc.L,W:sc.W,H:sc.H,tags:st.pairs.map(x=>'Stack '+Math.min(x.bottom.seq,x.top.seq)+'-'+Math.max(x.bottom.seq,x.top.seq))}});
+  $('bk3Info').innerHTML=esc(info.type)+' · '+info.L+' × '+info.W+' × '+info.H+' cm · Physical Pallet <b>'+info.phys+'</b> · พื้นตู้ '+info.used+' / '+info.cap+' ตำแหน่ง'+(info.pairs?' · ซ้อน '+info.pairs+' คู่ ('+esc(info.tags.join(', '))+')':'')+(info.over?' · <b style="color:var(--red)">เกินตู้ '+info.over+' ตำแหน่ง</b>':'')+' · ลากเพื่อหมุน · ล้อเมาส์ = ซูม';
+  box.style.display='';bk3Draw(false);
+}
+function bk3Draw(freeze){
+  if(!BK3.plan||!BK3.sc)return;const svg=$('bk3d');if(!svg)return;
+  const r=withPlanCtx(BK3.plan,()=>s3svg(BK3.sc,{cam:BK3.cam,look:BK3.look,fit:BK3.fit,freeze,gid:'bk3bg',hint:false}));BK3.fit=r.fit;svg.innerHTML=r.html;
+}
+function bk3view(yaw,pitch){BK3.cam.yaw=yaw;BK3.cam.pitch=pitch;BK3.cam.zoom=1;bk3Draw(false)}
+function bk3Look(){BK3.look=BK3.look==='kraft'?'model':'kraft';$('bk3LookBtn').textContent=BK3.look==='kraft'?'ตาม Model':'Kraft';bk3Draw(false)}
+function bk3down(e){if(e.button>0)return;const c=BK3.cam;BK3.drag={x:e.clientX,y:e.clientY,yaw:c.yaw,pitch:c.pitch};try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}}
+function bk3move(e){const d=BK3.drag;if(!d)return;const c=BK3.cam;c.yaw=d.yaw+(e.clientX-d.x)*.45;c.pitch=Math.max(4,Math.min(88,d.pitch+(e.clientY-d.y)*.35));if(!BK3.raf)BK3.raf=requestAnimationFrame(()=>{BK3.raf=0;if(BK3.drag)bk3Draw(true)})}
+function bk3up(){const d=BK3.drag;BK3.drag=null;if(d)bk3Draw(false)}
+function bk3wheel(e){e.preventDefault();const c=BK3.cam;c.zoom=Math.max(.6,Math.min(3,c.zoom*(e.deltaY<0?1.12:1/1.12)));bk3Draw(false)}
 function bkRenderState(p){
   const i=delivInfo(p),sl=p.slides||[];
   $('bkState').innerHTML='สถานะ: '+chip(i)+(sl.length?'<div class="sub" style="margin-top:6px">ประวัติ Slide (วันที่ Booking เดิม '+esc(planDay(p))+' '+esc(p.deliveryTime||'')+'):<br>'+sl.map(s=>esc(s.fromDate+' '+(s.fromTime||''))+' → <b>'+esc(s.toDate+' '+(s.toTime||''))+'</b>'+(s.reason?' · '+esc(s.reason):'')).join('<br>')+'</div>':'')+(p.cancel?'<div class="sub" style="margin-top:6px">Cancel: '+esc(p.cancel.reason||'-')+' ('+esc(String(p.cancel.at||'').slice(0,10))+')</div>':'');
@@ -1012,7 +1129,7 @@ function openBooking(id){
   $('bkPlanInfo').innerHTML='<b>'+esc(p.destination)+' · '+esc(p.port)+'</b> · Firm Booking เดิม '+esc(planDay(p)||'-')+' '+esc(p.deliveryTime||'')+' (เวลาไทย) · '+esc(p.shipBy||'')+' · '+fmt(p.summary?.pallets)+' Pallet · '+fmt(p.summary?.gross)+' kg';
   ['containerNo','sealNo','loadingBy','invoiceNo','loadDate','loadTime','driver','subTruck','truckPlate'].forEach(k=>$('bk_'+k).value=b[k]||'');
   $('bk_prep').value=p.prep||'';$('bk_prep').disabled=bkComplete(p)||!!p.cancel;$('bkPrepMsg').textContent=(bkComplete(p)||p.cancel)?'ปิดงานแล้ว (สำเร็จ / Cancel) ไม่ต้องตั้งสถานะจัดเตรียม':'';$('bk_slideDate').value=effDay(p)||'';$('bk_slideTime').value=effTime(p)||'';$('bk_slideReason').value='';
-  $('bkWarn').innerHTML='';bkFillHistory();bkRenderState(p);bkApplyAccess();$('bkPrint').style.display=(bkComplete(p)&&!p.cancel)?'':'none';bkPrintLabel(p);$('bookModal').classList.add('open');bkPhotosInit(p);
+  $('bkWarn').innerHTML='';bkFillHistory();bkRenderState(p);bk3Render(p);bkApplyAccess();$('bkPrint').style.display=(bkComplete(p)&&!p.cancel)?'':'none';bkPrintLabel(p);$('bookModal').classList.add('open');bkPhotosInit(p);
 }
 function bkSnap(p){return JSON.stringify({booking:p.booking,slides:p.slides,cancel:p.cancel})}
 function bkRestore(p,s){const o=JSON.parse(s);p.booking=o.booking;p.slides=o.slides;p.cancel=o.cancel}
@@ -1385,7 +1502,7 @@ function floorOver(){
     msg:'ไม่สามารถบันทึกได้: Physical Pallet '+st.physical+(st.pairs.length?' (ซ้อน 2 ชั้น '+st.pairs.length+' คู่)':'')+' ใช้พื้นตู้ '+st.floorUsed+' ตำแหน่ง เกินความจุ '+st.cap+' ('+type+') เกิน '+(st.floorUsed-st.cap)+' ตำแหน่ง\nปรับ Qty / จัด Mix Pallet ใหม่ หรือแยกตู้ก่อนบันทึก'};
 }
 function renderFloorStatus(){
-  const st=planStacking(),fo=floorOver(),sb=$('savePlanBtn');if(sb){sb.disabled=fo.over||!planEditable();sb.title=fo.over?fo.msg:(planEditable()?'':'สิทธิ์ของคุณแก้ไขแผนที่บันทึกแล้วไม่ได้ (Slide / Cancel ได้ที่ Delivery Board)')}
+  const st=planStacking(),fo=floorOver(),sb=$('savePlanBtn');paintStackLabels(st);if(sb){sb.disabled=fo.over||!planEditable();sb.title=fo.over?fo.msg:(planEditable()?'':'สิทธิ์ของคุณแก้ไขแผนที่บันทึกแล้วไม่ได้ (Slide / Cancel ได้ที่ Delivery Board)')}
   const type=$('containerType').value,over=Math.max(0,st.floorUsed-st.cap),pk=st.pairs.length?' · ซ้อน Pallet 2 ชั้น '+st.pairs.length+' คู่ (คู่ที่ซ้อน = 1 ตำแหน่งพื้น)':'';
   $('floorStatus').innerHTML=over?'<div class="note" style="margin-top:10px"><b>เกินความจุพื้นตู้ Layer 1 · ปุ่ม Save ถูก Block:</b> Physical Pallet '+st.physical+pk+' → ใช้พื้น '+st.floorUsed+' / '+st.cap+' ตำแหน่ง ('+esc(type)+') เกิน '+over+' ตำแหน่ง · ต้องแยกตู้ (อย่างน้อย '+Math.ceil(st.physical/(st.cap*(st.on?2:1)))+' ตู้)'+(st.on&&st.pairs.length<st.needed?' · ซ้อนได้ไม่พอ: ตัวล่าง (Layer 1) ต้องผิวหน้าเรียบ/หนักกว่าและสูง ≤ '+MIX_MAX_H+' cm · ตัวบนไม่ต้องปรับเรียบ แต่สูงรวมต้อง ≤ '+st.H+' cm':'')+'</div>':'<div class="success" style="margin-top:10px">Floor Layer 1: ใช้พื้น '+st.floorUsed+' / '+st.cap+' ตำแหน่ง ('+esc(type)+') · เหลือ '+(st.cap-st.floorUsed)+' ตำแหน่ง · Physical Pallet '+st.physical+pk+'</div>';
 }
@@ -1393,6 +1510,20 @@ function renderFloorStatus(){
 // "#12" = Pallet No. (loading order, the same number printed on the 3D view); Layer 1 = on the container floor, Layer 2 = stacked on top
 function palName(pl){return '<b>#'+pl.seq+'</b> '+(pl.kind==='mix'?esc(pl.label):esc(pl.rows[0].shipmentModel)+' <span class="sub">'+esc((pl.kind==='rem'?'Pallet เศษ · ':'')+pl.skid)+'</span>')+(pl.units?' <span class="chip new">Stack × 2 Pallet</span>':'')}
 function palSub(pl){return pl.byModel.map(m=>esc(m.model)+' ×'+fmt(m.qty)).join(', ')+' · '+fmt(pl.h)+' cm · '+fmt(pl.gross)+' kg'}
+// Text for "which pallet is stacked with which": a pair of different pallets = "Stack 18-19" (lower Pallet No. first, tooltip says which one is on the bottom);
+// one Seq holding 2 pallets of the same Model (Stack = Y, e.g. 64 x 2 = 128) = "Stack ×2"; otherwise ''
+function stackTag(st,pl){
+  const pr=st.pairs.find(x=>x.bottom===pl||x.top===pl);
+  if(pr){const a=Math.min(pr.bottom.seq,pr.top.seq),b=Math.max(pr.bottom.seq,pr.top.seq);return {txt:'Stack '+a+'-'+b,title:'ซ้อนกัน: ล่าง Pallet '+pr.bottom.seq+' · บน Pallet '+pr.top.seq,pair:true}}
+  if(pl.units)return {txt:'Stack ×2',title:'Pallet Model เดียวกัน 2 ใบซ้อนกัน (นับเป็น 1 ตำแหน่ง)',pair:false};
+  return null;
+}
+function paintStackLabels(st){
+  document.querySelectorAll('#allocations .stkpair').forEach(el=>{
+    const pl=st.pls.find(x=>x.seq===Number(el.dataset.seq)),t=pl&&stackTag(st,pl);
+    el.innerHTML=t?'<span class="chip '+(t.pair?'stkp':'cus')+'" title="'+esc(t.title)+'">'+esc(t.txt)+'</span>':'';
+  });
+}
 function stackPartner(st,pl){const pr=st.pairs.find(x=>x.bottom===pl||x.top===pl);return pr?{pair:pr,role:pr.top===pl?'L2':'L1',other:pr.top===pl?pr.bottom:pr.top}:null}
 function stackPlanHtml(st){
   const H=st.H;
@@ -1578,31 +1709,39 @@ function s3paint(items,v,Q){
   });
   return o;
 }
-function s3draw(freeze){
-  const sc=SIM3.scene,svg=document.getElementById('sim3d');if(!sc||!svg)return;
-  const cam=SIM3.cam,VW=1000,VH=520,th=cam.yaw*Math.PI/180,ph=cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph);
+// Pure renderer: scene + camera -> SVG markup. Used by the 3D View in WH Calculate, the Delivery Booking dialog and the printed sketch.
+// o = {cam, look:'model'|'kraft', fit (kept while dragging), freeze, gid (gradient id), hint (bottom caption)}
+function s3svg(sc,o){
+  const cam=o.cam,VW=1000,VH=520,th=cam.yaw*Math.PI/180,ph=cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph),gid=o.gid||'s3bg';
+  const keepLook=SIM3.look;if(o.look)SIM3.look=o.look;
+  try{
   const v=[-cp*st,-cp*ct,sp],cx=sc.L/2,cy=sc.W/2,cz=sc.H/2;
   const P=(x,y,z)=>{const dx=x-cx,dy=y-cy,dz=z-cz;return [dx*ct-dy*st,-(dz*cp+(dx*st+dy*ct)*sp)]};
   const items=s3order(s3items(sc,v),v,P);
-  let f=freeze&&SIM3.fit;
+  let f=o.freeze&&o.fit;
   if(!f){
     let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const pt=(x,y,z)=>{const q=P(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])};
     items.forEach(i=>{const b=i.b;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>pt(x,y,z))))});
     pt(-75,sc.W/2,-30);pt(sc.L+75,sc.W/2,-30);if(sc.over.length)pt(0,sc.W+160,0);
     const k=Math.min((VW-50)/Math.max(1,x1-x0),(VH-60)/Math.max(1,y1-y0))*cam.zoom;
-    f=SIM3.fit={k,ox:VW/2-(x0+x1)/2*k,oy:VH/2-(y0+y1)/2*k+6};
+    f={k,ox:VW/2-(x0+x1)/2*k,oy:VH/2-(y0+y1)/2*k+6};
   }
   const Q=(x,y,z)=>{const q=P(x,y,z);return [f.ox+q[0]*f.k,f.oy+q[1]*f.k]},pts=a=>a.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
-  let o='<rect width="'+VW+'" height="'+VH+'" rx="10" fill="url(#s3bg)"/>';
+  let h='<rect width="'+VW+'" height="'+VH+'" rx="10" fill="url(#'+gid+')"/>';
   // soft ground shadow
-  o+='<polygon points="'+pts([Q(-4+34,-4+30,-7),Q(sc.L+4+34,-4+30,-7),Q(sc.L+4+34,sc.W+4+30,-7),Q(-4+34,sc.W+4+30,-7)])+'" fill="#1d3f73" opacity=".13"/>';
-  o+=s3paint(items,v,Q);
+  h+='<polygon points="'+pts([Q(-4+34,-4+30,-7),Q(sc.L+4+34,-4+30,-7),Q(sc.L+4+34,sc.W+4+30,-7),Q(-4+34,sc.W+4+30,-7)])+'" fill="#1d3f73" opacity=".13"/>';
+  h+=s3paint(items,v,Q);
   const a=Q(0,sc.W/2,-7),b=Q(sc.L,sc.W/2,-7),halo='style="paint-order:stroke;stroke:#eef5fc;stroke-width:4px;font-weight:700"';
-  if(Math.abs(v[1])>=.35)o+='<text x="'+a[0].toFixed(1)+'" y="'+(a[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>หัวตู้ (Front)</text><text x="'+b[0].toFixed(1)+'" y="'+(b[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>ประตู (Door)</text>';
-  if(sc.over.length&&sc.overLabel){const q=Q(sc.overLabel.x,sc.overLabel.y,sc.overLabel.z);o+='<text x="'+q[0].toFixed(1)+'" y="'+q[1].toFixed(1)+'" font-size="12" fill="#dc2626" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:4px;font-weight:700">นอกตู้ · ไม่มีที่ '+sc.over.length+' ตำแหน่ง'+(sc.over.length>8?' (แสดง 8)':'')+'</text>'}
-  o+=s3labels(sc,v,Q,VW,VH);
-  o+='<text x="12" y="'+(VH-10)+'" font-size="11" fill="#5b7396">ลากเพื่อหมุน · ล้อเมาส์ = ซูม · '+Math.round(cam.yaw)+'° / '+Math.round(cam.pitch)+'°</text>';
-  svg.innerHTML='<defs><linearGradient id="s3bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4e7f8"/><stop offset="1" stop-color="#eef5fc"/></linearGradient></defs>'+o;
+  if(Math.abs(v[1])>=.35)h+='<text x="'+a[0].toFixed(1)+'" y="'+(a[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>หัวตู้ (Front)</text><text x="'+b[0].toFixed(1)+'" y="'+(b[1]+17).toFixed(1)+'" font-size="12" fill="#244f8e" text-anchor="middle" '+halo+'>ประตู (Door)</text>';
+  if(sc.over.length&&sc.overLabel){const q=Q(sc.overLabel.x,sc.overLabel.y,sc.overLabel.z);h+='<text x="'+q[0].toFixed(1)+'" y="'+q[1].toFixed(1)+'" font-size="12" fill="#dc2626" text-anchor="middle" style="paint-order:stroke;stroke:#fff;stroke-width:4px;font-weight:700">นอกตู้ · ไม่มีที่ '+sc.over.length+' ตำแหน่ง'+(sc.over.length>8?' (แสดง 8)':'')+'</text>'}
+  h+=s3labels(sc,v,Q,VW,VH);
+  if(o.hint!==false)h+='<text x="12" y="'+(VH-10)+'" font-size="11" fill="#5b7396">ลากเพื่อหมุน · ล้อเมาส์ = ซูม · '+Math.round(cam.yaw)+'° / '+Math.round(cam.pitch)+'°</text>';
+  return {html:'<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4e7f8"/><stop offset="1" stop-color="#eef5fc"/></linearGradient></defs>'+h,fit:f};
+  }finally{SIM3.look=keepLook}
+}
+function s3draw(freeze){
+  const sc=SIM3.scene,svg=document.getElementById('sim3d');if(!sc||!svg)return;
+  const r=s3svg(sc,{cam:SIM3.cam,look:SIM3.look,fit:SIM3.fit,freeze});SIM3.fit=r.fit;svg.innerHTML=r.html;
 }
 /* ---------- Per-pallet 3D (Mix Pallet Dimension Calculation): the cartons of ONE pallet, drag to rotate (all cards turn together) ---------- */
 const PAL3={cam:{yaw:-34,pitch:28},cards:[],drag:null};
@@ -1612,17 +1751,18 @@ function pal3dItems(c){
   s3addPallet(add,c.pl,c.g,0,0,0,{cargoColor:c.colorOf,sw:null,swv:.6,pid:1,maxH:400,maxCartons:400});
   return it;
 }
-function pal3dDraw(svg){
-  const c=PAL3.cards[+svg.dataset.i];if(!c)return;
-  const W=330,H=290,th=PAL3.cam.yaw*Math.PI/180,ph=PAL3.cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph),v=[-cp*st,-cp*ct,sp],ch=c.pl.h;
+// Pure renderer for ONE pallet (c = {pl, g, colorOf}); W x H = size of the drawing, cam = {yaw,pitch}
+function pal3dSvg(c,cam,W,H,label){
+  const th=cam.yaw*Math.PI/180,ph=cam.pitch*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),cp=Math.cos(ph),sp=Math.sin(ph),v=[-cp*st,-cp*ct,sp],ch=c.pl.h;
   const P=(x,y,z)=>{const dx=x-55,dy=y-55,dz=z-ch/2;return [dx*ct-dy*st,-(dz*cp+(dx*st+dy*ct)*sp)]};
-  const items=s3order(it=pal3dItems(c),v,P);
+  const items=s3order(pal3dItems(c),v,P);
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;items.forEach(i=>{const b=i.b;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>{const q=P(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])})))});
-  const k=Math.min((W-30)/Math.max(1,x1-x0),(H-46)/Math.max(1,y1-y0)),ox=W/2-(x0+x1)/2*k,oy=H/2-(y0+y1)/2*k-4,Q=(x,y,z)=>{const q=P(x,y,z);return [ox+q[0]*k,oy+q[1]*k]};
+  const bot=label===false?10:46,k=Math.min((W-30)/Math.max(1,x1-x0),(H-bot)/Math.max(1,y1-y0)),ox=W/2-(x0+x1)/2*k,oy=(label===false?H/2:H/2-4)-(y0+y1)/2*k,Q=(x,y,z)=>{const q=P(x,y,z);return [ox+q[0]*k,oy+q[1]*k]};
   let o='<rect width="'+W+'" height="'+H+'" rx="8" fill="#eef5fc"/>'+s3paint(items,v,Q);
-  const q=Q(55,-6,ch+3);o+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="11" text-anchor="middle" fill="#244f8e" style="font-weight:700">110 × 110 × '+fmt(ch)+' cm</text>';
-  svg.innerHTML=o;
+  if(label!==false)o+='<text x="'+(W/2)+'" y="'+(H-8)+'" font-size="11" text-anchor="middle" fill="#244f8e" style="font-weight:700">110 × 110 × '+fmt(ch)+' cm</text>';
+  return o;
 }
+function pal3dDraw(svg){const c=PAL3.cards[+svg.dataset.i];if(!c)return;svg.innerHTML=pal3dSvg(c,PAL3.cam,330,290)}
 function pal3dAll(){document.querySelectorAll('svg.pal3d').forEach(pal3dDraw)}
 function p3down(e){if(e.button>0)return;const c=PAL3.cam;PAL3.drag={x:e.clientX,y:e.clientY,yaw:c.yaw,pitch:c.pitch};try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}}
 function p3move(e){const d=PAL3.drag;if(!d)return;const c=PAL3.cam;c.yaw=d.yaw+(e.clientX-d.x)*.5;c.pitch=Math.max(6,Math.min(88,d.pitch+(e.clientY-d.y)*.4));if(!PAL3.raf)PAL3.raf=requestAnimationFrame(()=>{PAL3.raf=0;pal3dAll()})}
@@ -1635,6 +1775,18 @@ function s3wheel(e){e.preventDefault();const c=SIM3.cam;c.zoom=Math.max(.6,Math.
 function s3reset(){SIM3.cam=Object.assign({},S3_CAM);s3draw(false)}
 function s3look(m){SIM3.look=m;document.querySelectorAll('.s3look button').forEach(b=>b.classList.toggle('on',b.dataset.look===m));s3draw(false)}
 function s3view(yaw,pitch){const c=SIM3.cam;c.yaw=yaw;c.pitch=pitch;c.zoom=1;s3draw(false)}
+// Scene of the container for the CURRENT form (or inside withPlanCtx: for any saved plan): floor positions, stacked pairs, Mix layouts
+function buildScene(st){
+  st=st||planStacking();const cap=st.cap,type=$('containerType').value,rowsN=Math.ceil(cap/2);
+  return {L:type==='40HC'?1203:rowsN*110+30,W:235,H:st.H,placed:st.positions.slice(0,cap),over:st.positions.slice(cap),layouts:calculateMixPalletLayouts(),st};
+}
+// Run fn with a SAVED plan loaded into the calculation globals (models, allocations, container fields) and put everything back afterwards (synchronous)
+function withPlanCtx(p,fn){
+  const sv={models,allocations,ct:$('containerType').value,fc:$('floorCap').value,ch:$('contH').value,sp:$('stackPallet').checked},s=p.summary||{};
+  models=JSON.parse(JSON.stringify(p.models||[]));allocations=JSON.parse(JSON.stringify(p.allocations||[]));
+  $('containerType').value=s.containerType||'40HC';$('floorCap').value=s.floorCap||20;$('contH').value=s.contH||269;$('stackPallet').checked=s.stackOn!==false;
+  try{return fn()}finally{models=sv.models;allocations=sv.allocations;$('containerType').value=sv.ct;$('floorCap').value=sv.fc;$('contH').value=sv.ch;$('stackPallet').checked=sv.sp}
+}
 function renderSimLayout(){
   const el=$('simLayout');if(!el)return;
   const st=planStacking(),pls=st.pls;
@@ -1642,7 +1794,7 @@ function renderSimLayout(){
   const cap=st.cap,H=st.H,type=$('containerType').value,rowsN=Math.ceil(cap/2),COLS=2;
   const L=type==='40HC'?1203:rowsN*110+30,W=235;
   const placed=st.positions.slice(0,cap),over=st.positions.slice(cap);
-  SIM3.scene={L,W,H,placed,over,layouts:calculateMixPalletLayouts()};SIM3.fit=null;
+  SIM3.scene=buildScene(st);SIM3.fit=null;
   const used=placed.length,emptyPos=Math.max(0,cap-used),freeM2=Math.max(0,(L*W-used*110*110)/10000),utl=Math.round(used*110*110/(L*W)*100);
   const legend='<div class="topview-legend" style="margin-top:8px">'+[...new Set(models.map(m=>m.model))].map(m=>'<i style="background:'+simColor(m)+'"></i>'+esc(m)+' ('+fmt(pls.reduce((s,pl)=>s+(pl.byModel.find(x=>x.model===m)?.qty||0),0))+' PCS)').join('')+'</div>';
   const label=ps=>ps.map(p=>p.seq).join(' ▲ ');
