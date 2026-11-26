@@ -168,6 +168,61 @@ setTimeout(async()=>{
   w.printDeliveryNote('DN-1');ok(opened&&/DELIVERY NOTE/.test(opened)&&!/DELIVERED COMPLETE SLIP/.test(opened),'printDeliveryNote opens ใบส่งงาน only');
   ok(!!d.getElementById('logoCard')&&!!d.getElementById('logoFile')&&/Pioneer logo/.test(d.getElementById('logoCard').innerHTML),'Management page shows the Pioneer logo setting');
   w.alert=()=>{};
+  // Container photos (R2): per-trip flag, 5 slots, bulk pick from the camera, role-aware, badge + filter
+  const calls=[];let store={};let cfg=true;
+  w.clcPhotos={async index(){return Object.keys(store).flatMap(pid=>Object.keys(store[pid]).map(s=>({plan_id:pid,slot:Number(s)})))},
+    async call(action,body){calls.push(action+(body&&body.slot?':'+body.slot:''));
+      if(action==='status')return {configured:cfg,role:'warehouse',canWrite:true};
+      if(action==='sign-view')return {photos:Object.keys(store[body.planId]||{}).map(s=>({slot:Number(s),url:'https://r2.test/'+body.planId+'/'+s+'?sig',bytes:1}))};
+      if(action==='sign-upload')return {key:'plans/'+body.planId+'/slot'+body.slot+'-k.jpg',url:'https://r2.test/put/'+body.slot,headers:{'Content-Type':'image/jpeg'}};
+      if(action==='commit'){(store[body.planId]=store[body.planId]||{})[body.slot]=1;return {photo:{}}}
+      if(action==='delete'){delete store[body.planId][body.slot];return {deleted:true}}
+      return {}}};
+  const puts=[];w.fetch=async(u,o)=>{puts.push(u+'|'+o.method+'|'+(o.headers&&o.headers['Content-Type']));return {ok:true,status:200}};
+  w.photoCompress=async f=>new w.Blob(['x'],{type:'image/jpeg'});
+  const pp=P('PH-1','09:00',{booking:full(day,'08:00')});w.plans=[pp,P('PH-2','10:00',{photoReq:true}),P('PH-3','11:00',{photoReq:true})];
+  store={'PH-2':{1:1,2:1,3:1,4:1,5:1},'PH-3':{1:1}};const PHs=w.eval('PH');PHs.loaded=false;PHs.tried=false;
+  await w.phLoadIndex(true);
+  const brow=id=>[...d.querySelectorAll('#bookTable tbody tr')].find(r=>r.textContent.includes(id));
+  ok(!/📷/.test(brow('PH-1').textContent)&&/📷 5\/5/.test(brow('PH-2').textContent)&&/📷 1\/5/.test(brow('PH-3').textContent),'booking table: 📷 n/5 badge only on trips that require photos');
+  ok(brow('PH-2').querySelector('.chip.ok:last-of-type')&&/📷 1\/5/.test(brow('PH-3').textContent)&&!!brow('PH-3').querySelector('.chip.bad'),'badge is green when complete, red when photos are missing');
+  d.getElementById('bkStatus').value='photo';w.renderBooking();
+  ok([...d.querySelectorAll('#bookTable tbody tr')].length===1&&brow('PH-3'),'filter "📷 รูปยังไม่ครบ" lists only incomplete trips that require photos');
+  d.getElementById('bkStatus').value='';w.renderBooking();
+  // open a trip that does not need photos, then tick the flag
+  await w.openBooking('PH-1');
+  ok(d.getElementById('bkPhotos').style.display==='none'&&d.getElementById('bk_photoReq').checked===false,'photo section hidden until the customer requires photos');
+  d.getElementById('bk_photoReq').checked=true;await w.bkTogglePhotoReq();
+  ok(pp.photoReq===true&&d.getElementById('bkPhotos').style.display==='','ticking the flag saves it on the trip and shows the 5 slots');
+  ok(d.querySelectorAll('#bkPhotoGrid .pslot').length===5&&/ก่อนโหลด/.test(d.getElementById('bkPhotoGrid').textContent)&&/Close Cargo door/.test(d.getElementById('bkPhotoGrid').textContent)&&/Seal/.test(d.getElementById('bkPhotoGrid').textContent),'5 slots: Cargo Empty, 50%, Loading complete, Close door, Seal / Lock');
+  // bulk: files named like a Canon, one slot already filled -> goes into empty slots 1,3,4,5 in file-name order
+  store['PH-1']={2:1};await w.bkPhotosLoad('PH-1');calls.length=0;puts.length=0;
+  const F=n=>new w.File(['img'],n,{type:'image/jpeg'});
+  await w.bkPhotoBulkChosen({files:[F('IMG_0010.JPG'),F('IMG_0002.JPG'),F('IMG_0003.JPG'),F('IMG_0004.JPG')]});
+  ok(calls.filter(c=>c.startsWith('sign-upload')).join()==='sign-upload:1,sign-upload:3,sign-upload:4,sign-upload:5'&&calls.filter(c=>c.startsWith('commit')).length===4,'bulk pick: sorted by file name and placed into the empty slots in order');
+  ok(puts.length===4&&puts.every(x=>/^https:\/\/r2\.test\/put\/\d\|PUT\|image\/jpeg$/.test(x)),'files are PUT straight to the presigned R2 URL as image/jpeg');
+  ok(d.querySelectorAll('#bkPhotoGrid .pslot.has').length===5&&phc('PH-1')===5,'all 5 slots filled after upload ('+phc('PH-1')+')');
+  function phc(id){return w.phCount(id)}
+  ok(/📷 5\/5/.test(brow('PH-1').textContent),'badge updates to 5/5 after uploading');
+  // errors: RAW / non-image rejected with a clear message
+  store['PH-1']={};await w.bkPhotosLoad('PH-1');
+  await w.phRunJobs('PH-1',[{f:new w.File(['x'],'IMG_1.CR3',{type:''}),slot:1}]);
+  ok(/RAW/.test(d.getElementById('bkPhotoMsg').textContent)&&!store['PH-1'][1],'RAW files (CR2/CR3) are rejected with a hint to shoot JPEG');
+  // delete
+  store['PH-1']={4:1};await w.bkPhotosLoad('PH-1');await w.bkPhotoDel(4);
+  ok(!store['PH-1'][4]&&calls.includes('delete:4'),'delete removes the photo through the function');
+  // R2 not configured
+  cfg=false;await w.bkPhotosLoad('PH-1');
+  ok(/ยังไม่ได้ตั้งค่า Cloudflare R2/.test(d.getElementById('bkPhotoMsg').textContent)&&d.querySelectorAll('#bkPhotoGrid button').length===0,'R2 not configured: clear message and no upload buttons');
+  cfg=true;
+  // viewer: sees photos but no upload/delete buttons
+  d.body.dataset.role='viewer';store['PH-1']={1:1};await w.bkPhotosLoad('PH-1');
+  ok(d.querySelectorAll('#bkPhotoGrid .pslot.has').length===1&&d.querySelectorAll('#bkPhotoGrid button').length===0&&d.getElementById('bkPhotoBulkBtn').style.display==='none','viewer role: can look at photos, no upload / delete buttons');
+  delete d.body.dataset.role;
+  // flag survives re-saving the plan from the calculator
+  w.plans=[Object.assign({},pp,{planId:'KEEP-1',photoReq:true})];d.getElementById('planId').value='KEEP-1';
+  ok(w.makePlan().photoReq===true,'photoReq is preserved when the plan is re-saved from WH Calculate');
+  w.closeModal('bookModal');
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
 },500);
