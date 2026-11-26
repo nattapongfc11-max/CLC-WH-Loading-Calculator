@@ -64,7 +64,7 @@ setTimeout(async()=>{
    ok(w.eval('BOARD.day')===far&&d.querySelector('#deliveryBoard tr.newrow')&&/NEW1/.test(d.querySelector('#deliveryBoard tr.newrow').textContent),'after saving, the board jumps to the plan day and marks the row as new');
    ok(d.getElementById('clcToast').classList.contains('show')&&d.getElementById('clcToast').textContent.includes(far)&&d.getElementById('clcToastBtn'),'toast says where the plan is, with a button to the board');
    w.setBoardDay(day);ok(!d.querySelector('#deliveryBoard tr.newrow'),'highlight is cleared when the user changes day');
-   const nodate=mk('NODATE','10:00',{requestDate:''});w.clcAfterPlanSaved(nodate);ok(/ไม่มี Log Request Container Date/.test(d.getElementById('clcToast').textContent),'plan without request date: user is told why it is not on the board');
+   const nodate=mk('NODATE','10:00',{requestDate:''});w.clcAfterPlanSaved(nodate);ok(/ไม่มี FG Ship Container Date \(ETD PTM\)/.test(d.getElementById('clcToast').textContent),'plan without request date: user is told why it is not on the board');
    w.plans=w.plans.filter(x=>x.planId!=='NEW1');w.renderDeliveryBoard();}
   // booking flow
   let saved=null;w.savePlanRecord=async p=>{saved=JSON.parse(JSON.stringify(p));return true};
@@ -100,11 +100,11 @@ setTimeout(async()=>{
   // simulate layout
   w.models=[{model:'A',planQty:600,actualQty:null,packingModel:'A'},{model:'B',planQty:100,actualQty:null,packingModel:'B'}];w.generateAllocations();w.renderCalc();
   const sim=d.getElementById('simLayout');
-  ok(sim.querySelectorAll('svg.simsvg').length===2,'Top View + Side View rendered');
-  ok(/SKID 1/.test(sim.textContent)&&/Top View/.test(sim.textContent)&&/Side View/.test(sim.textContent),'SKID numbers + view titles shown');
+  ok(sim.querySelectorAll('svg.sim3d').length===1&&sim.querySelectorAll('svg.simsvg').length===0,'one 3D View (no separate Top View / Side View)');
+  ok(sim.querySelectorAll('g.s3lab').length>=3&&/3D View/.test(sim.textContent)&&!/Top View|Side View/.test(sim.textContent),'Pallet No. labels + 3D View title shown');
   ok(sim.innerHTML.includes('ว่าง'),'empty space shown');
-  const fills=new Set([...sim.querySelectorAll('svg.simsvg rect[fill^="#"]')].map(x=>x.getAttribute('fill')));
-  ok(fills.has(w.simColor('A'))&&fills.has(w.simColor('B'))&&w.simColor('A')!==w.simColor('B'),'pallets coloured per model');
+  const fills=new Set([...sim.querySelectorAll('.topview-legend i')].map(x=>x.style.background).map(c=>c.startsWith('rgb')?c:c));const colorOf=m=>{const e=d.createElement('i');e.style.background=w.simColor(m);return e.style.background};
+  ok(fills.has(colorOf('A'))&&fills.has(colorOf('B'))&&w.simColor('A')!==w.simColor('B'),'legend shows one colour per model');
   w.models=[{model:'A',planQty:200*45,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(d.getElementById('simLayout').textContent.includes('เกินความจุพื้นตู้'),'over 20 floor positions flagged in simulation');
   // Mix calculation: flat stacking order, pallets <= 130 (125+5), Save blocked above floor capacity

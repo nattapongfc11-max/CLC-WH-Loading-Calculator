@@ -33,7 +33,7 @@ setTimeout(()=>{
   ok(gs.every(g=>g.totalHeight<=130),'every split pallet <= 130 cm ('+gs.map(g=>g.totalHeight).join(', ')+')');
   ok(w.allocations.reduce((s,a)=>s+a.ctnNo,0)===40&&w.allocations.reduce((s,a)=>s+a.qtyPallet,0)===400,'split keeps total cartons (40) and qty (400)');
   ok(w.physicalPalletCount()===2&&Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0)-14)<1e-6,'2 physical pallets -> tare 14 kg');
-  ok(gs[0].group==='Mix Pallet 1'&&/Mix Pallet 1 \(2\)/.test(gs[1].group),'extra pallet named "Mix Pallet 1 (2)"');
+  ok(gs[0].group==='Mix Pallet 1'&&gs[1].group==='Mix Pallet 2','split pieces run on as Mix Pallet 1, Mix Pallet 2 (no "(2)" names)');
   w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
   // 3c. 40HC floor capacity = 20 pallets
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
