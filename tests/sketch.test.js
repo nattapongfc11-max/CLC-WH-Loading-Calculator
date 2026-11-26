@@ -17,6 +17,7 @@ function load(S,qty,stackY){
   w.models=NAMES.map((m,i)=>({model:m,planQty:qty[i],actualQty:null,packingModel:m}));
   w.generateAllocations();if(stackY!==false)w.allocations.forEach((a,i)=>w.setStack(i,'Y'));w.renderCalc();
 }
+const n0=v=>Number(v)||0;
 const USER_QTY=[192,448,192,64,1216,448];
 
 (async()=>{
@@ -112,6 +113,26 @@ const USER_QTY=[192,448,192,64,1216,448];
   ok(/printSketchPlan/.test(d.getElementById('bk3dBox').innerHTML),'Print Sketch is available inside the booking dialog');
   w.closeModal('bookModal');w.openBooking('NOALLOC');ok(d.getElementById('bk3dBox').style.display==='none','plan without pallet data: no 3D block');
   w.closeModal('bookModal');
+
+  // ---------- ONE pipeline: 3D of a saved plan == the 3D WH Calculate draws after opening that plan ----------
+  load(S,[192+36,448+20,192+10,64,1216+40,448+12]);
+  w.addManualAllocation();w.manSet(0,'30');w.manSet(1,'20');w.manSet(2,'10');w.manualConfirm();   // a real Mix Pallet of 3 models (Manual Pallet pop-up)
+  const cur2=w.makePlan();cur2.planId='PTM-261126-S-007';cur2.destination='JPSHG';cur2.port='NAGOYA';cur2.etd=w.localDay();cur2.deliveryTime='10:00';
+  const saved=JSON.parse(JSON.stringify(cur2));saved.allocations.reverse();               // a plan saved in a different row order (older save)
+  saved.allocations.forEach(a=>{if(w.isMixAllocation(a))a.palletH=40});   // ... with stale pallet heights (WH Calculate recalculates them when the plan is opened)
+  const gid=s=>s.replace(/s3bg|bk3bg|skbg/g,'G').replace(/<text[^>]*>ลากเพื่อหมุน[^<]*<\/text>/,'');
+  const live=gid(w.s3svg(w.sceneOfPlan().sc,{cam:{yaw:-34,pitch:30,zoom:1},look:'model',gid:'s3bg',hint:false}).html);
+  ok(gid(w.sketchData(cur2).container)===live,'sketch of the open form == the 3D of the open form (identical SVG)');
+  w.plans=[saved];w.loadPlan('PTM-261126-S-007');
+  const calcSvg=gid(d.getElementById('sim3d').innerHTML);
+  w.newPlan();w.openBooking('PTM-261126-S-007');
+  const bkSvg=gid(d.getElementById('bk3d').innerHTML);
+  ok(w.sceneOfPlan(saved).st.pls.some(x=>x.kind==='mix')&&calcSvg.length>5000&&calcSvg===bkSvg,'Delivery Booking 3D == WH Calculate 3D of the same saved plan (identical SVG, even for rows saved in another order)');
+  const viaDom=h=>{const s=d.createElementNS('http://www.w3.org/2000/svg','svg');s.innerHTML=h;return s.innerHTML};    // same serialisation as the on-screen <svg>
+  ok(gid(viaDom(w.sketchData(saved).container))===calcSvg,'Print Sketch picture == WH Calculate 3D of the same saved plan (identical SVG)');
+  const ids=w.sceneOfPlan(saved).st.pls.map(x=>x.seq+':'+x.kind+':'+x.label).join();
+  w.loadPlan('PTM-261126-S-007');ok(w.planStacking().pls.map(x=>x.seq+':'+x.kind+':'+x.label).join()===ids,'Pallet No. / Mix Pallet / Pallet เศษ numbering is the same in every view');
+  w.closeModal('bookModal');w.newPlan();
 
   // ---------- Delivery Board: compact ----------
   ok(/#deliveryBoard \.kpis\{grid-template-columns:none;grid-auto-flow:column/.test(css),'KPI cards: one row (grid-auto-flow: column)');

@@ -1,5 +1,5 @@
 # CLC-WH-Loading-Calculator
-CLC WH Loading Calculator V2 – Container Loading Calculator for Logistics and Warehouse.
+CLC – Container Loading Calculator for Logistics and Warehouse (Pioneer Manufacturing).
 
 - **Web app:** https://nattapongfc11-max.github.io/CLC-WH-Loading-Calculator/
 - **Database / auth:** Supabase project "CLC Warehouse" (`part_master`, `destination_ports`, `shipment_options`, `shipment_plans`)
@@ -91,8 +91,8 @@ Some customers require photos of the container. Tick **Customer ต้องก�
 5. Supabase → **Edge Functions → photos → Secrets** (never paste these in chat or commit them): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`.
 6. Open a trip, tick *Customer ต้องการรูป*: until step 5 is done the dialog says “ยังไม่ได้ตั้งค่า Cloudflare R2”, and if a secret is present but malformed it names it (e.g. `R2_ACCOUNT_ID: must be 32 characters…`).
 
-### Checking the secrets (🔧 ตรวจ R2)
-The button next to the photo slots (admin / logistics / warehouse) asks the Edge Function to test the secrets: it validates their format and sends one signed request to R2, then reports **which** secret is wrong – `R2_ACCOUNT_ID` (host not found), `R2_BUCKET` (no such bucket), `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, or a token without *Object Read & Write* on that bucket. Secret values are never shown. The same check runs automatically when the browser cannot reach R2 during an upload. “Failed to fetch / Load failed” with a healthy server check means the bucket **CORS** (step 3) or a network filter blocking `*.r2.cloudflarestorage.com`. The check cannot see CORS, because that is enforced by the browser.
+### Checking the secrets
+The **🔧 ตรวจ R2 button was removed in v3.1** (it was clutter for everyday users). The check itself is still in the Edge Function (action `check`): when an upload fails or R2 is not configured, the booking dialog shows **which** secret is wrong – `R2_ACCOUNT_ID` (host not found), `R2_BUCKET` (no such bucket), `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, or a token without *Object Read & Write* on that bucket. Secret values are never shown.
 
 ### Photos on the printed ใบส่งงาน (optional)
 For a trip that has **Customer ต้องการรูป** ticked, the print buttons read `🖨 ใบส่งงาน + 📷`. The print window opens at once, fetches fresh signed links and then adds a second A4 page **CONTAINER PHOTOS** after the one-page ใบส่งงาน: the five slots with their customer captions (Cargo Empty … Lock cargo), empty slots marked *ไม่มีรูป*, and a *Loading record* box (plan, container, seal, invoice, loading by, date/time, plate, driver).
@@ -156,3 +156,20 @@ Code: `supabase/functions/photos/` (function), `supabase/migrations/20261126_del
 
 Internals: `s3svg()` / `pal3dSvg()` are pure renderers (scene → SVG text) shared by WH Calculate, the Booking dialog and the print sketch; `withPlanCtx(plan, fn)` loads a saved plan into the calculation globals and restores everything afterwards. No database change.
 Tests: `tests/sketch.test.js` (new), `tests/delivery.test.js` (type-ahead / auto-fill).
+
+## v3.1 – one 3D pipeline, languages, compact Booking table
+**One 3D drawing pipeline (no drift between screens).** The WH Calculate form, the Delivery Booking 3D view and the Print Sketch all build their picture the same way: `prepareCalc()` (sort allocations, renumber Mix Pallets / skids, apply Mix Pallet dimensions — the exact steps `renderCalc()` runs) → `planStacking()` → `buildScene()` → `s3svg()`. For a saved plan, `withPlanCtx()` runs `prepareCalc()` on the plan's own data and `sceneOfPlan(plan)` returns `{st, sc}`; Booking and Sketch only draw that scene. A plan saved in another row order, or with a stale Mix Pallet height, therefore comes out **identical** to the open Calculate form (test: same SVG, byte for byte, in all three places; the test fails if the shared step is removed).
+
+**Language: Standard / English / 日本語** — selector in the header (remembered per browser in `localStorage.clcLang`).
+- *Standard* = the text exactly as written (Thai + English terms), nothing is changed.
+- *English* / *日本語* translate what is on screen (text, placeholders, tooltips, `<title>`), `alert` / `confirm` messages and every **print window** (Shipment Slip, Print Sketch, Delivery Note) from one dictionary in `index.html` (`I18N_TH` rows `[Standard, English, 日本語]`, `I18N_EN` rows `[English label, 日本語]`). A MutationObserver translates content as the app renders it, so nothing needs to be re-rendered.
+- Never translated: Plan IDs, Model codes, names / remarks typed by users (they are not in the dictionary). `<option>` labels are translated but their **values stay** (`Sea`, `Air`, …) so saved data does not depend on the language.
+- To add or fix wording, edit the dictionary rows (longest text wins; keys shorter than 4 characters only match a whole word). Test `tests/lang.test.js` fails if any Thai is left on any page / dialog / print document in English or 日本語. Japanese wording is a first draft written for warehouse / logistics use — have a Japanese-speaking colleague review it.
+
+**Delivery Booking table** is compact like Loading History: one line per cell (two where a sub-line helps), no words broken in the middle (Plan ID, name, Delay chip), *Loading by* moved under *Loading date · time*, fits a ~1320 px screen without sideways scrolling.
+
+**Header / dialogs**: removed the *V2* badge (and "v2" in the page title), the **🖼 Print logo** button on Delivery Booking, and **🔧 ตรวจ R2** in the photo section.
+
+**Official URL**: page title / description / tab icon / theme colour / `noindex` added. A company URL needs a company domain — see `docs/OFFICIAL_URL.md` (DNS `CNAME` → GitHub Pages custom domain, and the Supabase Auth URL / R2 CORS settings that must change with the origin). No `CNAME` file is committed on purpose.
+
+No database change in v3.1. Tests: `tests/lang.test.js` (new), `tests/sketch.test.js` (one-pipeline consistency), `tests/delivery.test.js`.
