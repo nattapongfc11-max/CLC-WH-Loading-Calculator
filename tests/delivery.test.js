@@ -243,6 +243,51 @@ setTimeout(async()=>{
   // flag survives re-saving the plan from the calculator
   w.plans=[Object.assign({},pp,{planId:'KEEP-1',photoReq:true})];d.getElementById('planId').value='KEEP-1';
   ok(w.makePlan().photoReq===true,'photoReq is preserved when the plan is re-saved from WH Calculate');
+  // Print ใบส่งงาน + optional "รูปถ่ายตู้" page (only when the customer requires photos)
+  const pn=Object.assign({},dp,{planId:'PRN-1',photoReq:true}),pnNo=Object.assign({},dp,{planId:'PRN-2'});
+  w.plans=[pn,pnNo];store={'PRN-1':{3:1,1:1,2:1}};
+  const ph3=await w.phForPrint('PRN-1');
+  ok(ph3.photos&&ph3.photos.map(x=>x.slot).join()==='1,2,3'&&ph3.photos.every(x=>/^https:\/\/r2\.test\//.test(x.url)),'phForPrint: fresh signed URLs, sorted by slot');
+  const dn0=w.deliveryNoteHtml(pnNo,null);
+  ok((dn0.match(/<main class="sheet/g)||[]).length===1&&!/optPhotos|CONTAINER PHOTOS/.test(dn0),'trip that does not need photos: no photo option, still exactly 1 page');
+  const dn3=w.deliveryNoteHtml(pn,ph3);
+  ok((dn3.match(/<main class="sheet/g)||[]).length===2&&/<main class="sheet fix pg-dn">/.test(dn3)&&/<main class="sheet fix pgph">/.test(dn3),'with photos: ใบส่งงาน page + 1 photo page (both fixed A4)');
+  ok(dn3.indexOf('<main class="sheet fix pg-dn">')<dn3.indexOf('<main class="sheet fix pgph">')&&/CONTAINER PHOTOS/.test(dn3)&&/ภาพถ่ายตู้คอนเทนเนอร์/.test(dn3),'photo page comes after the ใบส่งงาน page, same Pioneer header');
+  ok(['Cargo Empty','Loading on Cargo 50%','Loading complete','Close Cargo door','Lock cargo'].every(t=>dn3.includes(t))&&(dn3.match(/<div class="phc">/g)||[]).length===5,'photo page has the 5 customer captions (Cargo Empty … Lock cargo)');
+  ok((dn3.match(/<img src="https:\/\/r2\.test\//g)||[]).length===3&&(dn3.match(/— ไม่มีรูป —/g)||[]).length===2,'3 photos placed in their slots, 2 empty slots marked "ไม่มีรูป"');
+  ok(/class="phc phi"/.test(dn3)&&/MSKU7654321/.test(dn3.slice(dn3.indexOf('pgph')))&&/SEAL99/.test(dn3.slice(dn3.indexOf('pgph'))),'6th cell: loading record (Container No., Seal No.) next to the photos');
+  ok(/id="optPhotos" checked/.test(dn3)&&/3\/5 · ยังไม่ครบ/.test(dn3)&&/classList\.toggle\('nophotos'/.test(dn3)&&/\.nophotos \.pgph\{display:none\}/.test(dn3),'print window option: ☑ แนบรูปถ่ายตู้ (3/5 · ยังไม่ครบ) hides / shows the photo page');
+  ok(/function clcPrint\(\)/.test(dn3)&&/onclick="clcPrint\(\)"/.test(dn3),'Print button waits for the photos to finish loading');
+  const dn5=w.deliveryNoteHtml(pn,{photos:[1,2,3,4,5].map(n=>({slot:n,url:'https://r2.test/x/'+n+'?a=1&b=2'}))});
+  ok(!/ยังไม่ครบ/.test(dn5)&&/5\/5/.test(dn5)&&dn5.includes('src="https://r2.test/x/1?a=1&amp;b=2"'),'5/5: no warning; signed URL is HTML-escaped');
+  ok(/กำลังโหลดรูปถ่ายตู้/.test(w.deliveryNoteHtml(pn,{loading:true}))&&(w.deliveryNoteHtml(pn,{loading:true}).match(/<main class="sheet/g)||[]).length===1,'while loading: message in the bar, only the ใบส่งงาน page');
+  ok(/class="warn">⚠ รูปถ่ายตู้: R2 down/.test(w.deliveryNoteHtml(pn,{error:'R2 down'}))&&/ยังไม่มีรูปถ่ายตู้ในระบบ/.test(w.deliveryNoteHtml(pn,{photos:[]}))&&!/CONTAINER PHOTOS/.test(w.deliveryNoteHtml(pn,{photos:[]})),'error / no photos: warning in the bar, no empty photo page');
+  const bigP=w.deliveryNoteHtml(Object.assign({},big,{photoReq:true,booking:dp.booking}),ph3);
+  ok((bigP.match(/class="sheet fix pg-dn"/g)||[]).length===1&&(bigP.match(/class="sheet fix pgph"/g)||[]).length===1,'40 models + photos: still 1 ใบส่งงาน page + 1 photo page');
+  // printDeliveryNote: window opens at once (pop-up blockers), photos are added when they arrive
+  const writes=[];let closedWin=false;w.open=()=>({get closed(){return closedWin},document:{open(){},write(h){writes.push(h)},close(){}}});
+  calls.length=0;const pr=w.printDeliveryNote('PRN-1');
+  ok(writes.length===1&&/กำลังโหลดรูปถ่ายตู้/.test(writes[0])&&!/CONTAINER PHOTOS/.test(writes[0]),'photo trip: ใบส่งงาน window opens immediately with "กำลังโหลดรูป…"');
+  await pr;
+  ok(writes.length===2&&/CONTAINER PHOTOS/.test(writes[1])&&/id="optPhotos"/.test(writes[1])&&calls.includes('sign-view'),'then the window is rewritten with the photo page + option');
+  ok(w.phCount('PRN-1')===3,'photo count badge updated from the print fetch');
+  writes.length=0;calls.length=0;await w.printDeliveryNote('PRN-2');
+  ok(writes.length===1&&!calls.includes('sign-view')&&!/optPhotos/.test(writes[0]),'trip without photo requirement: one write, no photo request');
+  writes.length=0;closedWin=false;const pc=w.printDeliveryNote('PRN-1');closedWin=true;await pc;
+  ok(writes.length===1,'window closed while photos load: nothing written to a closed window');
+  closedWin=false;writes.length=0;const savedPhotos=w.clcPhotos;
+  w.clcPhotos={async call(){throw new Error('R2 ยังไม่ตั้งค่า')}};await w.printDeliveryNote('PRN-1');
+  ok(writes.length===2&&/ใบส่งงาน|DELIVERY NOTE/.test(writes[1])&&/รูปถ่ายตู้: R2 ยังไม่ตั้งค่า/.test(writes[1])&&!/CONTAINER PHOTOS/.test(writes[1]),'photo fetch fails: ใบส่งงาน still prints, bar explains why');
+  w.clcPhotos=null;writes.length=0;await w.printDeliveryNote('PRN-1');
+  ok(writes.length===2&&/ต้องล็อกอินและเชื่อม Supabase/.test(writes[1]),'not signed in: ใบส่งงาน still prints, bar says photos need sign-in');
+  w.clcPhotos=savedPhotos;
+  // buttons tell the user the photo option exists
+  w.renderBooking();
+  ok(/ใบส่งงาน \+ 📷/.test(brow('PRN-1').textContent)&&!/ใบส่งงาน \+ 📷/.test(brow('PRN-2').textContent),'booking table: "🖨 ใบส่งงาน + 📷" only on trips that require photos');
+  await w.openBooking('PRN-1');
+  ok(/รูปถ่ายตู้/.test(d.getElementById('bkPrint').textContent),'booking dialog: Print button mentions the photo option');
+  await w.openBooking('PRN-2');
+  ok(d.getElementById('bkPrint').textContent==='🖨 Print ใบส่งงาน','booking dialog: plain label when the customer does not need photos');
   w.closeModal('bookModal');
   ok(errs.length===0,'no runtime errors '+errs.join('|'));
   console.log(fail?'FAILED '+fail:'ALL PASSED');process.exit(fail?1:0);
