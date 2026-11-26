@@ -7,14 +7,21 @@ let fail=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fail++};
 let confirmAns=true;w.alert=()=>{};w.confirm=()=>confirmAns;
 const $=id=>d.getElementById(id);
 const nav=p=>d.querySelector('.navbtn[data-page="'+p+'"]').style.display!=='none';
-const ALL=['plans.view','plans.view_own','plans.edit','plans.delete','plans.delete_own','parts.view','parts.edit','parts.delete','masters.view','masters.edit','masters.delete','photos.view','photos.edit'];
+const ALL=['plans.view','plans.view_own','plans.edit','plans.create','plans.slide','plans.delete','plans.delete_own','parts.view','parts.edit','parts.delete','masters.view','masters.edit','masters.delete','photos.view','photos.edit'];
 const T=w.CLC_ROLE_PERMS,UA=w.eval('UA');
 setTimeout(async()=>{
   // ---- role templates mirror the SQL function clc_role_perms() ----
-  const sql=fs.readFileSync(path.join(__dirname,'..','supabase','migrations','20261126_user_permissions.sql'),'utf8');
+  // the newest migration that redefines clc_role_perms() / the check constraint is the one that counts
+  const sql=fs.readFileSync(path.join(__dirname,'..','supabase','migrations','20261127_plans_slide_permission.sql'),'utf8');
   const sqlTpl=r=>{const m=new RegExp("when '"+r+"' then array\\[([^\\]]*)\\]").exec(sql);return m[1].split(',').map(x=>x.trim().replace(/'/g,''))};
   ok(['admin','logistics','warehouse','viewer'].every(r=>JSON.stringify(sqlTpl(r).sort())===JSON.stringify(T[r].slice().sort())),'UI role templates are identical to clc_role_perms() in the migration');
   ok(JSON.stringify(ALL)===JSON.stringify(w.eval('ALL_PERMS'))&&ALL.every(p=>sql.includes("'"+p+"'")),'permission keys match the SQL check constraint');
+  const chk=/user_roles_perms_valid check \(perms <@ array\[([^\]]*)\]/.exec(sql);
+  ok(chk&&JSON.stringify(chk[1].split(',').map(x=>x.trim().replace(/'/g,'')).sort())===JSON.stringify(ALL.slice().sort()),'SQL check constraint lists exactly the 15 permission keys');
+  ok(T.logistics.includes('plans.create')&&T.logistics.includes('plans.slide')&&!T.logistics.includes('plans.edit')&&!T.logistics.includes('parts.edit'),'logistics template: create + Slide/Cancel, cannot edit saved plans, cannot edit Part Master');
+  ok(T.warehouse.includes('plans.edit')&&!T.warehouse.includes('plans.create')&&!T.warehouse.includes('plans.slide'),'warehouse template keeps plans.edit (edit implies create + slide, stored implicitly)');
+
+  ok(w.eval("uaSame(['plans.view','plans.edit'],['plans.view','plans.edit','plans.create','plans.slide'])")&&!w.eval("uaSame(['plans.view','plans.create'],['plans.view','plans.edit'])"),'"ปรับเอง" comparison treats plans.edit as including create + Slide/Cancel (no false flag for the warehouse template)');
 
   // ---- what each permission shows (menu) ----
   let perms=[];w.clcCan=p=>perms.includes(p);d.body.dataset.role='viewer';
@@ -60,15 +67,22 @@ setTimeout(async()=>{
   $('ua_plans_edit').checked=true;w.uaSync('plans_edit');
   // save custom permissions
   await w.uaSave();
-  ok(log.save.role==='warehouse'&&JSON.stringify(log.save.perms.slice().sort())===JSON.stringify(['masters.edit','masters.view','photos.edit','photos.view','plans.delete_own','plans.edit','plans.view_own'])&&!$('userModal').classList.contains('open'),'save writes exactly the ticked permissions and closes');
+  ok(log.save.role==='warehouse'&&JSON.stringify(log.save.perms.slice().sort())===JSON.stringify(['masters.edit','masters.view','photos.edit','photos.view','plans.create','plans.delete_own','plans.edit','plans.slide','plans.view_own'])&&!$('userModal').classList.contains('open'),'save writes exactly the ticked permissions and closes');
   ok(/บันทึกสิทธิ์ของ wh@co\.test/.test($('uaMsg').textContent)&&/ปรับเอง/.test([...d.querySelectorAll('#uaTable tbody tr')][2].textContent),'list refreshes: user now marked "ปรับเอง"');
   // role change -> template; admin -> locked + all
   w.openUserAuth('u-cu');$('ua_role').value='logistics';w.uaRoleChanged();
   ok($('ua_masters_del').checked&&!$('ua_parts_edit').checked&&$('ua_plans_del').value==='own','changing role loads that role\'s template');
+  ok(!$('ua_plans_edit').checked&&$('ua_plans_create').checked&&$('ua_plans_slide').checked,'logistics template in the form: edit NOT ticked, create + Slide/Cancel ticked');
+  $('ua_plans_create').checked=false;w.uaSync('plans_create');ok(!$('ua_plans_edit').checked,'unticking create keeps edit off');
+  $('ua_plans_edit').checked=true;w.uaSync('plans_edit');ok($('ua_plans_create').checked&&$('ua_plans_slide').checked,'ticking edit also ticks create + Slide/Cancel');
+  $('ua_plans_slide').checked=false;w.uaSync('plans_slide');ok(!$('ua_plans_edit').checked,'unticking Slide/Cancel switches edit off (edit includes it)');
+  $('ua_plans_view').value='';w.uaSync('plans_view');$('ua_plans_slide').checked=true;w.uaSync('plans_slide');ok($('ua_plans_view').value==='own','ticking Slide with no plan view grants "view own" so it is usable');
+  ok(/สร้างแผนใหม่/.test($('uaTemplates').textContent)&&/Slide\/Cancel/.test($('uaTemplates').textContent),'templates table shows the logistics create + Slide/Cancel chips');
+  w.uaRoleChanged();
   $('ua_role').value='admin';w.uaRoleChanged();ok($('ua_plans_view').disabled&&$('ua_plans_del').disabled&&/admin มีสิทธิ์ทั้งหมด/.test($('uaRoleNote').textContent),'admin role: checkboxes locked, note shown');
-  await w.uaSave();ok(log.save.user_id==='u-cu'&&log.save.role==='admin'&&log.save.perms.length===13,'saving as admin stores all permissions');
+  await w.uaSave();ok(log.save.user_id==='u-cu'&&log.save.role==='admin'&&log.save.perms.length===15,'saving as admin stores all 15 permissions');
   // nothing ticked
-  w.openUserAuth('u-wh');['ua_parts_view','ua_parts_edit','ua_parts_del','ua_masters_view','ua_masters_edit','ua_masters_del','ua_photos_view','ua_photos_edit','ua_plans_edit'].forEach(i=>$(i).checked=false);$('ua_plans_view').value='';$('ua_plans_del').value='';
+  w.openUserAuth('u-wh');['ua_parts_view','ua_parts_edit','ua_parts_del','ua_masters_view','ua_masters_edit','ua_masters_del','ua_photos_view','ua_photos_edit','ua_plans_edit','ua_plans_create','ua_plans_slide'].forEach(i=>$(i).checked=false);$('ua_plans_view').value='';$('ua_plans_del').value='';
   log.length=0;await w.uaSave();ok(!log.includes('save')&&/ถอนสิทธิ์/.test($('uaErr').textContent)&&$('userModal').classList.contains('open'),'no permission ticked: refuses to save (use "ถอนสิทธิ์" instead)');
   // database refuses (e.g. last admin) -> message stays in the dialog
   saveErr='ต้องมี admin อย่างน้อย 1 คน';w.uaApplyTemplate();await w.uaSave();ok(/ต้องมี admin อย่างน้อย 1 คน/.test($('uaErr').textContent)&&$('userModal').classList.contains('open')&&!UA.busy,'database error is shown in the dialog (dialog stays open)');saveErr=null;

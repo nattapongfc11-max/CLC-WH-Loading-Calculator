@@ -57,8 +57,17 @@ state.parts=results[0].map(fromPart);state.options=results[1].map(x=>({category:
 if(!results[3].length&&Array.isArray(window.clcLegacyPlans)&&window.clcLegacyPlans.length){for(const p of window.clcLegacyPlans){const {error}=await cloud.from('shipment_plans').upsert(toPlan(p));if(error)throw error;}window.clcLegacyPlans=[];localStorage.removeItem('clcPlansV2');const again=await cloud.from('shipment_plans').select('*').order('created_at',{ascending:false});if(again.error)throw again.error;state.plans=again.data.map(fromPlan);}
 fillSelects();$('modelList').innerHTML=modelListHtml();renderAll();$('connectionStatus').textContent=statusText();
 }catch(e){console.error(e);alert('Cloud data load failed: '+(e.stack||e.message));}};
-window.savePlanRecord=async function(p){if(!need('plans'))return false;const prev=state.plans.find(x=>x.planId===p.planId);p.createdBy=prev?.createdBy||p.createdBy||signedUser.id;const {error}=await cloud.from('shipment_plans').upsert(toPlan(p));if(error){alert('Cloud save failed: '+error.message);return false}const i=state.plans.findIndex(x=>x.planId===p.planId);if(i>=0)state.plans[i]=p;else state.plans.unshift(p);return true;};
-window.savePlan=async function(){if(!need('plans'))return;if(!signedUser)return alert('Please login');if(!state.models.length)return alert('Please add Shipment Model');{const fo=floorOver();if(fo.over)return alert(fo.msg)}const p=makePlan();const isNew=!p.planId;
+// Slide / Cancel / Booking / preparation status. plans.edit = save the whole plan (as before); plans.slide only = the database function plan_delivery_update,
+// which accepts nothing but booking / slides / cancel / prep / photoReq (everything else of the plan stays untouched).
+const DELIVERY_KEYS=['booking','slides','cancel','prep','photoReq'];
+async function saveDeliveryFields(p){
+  const patch={};DELIVERY_KEYS.forEach(k=>{patch[k]=p[k]===undefined?null:p[k]});
+  const {error}=await cloud.rpc('plan_delivery_update',{p_plan_id:p.planId,p_patch:patch});
+  if(error){alert('Cloud save failed: '+error.message+(/plan_delivery_update|function/i.test(error.message)?'\nยังไม่ได้รัน migration 20261127_plans_slide_permission.sql ?':''));return false}
+  const i=state.plans.findIndex(x=>x.planId===p.planId);if(i>=0)state.plans[i]=p;return true;
+}
+window.savePlanRecord=async function(p){if(!can('plans.edit')&&can('plans.slide')&&state.plans.some(x=>x.planId===p.planId))return await saveDeliveryFields(p);if(!need('plans'))return false;const prev=state.plans.find(x=>x.planId===p.planId);p.createdBy=prev?.createdBy||p.createdBy||signedUser.id;const {error}=await cloud.from('shipment_plans').upsert(toPlan(p));if(error){alert('Cloud save failed: '+error.message);return false}const i=state.plans.findIndex(x=>x.planId===p.planId);if(i>=0)state.plans[i]=p;else state.plans.unshift(p);return true;};
+window.savePlan=async function(){if(!signedUser)return alert('Please login');if(!state.models.length)return alert('Please add Shipment Model');{const fo=floorOver();if(fo.over)return alert(fo.msg)}const p=makePlan();const isNew=!p.planId;if(isNew?!(can('plans.create')||can('plans.edit')):!can('plans.edit'))return alert('สิทธิ์ของคุณ ('+(userRole||'none')+') '+(isNew?'สร้างแผนใหม่ไม่ได้':'แก้ไขแผนที่บันทึกแล้วไม่ได้ (Slide / Cancel ได้ที่ Delivery Board)')+'\nYour role cannot '+(isNew?'create plans.':'change a saved plan (Slide / Cancel only).'));
   if(isNew){
     // new plan: Plan ID = company-YYMMDD-mode-running no. The running no. is read from the database right before saving; a duplicate (two people saving at once) retries with the next number
     let ids=state.plans.map(x=>x.planId);const base=planIdBase(p);
