@@ -71,14 +71,17 @@ Some customers require photos of the container. Tick **Customer ต้องก�
 - Files are stored in a **private** Cloudflare R2 bucket, not in Supabase: the database keeps only a small row per photo (`delivery_photos`). The browser uploads/downloads with short-lived presigned links created by the Supabase Edge Function `photos` after it checks the user's role (admin / logistics / warehouse may upload and delete; every role can view). Deleting a plan also deletes its photos.
 
 ### One-time setup (Cloudflare + Supabase)
-1. Cloudflare dashboard → **R2** → create a bucket (e.g. `clc-photos`). Keep *public access* OFF.
-2. R2 → **Manage API tokens** → create a token with **Object Read & Write** limited to that bucket. Note the *Access Key ID*, *Secret Access Key* and your *Account ID*.
+1. Cloudflare dashboard → **R2** → create a bucket (e.g. `clc-photos-apac`). Keep *public access* OFF. *Location*: pick **Asia-Pacific** (a hint, applied only when the bucket is first created; R2 has no Thailand-specific region).
+2. R2 → **Manage API tokens** → create a token with **Object Read & Write** limited to that bucket. Note the *Access Key ID*, *Secret Access Key* and your *Account ID* (R2 overview; **32 hex characters**, not the account name).
 3. Bucket → **Settings → CORS policy**:
    ```json
-   [{"AllowedOrigins":["https://nattapongfc11-max.github.io"],"AllowedMethods":["PUT","GET","HEAD"],"AllowedHeaders":["content-type"],"MaxAgeSeconds":3600}]
+   [{"AllowedOrigins":["https://nattapongfc11-max.github.io"],"AllowedMethods":["PUT","GET","HEAD"],"AllowedHeaders":["Content-Type"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]
    ```
 4. Bucket → **Settings → Object lifecycle rules**: delete objects after the retention you need (e.g. 365 days). The photo rows stay in the database until the plan is deleted; expired files simply show an empty thumbnail.
 5. Supabase → **Edge Functions → photos → Secrets** (never paste these in chat or commit them): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`.
-6. Open a trip, tick *Customer ต้องการรูป*: until step 5 is done the dialog says “ยังไม่ได้ตั้งค่า Cloudflare R2”.
+6. Open a trip, tick *Customer ต้องการรูป*: until step 5 is done the dialog says “ยังไม่ได้ตั้งค่า Cloudflare R2”, and if a secret is present but malformed it names it (e.g. `R2_ACCOUNT_ID: must be 32 characters…`).
+
+### Checking the secrets (🔧 ตรวจ R2)
+The button next to the photo slots (admin / logistics / warehouse) asks the Edge Function to test the secrets: it validates their format and sends one signed request to R2, then reports **which** secret is wrong – `R2_ACCOUNT_ID` (host not found), `R2_BUCKET` (no such bucket), `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, or a token without *Object Read & Write* on that bucket. Secret values are never shown. The same check runs automatically when the browser cannot reach R2 during an upload. “Failed to fetch / Load failed” with a healthy server check means the bucket **CORS** (step 3) or a network filter blocking `*.r2.cloudflarestorage.com`. The check cannot see CORS, because that is enforced by the browser.
 
 Code: `supabase/functions/photos/` (function), `supabase/migrations/20261126_delivery_photos.sql` (table + RLS; rollback file next to it). The function is deployed with `verify_jwt=false` because it authenticates the caller itself (`auth.getUser()`) and runs every database call with the caller's token, so RLS stays in force.

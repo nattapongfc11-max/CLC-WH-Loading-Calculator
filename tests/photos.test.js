@@ -3,7 +3,7 @@ const path = require('path');
 let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++; };
 
 (async () => {
-  const { createHandler, keyPrefix, safeId, MAX_BYTES } = await import(path.join(__dirname, '..', 'supabase', 'functions', 'photos', 'handler.mjs'));
+  const { createHandler, keyPrefix, safeId, MAX_BYTES, r2Settings, interpretCheck } = await import(path.join(__dirname, '..', 'supabase', 'functions', 'photos', 'handler.mjs'));
 
   // ---- in-memory fakes -------------------------------------------------------------------
   const mk = (role, o = {}) => {
@@ -15,7 +15,8 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); i
       presignPut: async (k, ct, ttl) => `https://r2.test/${k}?put&ct=${ct}&ttl=${ttl}`,
       presignGet: async (k, ttl) => `https://r2.test/${k}?get&ttl=${ttl}`,
       head: async k => store.get(k) || null,
-      del: async k => { log.push('del ' + k); store.delete(k); }
+      del: async k => { log.push('del ' + k); store.delete(k); },
+      check: async () => { if (o.checkThrows) throw new Error('dns error'); return o.checkRes || { status: 404, code: 'NoSuchKey' }; }
     };
     const db = {
       getByPlanSlot: async (p, s) => rows.find(r => r.plan_id === p && r.slot === s) || null,
@@ -24,7 +25,7 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); i
       remove: async (p, s) => { const i = rows.findIndex(r => r.plan_id === p && r.slot === s); if (i >= 0) rows.splice(i, 1); },
       removeAll: async p => { for (let i = rows.length - 1; i >= 0; i--) if (rows[i].plan_id === p) rows.splice(i, 1); }
     };
-    const handler = createHandler(async () => ({ env: {}, rand: () => 'abc123', auth: role === null ? null : { role: role === 'none' ? null : role, r2, db } }));
+    const handler = createHandler(async () => ({ env: o.env || {}, rand: () => 'abc123', auth: role === null ? null : { role: role === 'none' ? null : role, r2, db } }));
     const call = async (body, method = 'POST', hdr = {}) => {
       const res = await handler(new Request('https://fn.test/photos', { method, headers: { origin: 'https://nattapongfc11-max.github.io', ...hdr }, body: method === 'POST' ? JSON.stringify(body) : undefined }));
       let j = null; try { j = await res.json(); } catch {}
@@ -105,6 +106,42 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); i
     const q = new URL(s.url).searchParams;
     ok(q.get('X-Amz-Expires') === '600' && /AWS4-HMAC-SHA256/.test(q.get('X-Amz-Algorithm')) && q.get('X-Amz-SignedHeaders')==='host' && /^[0-9a-f]{64}$/.test(q.get('X-Amz-Signature')) && /\/auto\/s3\/aws4_request/.test(q.get('X-Amz-Credential')), 'presigned PUT: SigV4 query signature with 10 min expiry (type/size are verified at commit)');
   } else console.log('SKIP presign shape test (aws4fetch not installed)');
+
+  // ---- R2 secrets self-check (format + a real signed request) --------------------------------
+  const ID = '0123456789abcdef0123456789abcdef', KEY = 'k'.repeat(32), SEC = 's3cr3t' + 'x'.repeat(40);
+  const good = { R2_ACCOUNT_ID: ID, R2_ACCESS_KEY_ID: KEY, R2_SECRET_ACCESS_KEY: SEC, R2_BUCKET: 'clc-photos-apac' };
+  ok(r2Settings(good).problems.length === 0 && r2Settings(good).cfg.accountId === ID, 'r2Settings: valid secrets -> no problems');
+  ok(r2Settings({ ...good, R2_ACCOUNT_ID: ' ' + ID + '\n' }).problems.length === 0, 'r2Settings: stray space / new line around Account ID is tolerated');
+  ok(r2Settings({ ...good, R2_ACCOUNT_ID: 'https://' + ID + '.r2.cloudflarestorage.com' }).cfg.accountId === ID, 'r2Settings: a pasted endpoint URL is reduced to the Account ID');
+  const badLen = r2Settings({ ...good, R2_ACCOUNT_ID: ID + 'ab' }).problems;
+  ok(badLen.length === 1 && badLen[0].name === 'R2_ACCOUNT_ID' && /34/.test(badLen[0].message), 'r2Settings: wrong-length Account ID is named, with its length');
+  ok(r2Settings({ ...good, R2_ACCOUNT_ID: 'My Account Name' }).problems[0].name === 'R2_ACCOUNT_ID', 'r2Settings: a name instead of an ID is rejected');
+  ok(r2Settings({ ...good, R2_BUCKET: 'Clc_Photos' }).problems[0].name === 'R2_BUCKET', 'r2Settings: bucket name rules');
+  ok(r2Settings({ ...good, R2_ACCESS_KEY_ID: 'a b' }).problems[0].name === 'R2_ACCESS_KEY_ID' && r2Settings({ ...good, R2_SECRET_ACCESS_KEY: 'short' }).problems[0].name === 'R2_SECRET_ACCESS_KEY', 'r2Settings: key / secret format');
+  ok(r2Settings({}).problems.map(x => x.name).join() === 'R2_ACCOUNT_ID,R2_ACCESS_KEY_ID,R2_SECRET_ACCESS_KEY,R2_BUCKET', 'r2Settings: all four missing are listed');
+  const leak = JSON.stringify(r2Settings({ ...good, R2_ACCOUNT_ID: 'bad', R2_ACCESS_KEY_ID: 'bad key', R2_SECRET_ACCESS_KEY: SEC.slice(0, 20) }).problems); // (cfg itself holds the values for index.ts; only `problems` is ever sent to a browser)
+  ok(!leak.includes(SEC.slice(0, 20)) && !leak.includes('bad key') && leak.includes('R2_SECRET_ACCESS_KEY'), 'r2Settings: problems name the secret but never contain its value');
+
+  const stBad = (await mk('admin', { noR2: true, env: { ...good, R2_ACCOUNT_ID: 'oops' } }).call({ action: 'status' })).j;
+  ok(stBad.configured === false && stBad.problems.length === 1 && stBad.problems[0].name === 'R2_ACCOUNT_ID', 'status lists exactly which secret is wrong');
+  ok((await mk('admin').call({ action: 'status' })).j.problems.length === 0, 'status: no problems when R2 is configured');
+  const s503 = await mk('admin', { noR2: true, env: { ...good, R2_BUCKET: '' } }).call({ action: 'sign-upload', planId: 'CLC-1', slot: 1, contentType: 'image/jpeg' });
+  ok(s503.s === 503 && /R2_BUCKET/.test(s503.j.message), '503 message names the missing secret');
+
+  ok((await mk('viewer').call({ action: 'check' })).s === 403, 'check: viewer -> 403');
+  const cNo = (await mk('admin', { noR2: true, env: { ...good, R2_ACCOUNT_ID: 'oops' } }).call({ action: 'check' })).j;
+  ok(cNo.ok === false && cNo.code === 'config' && cNo.problems[0].name === 'R2_ACCOUNT_ID', 'check: bad format is reported without calling R2');
+  const cOk = (await mk('warehouse').call({ action: 'check' })).j;
+  ok(cOk.ok === true && /ถูกต้อง/.test(cOk.message), 'check: 404 NoSuchKey = host, bucket and credentials are valid');
+  const chk = async checkRes => (await mk('admin', { checkRes }).call({ action: 'check' })).j;
+  ok((await chk({ status: 404, code: 'NoSuchBucket' })).message.includes('R2_BUCKET'), 'check: NoSuchBucket -> names R2_BUCKET');
+  ok((await chk({ status: 403, code: 'InvalidAccessKeyId' })).message.includes('R2_ACCESS_KEY_ID'), 'check: InvalidAccessKeyId -> names R2_ACCESS_KEY_ID');
+  ok((await chk({ status: 403, code: 'SignatureDoesNotMatch' })).message.includes('R2_SECRET_ACCESS_KEY'), 'check: SignatureDoesNotMatch -> names R2_SECRET_ACCESS_KEY');
+  ok(/Object Read & Write/.test((await chk({ status: 403, code: 'AccessDenied' })).message) && /Object Read & Write/.test((await chk({ status: 403, code: '' })).message), 'check: 403 -> token permission hint');
+  ok((await chk({ status: 500, code: 'InternalError' })).message.includes('500'), 'check: other status is shown');
+  const cNet = (await mk('admin', { checkThrows: true }).call({ action: 'check' })).j;
+  ok(cNet.ok === false && cNet.code === 'network' && /R2_ACCOUNT_ID/.test(cNet.message), 'check: unreachable host -> points at R2_ACCOUNT_ID');
+  ok(interpretCheck({ error: 'x' }).code === 'network' && interpretCheck({ status: 200 }).ok === true, 'interpretCheck basics');
 
   console.log(fail ? 'FAILED ' + fail : 'ALL PASSED'); process.exit(fail ? 1 : 0);
 })();
