@@ -1,4 +1,4 @@
-// 3D Simulate Layout: scene, painter's order, camera drag / presets, Kraft look, stacked pairs, pallets that do not fit.
+// 3D Simulate Layout: ONE 3D view, painter's order, camera drag / presets, Kraft look, readable pallet labels, stacked pairs, pallets that do not fit.
 const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://clc.test/'});
@@ -10,18 +10,18 @@ const setup=ms=>{w.parts=[part('A'),part('B',{qtyCarton:6,cartonD:55,cartonW:36,
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 setTimeout(async()=>{
   setup([['A',200*4+60],['B',96*2+30]]);
-  const top=d.getElementById('sim3d-top'),side=d.getElementById('sim3d-side');
-  ok(top&&side&&top.classList.contains('sim3d')&&side.classList.contains('sim3d'),'Top View and Side View are 3D SVG scenes');
-  ok(top.querySelectorAll('polygon').length>60&&side.querySelectorAll('polygon').length>60,'scenes contain the container, pallets and cartons ('+top.querySelectorAll('polygon').length+' faces)');
+  const top=d.getElementById('sim3d');
+  ok(top&&top.classList.contains('sim3d')&&d.querySelectorAll('#simLayout svg.sim3d').length===1,'one 3D SVG scene (no separate Top View / Side View)');
+  ok(top.querySelectorAll('polygon').length>60,'the scene contains the container, pallets and cartons ('+top.querySelectorAll('polygon').length+' faces)');
   const txt=d.getElementById('simLayout').textContent;
-  ok(/Top View · มุมมองด้านบน/.test(txt)&&/Side View · มุมมองด้านข้าง/.test(txt)&&d.querySelectorAll('#simLayout .s3head .tag').length===2,'titles keep the Thai names and are marked 3D');
-  ok(d.querySelectorAll('#simLayout details.sim2d svg.simsvg').length===2,'the old 2D drawings stay available (collapsed)');
+  ok(/3D View/.test(txt)&&!/Top View|Side View/.test(txt)&&d.querySelectorAll('#simLayout svg.simsvg').length===0&&d.querySelectorAll('#simLayout details.sim2d').length===0,'no Top View / Side View panels and no 2D drawings any more');
+  ok(d.querySelectorAll('#simLayout .s3head button').length>=4,'camera presets (oblique, from above, side, from the door) + reset');
   const fills=s=>new Set([...s.querySelectorAll('polygon')].map(p=>p.getAttribute('fill')));
   const ca=w.eval("s3col(simColor('A'),1.1)"),cb=w.eval("s3col(simColor('B'),1.1)");
   ok(fills(top).has(ca)&&fills(top).has(cb)&&ca!==cb,'pallet tops are coloured per model (same legend colours)');
   ok(fills(top).has('rgb(44,95,168)')||[...fills(top)].some(f=>/^rgb\(\d+,\d+,\d+\)$/.test(f)),'container shell is drawn in blue steel colours');
   ok(/หัวตู้/.test(top.textContent)&&/ประตู/.test(top.textContent),'front (head) and door ends are labelled');
-  ok([...top.querySelectorAll('text')].some(t=>/^\d+( MIX)?$/.test(t.textContent)),'SKID numbers are printed on the pallets');
+  ok(top.querySelectorAll('g.s3lab').length>=5&&[...top.querySelectorAll('g.s3lab text')].some(t=>/^\d+$/.test(t.textContent)),'every pallet position gets a number label');
   const sc=w.eval('SIM3.scene'),items=w.eval("s3items(SIM3.scene,[0,-1,0])");
   ok(items.filter(i=>i.k==='door').length===2&&items.some(i=>i.k==='wall'&&i.glass)&&items.filter(i=>i.k==='wall'&&i.glass).length===1,'doors open; only the wall nearest the camera is glass (cut-away)');
   ok(items.some(i=>i.k==='carton'),'a Mix pallet is drawn carton by carton from its layer layout');
@@ -46,19 +46,19 @@ setTimeout(async()=>{
   ok(bad===0&&pairsChecked>500,'draw order is correct from '+angles.length+' camera angles ('+pairsChecked+' overlapping box pairs checked, '+bad+' wrong)');
   // camera
   const before=top.innerHTML;
-  w.s3down({button:0,clientX:200,clientY:200,pointerId:1,currentTarget:top},'top');w.s3move({clientX:260,clientY:215});await sleep(60);w.s3up();
-  const cam=w.eval('SIM3.cams.top');
-  ok(Math.abs(cam.yaw-(-22+60*.45))<.01&&Math.abs(cam.pitch-(50+15*.35))<.01&&d.getElementById('sim3d-top').innerHTML!==before,'dragging rotates the 3D view (yaw '+cam.yaw.toFixed(1)+', pitch '+cam.pitch.toFixed(1)+')');
-  w.s3down({button:0,clientX:0,clientY:0,pointerId:1,currentTarget:top},'top');w.s3move({clientX:0,clientY:-900});await sleep(60);w.s3up();
-  ok(w.eval('SIM3.cams.top.pitch')<=88&&w.eval('SIM3.cams.top.pitch')>=4,'pitch is limited so the view never flips');
-  w.s3reset('top');ok(w.eval('SIM3.cams.top.yaw')===-22&&w.eval('SIM3.cams.top.pitch')===50,'reset restores the default angle');
-  w.s3view('side',-90,12);ok(w.eval('SIM3.cams.side.yaw')===-90&&!/หัวตู้/.test(d.getElementById('sim3d-side').textContent),'preset: view from the door end (end labels hidden when looking along the container)');
-  w.s3reset('side');
-  w.s3wheel({deltaY:-100,preventDefault(){}},'top');ok(w.eval('SIM3.cams.top.zoom')>1,'mouse wheel zooms');w.s3reset('top');w.eval("SIM3.cams.top.zoom=1");
+  w.s3down({button:0,clientX:200,clientY:200,pointerId:1,currentTarget:top});w.s3move({clientX:260,clientY:215});await sleep(60);w.s3up();
+  const cam=w.eval('SIM3.cam'),def=w.eval('S3_CAM');
+  ok(Math.abs(cam.yaw-(def.yaw+60*.45))<.01&&Math.abs(cam.pitch-(def.pitch+15*.35))<.01&&d.getElementById('sim3d').innerHTML!==before,'dragging rotates the 3D view (yaw '+cam.yaw.toFixed(1)+', pitch '+cam.pitch.toFixed(1)+')');
+  w.s3down({button:0,clientX:0,clientY:0,pointerId:1,currentTarget:top});w.s3move({clientX:0,clientY:-900});await sleep(60);w.s3up();
+  ok(w.eval('SIM3.cam.pitch')<=88&&w.eval('SIM3.cam.pitch')>=4,'pitch is limited so the view never flips');
+  w.s3reset();ok(w.eval('SIM3.cam.yaw')===def.yaw&&w.eval('SIM3.cam.pitch')===def.pitch,'reset restores the default angle');
+  w.s3view(-90,12);ok(w.eval('SIM3.cam.yaw')===-90&&!/หัวตู้/.test(d.getElementById('sim3d').textContent),'preset: view from the door end (end labels hidden when looking along the container)');
+  w.s3reset();
+  w.s3wheel({deltaY:-100,preventDefault(){}});ok(w.eval('SIM3.cam.zoom')>1,'mouse wheel zooms');w.s3reset();
   // Kraft look (like the reference photo)
   w.s3look('kraft');
-  ok(d.querySelector('.s3look button[data-look=kraft]').classList.contains('on')&&fills(d.getElementById('sim3d-top')).has(w.eval("s3col('#cfa66d',1.1)")),'Kraft look: brown cartons');
-  w.s3look('model');ok(fills(d.getElementById('sim3d-top')).has(ca),'back to colours by model');
+  ok(d.querySelector('.s3look button[data-look=kraft]').classList.contains('on')&&fills(d.getElementById('sim3d')).has(w.eval("s3col('#cfa66d',1.1)")),'Kraft look: brown cartons');
+  w.s3look('model');ok(fills(d.getElementById('sim3d')).has(ca),'back to colours by model');
   // stacked pairs
   setup([['A',200*17],['B',96*4]]);
   const st=w.planStacking(),it2=w.eval("s3items(SIM3.scene,[0,-1,.5])");
@@ -66,12 +66,44 @@ setTimeout(async()=>{
   ok(Math.max(...it2.filter(i=>i.k==='cargo'||i.k==='carton').map(i=>i.b[5]))<=269,'stacks never exceed the container height');
   // pallets that do not fit are shown outside the container
   setup([['A',200*40],['B',96*6]]);
-  const so=w.planStacking(),svgo=d.getElementById('sim3d-top');
+  const so=w.planStacking(),svgo=d.getElementById('sim3d');
   ok(so.positions.length>so.cap&&/นอกตู้/.test(svgo.textContent),'over-capacity pallets are drawn outside the container with a label');
   const sc2=w.eval('SIM3.scene'),it3=w.eval("s3items(SIM3.scene,[0,-1,.5])");
   ok(it3.some(i=>i.b[4]>sc2.W+10&&(i.k==='cargo'||i.k==='carton')&&i.stroke==='#dc2626'),'outside pallets have a red outline');
-  setup([['A',200*3]]);ok(d.getElementById('sim3d-top').querySelectorAll('polygon').length>60&&!/นอกตู้/.test(d.getElementById('sim3d-top').textContent),'a small shipment renders without the outside area');
+  setup([['A',200*3]]);ok(d.getElementById('sim3d').querySelectorAll('polygon').length>60&&!/นอกตู้/.test(d.getElementById('sim3d').textContent),'a small shipment renders without the outside area');
   setup([]);ok(/เพิ่ม Shipment Model/.test(d.getElementById('simLayout').textContent),'no models: hint instead of a scene');
+  // ---- pallet number labels: all visible, on top of everything, never overlapping, from every angle
+  {const Cp=part('C',{qtyCarton:12,cartonH:20,qtyPallet:240,palletH:110,grossPallet:180});
+   w.parts=[part('A'),part('B',{qtyCarton:6,cartonD:55,cartonW:36,cartonH:30,qtyPallet:96,palletH:120,grossPallet:200}),Cp];
+   w.models=[['A',200*17+60],['B',96*4+30],['C',240*5+120]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));
+   d.getElementById('floorCap').value=20;d.getElementById('stackPallet').checked=true;w.generateAllocations();w.renderCalc();
+   const st=w.planStacking(),svg=d.getElementById('sim3d'),kids=[...svg.children];
+   const lastPoly=Math.max(...kids.map((k,i)=>k.tagName==='polygon'?i:-1)),firstLab=kids.findIndex(k=>k.classList&&k.classList.contains('s3lab'));
+   ok(firstLab>lastPoly&&lastPoly>0,'labels are drawn after every wall, rail and carton, so nothing can cover a number');
+   ok(st.pls.every(p=>d.querySelectorAll('#sim3d g.s3lab').length>0)&&st.pls.every(p=>[...d.querySelectorAll('#sim3d g.s3lab')].some(g=>new RegExp('(^|\\D)'+p.seq+'(\\D|$)').test([...g.querySelectorAll('text')].map(t=>t.textContent).join(' ')))),'every Pallet No. 1…'+st.pls.length+' appears on a label');
+   ok(d.querySelectorAll('#sim3d g.s3lab').length===st.positions.length,'one label per floor position ('+st.positions.length+'); a stacked pair has one label for both pallets');
+   const pr=st.pairs[0],pg=[...d.querySelectorAll('#sim3d g.s3lab')].map(g=>[...g.querySelectorAll('text')].map(t=>t.textContent)).find(a=>a[0].startsWith('▲ '+pr.top.seq));
+   ok(pg&&pg[1].startsWith('▼ '+pr.bottom.seq),'pair label: ▲ top pallet / ▼ bottom pallet ('+(pg||[]).join(' | ')+')');
+   ok([...d.querySelectorAll('#sim3d g.s3lab text')].some(t=>/Mix \d+/.test(t.textContent)),'Mix pallets carry their running Mix number on the label');
+   ok(d.querySelector('#sim3d g.s3lab title').textContent.length>3,'hovering a label gives details (model, height, weight)');
+   const rects=()=>[...d.querySelectorAll('#sim3d g.s3lab > rect')].map(r=>({x:+r.getAttribute('x'),y:+r.getAttribute('y'),w:+r.getAttribute('width'),h:+r.getAttribute('height')}));
+   const overlaps=a=>{let c=0;for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){const p=a[i],q=a[j];if(p.x<q.x+q.w&&q.x<p.x+p.w&&p.y<q.y+q.h&&q.y<p.y+p.h)c++}return c};
+   const inside=a=>a.every(r=>r.x>=0&&r.y>=0&&r.x+r.w<=1000&&r.y+r.h<=520);
+   let worst=0,allIn=true,counts=new Set();
+   for(const [yaw,pitch] of [[-34,30],[0,86],[0,6],[-90,18],[60,25],[150,40],[-120,12],[20,60],[-10,5],[200,35]]){w.s3view(yaw,pitch);const r=rects();worst=Math.max(worst,overlaps(r));allIn=allIn&&inside(r);counts.add(r.length)}
+   ok(worst===0,'labels never overlap each other (checked from 10 camera angles)');
+   ok(allIn,'labels stay inside the picture');
+   ok(counts.size===1&&[...counts][0]===st.positions.length,'a label for every position at every angle');
+   w.s3view(-34,30);
+   const dashed=d.querySelectorAll('#sim3d g.s3lab > rect[stroke-dasharray]').length;
+   w.s3view(0,6);const dashedLow=d.querySelectorAll('#sim3d g.s3lab > rect[stroke-dasharray]').length;
+   ok(dashedLow>=dashed,'a pallet hidden behind others from the current angle gets a dashed label (low angle hides more: '+dashed+' → '+dashedLow+')');
+   w.s3reset();
+   w.s3look('kraft');ok(d.querySelectorAll('#sim3d g.s3lab').length===st.positions.length,'labels also drawn in the Kraft look');w.s3look('model');
+   // outside pallets are labelled too
+   setup([['A',200*40],['B',96*6]]);const so=w.planStacking();
+   ok(d.querySelectorAll('#sim3d g.s3lab').length===Math.min(8,so.positions.length-so.cap)+so.cap&&d.querySelectorAll('#sim3d g.s3lab > rect[stroke="#dc2626"]').length>0,'pallets outside the container are labelled with a red frame');
+  }
   ok(errs.length===0,'no script errors ('+errs.join('; ')+')');
   console.log(fail?fail+' FAILED':'ALL PASSED');process.exit(fail?1:0);
 },300);
