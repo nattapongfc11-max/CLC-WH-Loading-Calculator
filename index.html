@@ -156,12 +156,16 @@ tr.newrow td{background:#fff8d6!important;box-shadow:inset 0 0 0 1px #ecd47a}td 
 #deliveryBoard td:nth-child(3),#deliveryBoard td:nth-child(7),#deliveryBoard td:last-child{white-space:nowrap}
 .logocard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.logoprev{min-width:200px;min-height:64px;border:1px dashed var(--line,#d9cbd0);border-radius:10px;padding:8px 14px;display:flex;align-items:center;justify-content:center;background:#fff}.logoprev img{max-height:56px;max-width:220px;object-fit:contain}
 .chkline{margin-left:12px;font-weight:600;font-size:12.5px;cursor:pointer}.chkline input{width:auto;margin-right:5px}
+.ua-tbl{width:100%;min-width:0;border-collapse:collapse;margin:8px 0}#userModal .modalbox{max-width:820px}.ua-tbl th,.ua-tbl td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;font-size:13px;vertical-align:middle}.ua-tbl th{background:var(--blue2);color:var(--navy2);font-size:12px}
+.ua-tbl td{white-space:normal}.ua-tbl td select{width:100%;max-width:175px;min-width:0;padding:5px 8px}#userModal .ua-tbl th:first-child{width:36%}#userModal .ua-tbl th:not(:first-child){width:21%}.ua-tbl td input[type=checkbox]{width:18px;height:18px}
+.ua-chips{display:flex;gap:4px;flex-wrap:wrap}.ua-chips .chip{font-size:11px;padding:1px 8px}.chip.pend{background:#fff0cc;color:#8a5a00}.chip.on{background:#dcf3e6;color:#166534}.chip.cus{background:#e8e1fb;color:#4c2f9a}
+#users table td{white-space:normal;vertical-align:top}#users .self{color:var(--muted);font-size:11px}
 .photogrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pslot{border:1px solid #ead7de;border-radius:10px;padding:6px;text-align:center;font-size:11px;background:#fff}.pslot.has{border-color:#1f7a45;background:#f2faf5}
 .pslot b{display:block;font-size:11.5px;color:#7a0424}.pslot i{display:block;font-style:normal;color:#6f666a;font-size:10px;margin-bottom:4px}
 .pslot .th{height:78px;border-radius:6px;background:#f6eef1 center/cover no-repeat;display:grid;place-items:center;color:#b9a3ab;cursor:default}.pslot.has .th{cursor:zoom-in}
 .pslot .pbtn{display:flex;gap:4px;justify-content:center;margin-top:5px;flex-wrap:wrap}.pslot .pbtn .btn{padding:3px 7px;font-size:11px}
 @media(max-width:620px){.photogrid{grid-template-columns:repeat(3,1fr)}}
-</style></head><body><div id="authScreen" class="auth-screen"><div class="auth-card"><h2>CLC Warehouse</h2><div class="sub">Sign in to access shared warehouse data</div><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></div><div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div><div id="authError" class="auth-error"></div><div class="auth-actions"><button class="btn" onclick="clcSignIn()">Login</button><button class="btn secondary" onclick="clcSignUp()">Create account</button></div><button class="btn secondary" id="authLogout" onclick="clcSignOut()" style="display:none;width:100%;margin-top:10px">Logout</button><div class="sub" style="margin-top:14px">New accounts may require email confirmation.</div></div></div><header class="top"><div><h1>CLC – Container Loading Calculator</h1><small>Warehouse Calculate Process · Hybrid Pallet · Container Summary · Reference Rev.01</small></div><span class="badge">V2</span><div style="display:flex;align-items:center;gap:10px;margin-left:auto"><div class="status" id="connectionStatus">Connecting to Cloud...</div><button class="btn secondary small" id="clcLogout" onclick="clcSignOut()" style="display:none">Logout</button></div></header><div class="layout"><nav><button class="navbtn active" data-page="dashboard">▦ Dashboard</button><button class="navbtn" data-page="mgmt">◈ Management Overview</button><button class="navbtn" data-page="calculate">▤ WH Calculate</button><button class="navbtn" data-page="parts">▣ Part & Packing Master</button><button class="navbtn" data-page="dest">⌖ Destination-Port</button><button class="navbtn" data-page="booking">⛟ Delivery Booking</button><button class="navbtn" data-page="history">◷ Loading History</button></nav><main>
+</style></head><body><div id="authScreen" class="auth-screen"><div class="auth-card"><h2>CLC Warehouse</h2><div class="sub">Sign in to access shared warehouse data</div><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@company.com"></div><div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div><div id="authError" class="auth-error"></div><div class="auth-actions"><button class="btn" onclick="clcSignIn()">Login</button><button class="btn secondary" onclick="clcSignUp()">Create account</button></div><button class="btn secondary" id="authLogout" onclick="clcSignOut()" style="display:none;width:100%;margin-top:10px">Logout</button><div class="sub" style="margin-top:14px">New accounts may require email confirmation.</div></div></div><header class="top"><div><h1>CLC – Container Loading Calculator</h1><small>Warehouse Calculate Process · Hybrid Pallet · Container Summary · Reference Rev.01</small></div><span class="badge">V2</span><div style="display:flex;align-items:center;gap:10px;margin-left:auto"><div class="status" id="connectionStatus">Connecting to Cloud...</div><button class="btn secondary small" id="clcLogout" onclick="clcSignOut()" style="display:none">Logout</button></div></header><div class="layout"><nav><button class="navbtn active" data-page="dashboard">▦ Dashboard</button><button class="navbtn" data-page="mgmt">◈ Management Overview</button><button class="navbtn" data-page="calculate">▤ WH Calculate</button><button class="navbtn" data-page="parts">▣ Part & Packing Master</button><button class="navbtn" data-page="dest">⌖ Destination-Port</button><button class="navbtn" data-page="booking">⛟ Delivery Booking</button><button class="navbtn" data-page="history">◷ Loading History</button><button class="navbtn" data-page="users" id="navUsers" style="display:none">👥 Users</button></nav><main>
 <section id="dashboard" class="page active"><div class="heading"><div><h2>Loading Overview</h2><div class="sub">Overview of Shipment and Warehouse loading plans</div></div><button class="btn" onclick="newPlan()">＋ New Shipment</button></div><div id="deliveryBoard"></div></section>
 <section id="mgmt" class="page"><div class="heading"><div><h2>Management Overview</h2><div class="sub">Plan Overview · By Month / Week / Day · สำหรับผู้บริหาร (Delivery Performance On plan, Air / Sea, Slide / Cancel)</div></div></div><div class="card"><div class="section" style="margin-top:0">Plan Overview · By Month / Week / Day</div><div class="row" id="dashControls"></div></div><div class="grid" style="margin-top:12px" id="dashKpis"></div><div id="mgmtPerf"></div><div class="card" style="margin-top:12px"><div class="section" id="dashChartTitle" style="margin-top:0">Chart</div><div id="dashChart" class="dash-chart"></div></div><div id="dashShipType"></div><div class="section" id="dashTableTitle">Daily Delivery Plan</div><div id="recentPlans" class="tablewrap"></div><div class="card" style="margin-top:14px"><div class="section" style="margin-top:0">Print Logo · โลโก้บนใบพิมพ์ (Slip / ใบส่งงาน)</div><div id="logoCard" class="logocard"></div><input type="file" id="logoFile" accept="image/*" hidden onchange="onLogoFile(event)"></div></section>
 <section id="calculate" class="page"><div class="heading"><div><h2>WH Calculate Loading</h2><div class="sub">Logistics enters Shipment Information · Warehouse controls pallet allocation</div></div><div class="toolbar"><button class="btn secondary" onclick="newPlan()">New</button><button class="btn green" id="savePlanBtn" onclick="savePlan()">Save Loading Plan</button></div></div>
@@ -178,7 +182,20 @@ ABC-002	500"></textarea><div class="toolbar" style="margin-top:6px"><button clas
 <section id="dest" class="page"><div class="heading"><div><h2>Destination-Port Master</h2><div class="sub">Manage Destination-Port pairs</div></div><button class="btn" onclick="openDest()">＋ Add Destination</button></div><div id="destTable" class="tablewrap"></div><div class="section">Shipment Dropdown Options</div><div class="card"><div class="row"><div class="field"><label>Category</label><select id="optionCategory"><option>Order Type</option><option>SHIP BY</option><option>Type Shipment</option></select></div><div class="field"><label>New Value</label><input id="optionValue" placeholder="Enter value"></div><button class="btn" onclick="addOption()">Add Option</button></div><div id="optionTable" style="margin-top:12px"></div></div></section>
 <section id="booking" class="page"><div class="heading"><div><h2>Delivery Booking</h2><div class="sub">ลง Order = Firm Booking · Sub vendor ตอบกลับข้อมูลรถ/ตู้ = Delivered Complete · Slide / Cancel เก็บวันที่เดิมคิด KPI</div></div></div><div class="toolbar" style="margin-bottom:10px"><input id="bkSearch" placeholder="Search Plan / Container / Seal / Invoice / Driver / Sub truck" oninput="renderBooking()" style="min-width:300px"><label class="sub">Plan date</label><input type="date" id="bkFrom" onchange="renderBooking()"><label class="sub">to</label><input type="date" id="bkTo" onchange="renderBooking()"><select id="bkStatus" onchange="renderBooking()"><option value="">All status</option><option value="waiting">Firm · รอส่ง / Delay</option><option value="delivered">Delivered Complete</option><option value="slided">Slide</option><option value="cancelled">Cancelled</option><option value="photo">📷 รูปยังไม่ครบ</option></select><button class="btn secondary small" onclick="clearBookingFilter()">Clear</button><button class="btn secondary small" title="โลโก้บนใบพิมพ์" onclick="chooseLogo()">🖼 Print logo</button><span class="sub" id="bkCount"></span></div><div id="bookTable" class="tablewrap"></div></section>
 <section id="history" class="page"><div class="heading"><div><h2>Loading History</h2><div class="sub">Saved Shipment / WH Calculate plans</div></div><button class="btn secondary" onclick="refreshData()">↻ Reload</button></div><div class="toolbar" style="margin-bottom:10px"><input id="histSearch" placeholder="Search Plan ID / Model / Destination / Remark" oninput="renderHistory()" style="min-width:300px"><label class="sub">Request Date from</label><input type="date" id="histFrom" onchange="renderHistory()"><label class="sub">to</label><input type="date" id="histTo" onchange="renderHistory()"><button class="btn secondary small" onclick="clearHistoryFilter()">Clear</button><span class="sub" id="histCount"></span></div><div id="historyTable" class="tablewrap"></div></section>
-</main></div>
+<section id="users" class="page"><div class="heading"><div><h2>Users · Manage User Authorize</h2><div class="sub">กำหนดสิทธิ์รายคน: การมองเห็นข้อมูล · แก้ไข Master · ลบ — บังคับใช้ที่ฐานข้อมูล (เฉพาะ admin)</div></div><button class="btn secondary" onclick="usersReload()">↻ Reload</button></div><div id="uaMsg" class="sub" style="margin-bottom:8px"></div><div id="uaPending"></div><div class="section" style="margin-top:6px">ผู้ใช้ทั้งหมด</div><div id="uaTable" class="tablewrap"></div><div class="section">ค่ามาตรฐานของแต่ละ Role <span class="sub" style="font-weight:400">(ใช้เป็นจุดเริ่มต้น ปรับรายคนได้)</span></div><div id="uaTemplates" class="tablewrap"></div><div class="note" style="margin-top:10px">ผู้ใช้ใหม่กด <b>Create account</b> ที่หน้า Login แล้วจะรออยู่ใน “รออนุมัติ” ที่นี่ · “ถอนสิทธิ์” = ผู้ใช้กลับไปเป็นรออนุมัติ (ไม่ลบบัญชี; ลบบัญชีที่ Supabase → Authentication) · ต้องมี admin อย่างน้อย 1 คนเสมอ</div></section>
+<div id="noAccess" class="card" style="display:none;margin:18px"><b>บัญชีนี้ยังไม่มีสิทธิ์เข้าถึงข้อมูลใด ๆ</b><div class="sub">ติดต่อผู้ดูแลระบบ (admin) เพื่อกำหนดสิทธิ์ · No data permissions are assigned to this account.</div></div></main></div>
+<div class="modal" id="userModal"><div class="modalbox"><div class="modalhead"><h3 id="uaTitle">สิทธิ์ผู้ใช้</h3><button class="btn secondary" onclick="closeModal('userModal')">✕</button></div>
+<div class="row"><div class="field"><label>Email</label><input id="ua_email" type="text" readonly></div><div class="field"><label>Role (ค่าเริ่มต้นของสิทธิ์)</label><select id="ua_role" onchange="uaRoleChanged()"><option value="viewer">viewer</option><option value="warehouse">warehouse</option><option value="logistics">logistics</option><option value="admin">admin</option></select></div></div>
+<div class="sub" id="uaRoleNote" style="margin:4px 0"></div>
+<table class="ua-tbl"><thead><tr><th>ข้อมูล</th><th>ดู (มองเห็น)</th><th>เพิ่ม / แก้ไข</th><th>ลบ</th></tr></thead><tbody>
+<tr><td><b>Loading Plans</b><div class="sub">Dashboard · Management · Booking · History · Calculate</div></td><td><select id="ua_plans_view" onchange="uaSync('plans_view')"><option value="">ไม่เห็น</option><option value="own">เฉพาะของตัวเอง</option><option value="all">ทั้งหมด</option></select></td><td><input type="checkbox" id="ua_plans_edit" onchange="uaSync('plans_edit')"></td><td><select id="ua_plans_del" onchange="uaSync('plans_del')"><option value="">ลบไม่ได้</option><option value="own">เฉพาะของตัวเอง</option><option value="all">ทุกแผน</option></select></td></tr>
+<tr><td><b>Part &amp; Packing Master</b></td><td><input type="checkbox" id="ua_parts_view" onchange="uaSync('parts_view')"></td><td><input type="checkbox" id="ua_parts_edit" onchange="uaSync('parts_edit')"></td><td><input type="checkbox" id="ua_parts_del" onchange="uaSync('parts_del')"></td></tr>
+<tr><td><b>Destination-Port &amp; Options</b></td><td><input type="checkbox" id="ua_masters_view" onchange="uaSync('masters_view')"></td><td><input type="checkbox" id="ua_masters_edit" onchange="uaSync('masters_edit')"></td><td><input type="checkbox" id="ua_masters_del" onchange="uaSync('masters_del')"></td></tr>
+<tr><td><b>รูปถ่ายตู้</b><div class="sub">เห็นเฉพาะรูปของแผนที่เห็นได้</div></td><td><input type="checkbox" id="ua_photos_view" onchange="uaSync('photos_view')"></td><td><input type="checkbox" id="ua_photos_edit" onchange="uaSync('photos_edit')"><div class="sub">อัปโหลด / ลบรูป</div></td><td class="sub">—</td></tr>
+</tbody></table>
+<div class="sub">ต้องให้ “ดู” ก่อนจึงจะ แก้ไข / ลบ ได้ · การเปลี่ยนสิทธิ์มีผลเมื่อผู้ใช้โหลดหน้าใหม่ (Reload)</div>
+<div id="uaErr" class="auth-error" style="min-height:18px"></div>
+<div class="toolbar" style="justify-content:flex-end;margin-top:8px"><button class="btn secondary" onclick="uaApplyTemplate()">↺ ใช้ค่ามาตรฐานของ role</button><button class="btn secondary" onclick="closeModal('userModal')">Cancel</button><button class="btn green" id="uaSave" onclick="uaSave()">Save สิทธิ์</button></div></div></div>
 <div class="modal" id="manualModal"><div class="modalbox" style="max-width:860px"><div class="modalhead"><h3>＋ Add Manual Pallet · เลือก Model จาก Shipment Order</h3><button class="btn secondary" onclick="closeModal('manualModal')">✕</button></div><div class="sub">เลือกว่า Pallet ใหม่ต้องการ Model ไหน จำนวนเท่าไร จาก Shipment Order ด้านบน · ใส่หลาย Model = Mix Pallet</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Model</th><th>Description</th><th class="right">Shipment Qty</th><th class="right">จัดลง Pallet แล้ว</th><th class="right">เหลือ (BL)</th><th>Qty บน Pallet นี้</th></tr></thead><tbody id="manualRows"></tbody></table></div><div id="manualPreview"></div><div class="toolbar" style="justify-content:flex-end;margin-top:14px"><button class="btn secondary" onclick="closeModal('manualModal')">Cancel</button><button class="btn" id="manualOk" onclick="manualConfirm()">เพิ่ม Pallet</button></div></div></div>
 <div class="modal" id="partModal"><div class="modalbox"><div class="modalhead"><h3 id="partModalTitle">Part & Packing</h3><button class="btn secondary" onclick="closeModal('partModal')">✕</button></div><div id="partForm" class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div><div class="toolbar" style="justify-content:flex-end;margin-top:15px"><button class="btn secondary" onclick="closeModal('partModal')">Cancel</button><button class="btn" onclick="savePart()">Save Master</button></div></div></div>
 <div class="modal" id="bookModal"><div class="modalbox"><div class="modalhead"><h3 id="bkTitle">Delivery Booking</h3><button class="btn secondary" onclick="closeModal('bookModal')">✕</button></div><div class="note" id="bkPlanInfo"></div><div id="bkState" style="margin:8px 0"></div><div class="section" style="font-size:13px;margin-top:6px">ข้อมูลรถ / ส่งมอบ · กรอกครบแล้วบันทึก = Delivered Complete</div><div class="row"><div class="field"><label>Container No.</label><input id="bk_containerNo" type="text" placeholder="ABCD1234567" style="text-transform:uppercase"></div><div class="field"><label>Seal No.</label><input id="bk_sealNo" type="text"></div><div class="field"><label>Invoice No.</label><input id="bk_invoiceNo" type="text"></div></div><div class="row"><div class="field"><label>Loading by</label><input id="bk_loadingBy" type="text" list="dl_loadingBy"></div><div class="field"><label>Loading date</label><input id="bk_loadDate" type="date"></div><div class="field"><label>Loading time</label><input id="bk_loadTime" type="time"></div></div><div class="row"><div class="field"><label>พขร. (Driver)</label><input id="bk_driver" type="text" list="dl_driver"></div><div class="field"><label>Sub control truck</label><input id="bk_subTruck" type="text" list="dl_subTruck"></div><div class="field"><label>ทะเบียนรถ (Plate)</label><input id="bk_truckPlate" type="text" list="dl_truckPlate"></div></div><datalist id="dl_loadingBy"></datalist><datalist id="dl_driver"></datalist><datalist id="dl_subTruck"></datalist><datalist id="dl_truckPlate"></datalist><div id="bkWarn"></div><div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bkPrint" style="display:none" onclick="printDeliveryNote($('bookModal').dataset.plan)">🖨 Print ใบส่งงาน</button><button class="btn secondary" onclick="closeModal('bookModal')">Close</button><button class="btn green" onclick="saveBooking()">Save · Delivered Complete</button></div><div class="section" style="font-size:13px;margin-top:6px">📷 รูปถ่ายตู้ <label class="chkline"><input type="checkbox" id="bk_photoReq" onchange="bkTogglePhotoReq()"> Customer ต้องการรูป (เฉพาะบางเที่ยว)</label></div><div id="bkPhotos" style="display:none"><div class="toolbar" style="margin:4px 0 8px"><button class="btn small" id="bkPhotoBulkBtn" onclick="bkPhotoBulk()">⬆ เลือกรูปจากกล้อง (หลายไฟล์ · วางช่องว่างตามลำดับชื่อไฟล์)</button><button class="btn small secondary" id="bkPhotoCheckBtn" onclick="bkPhotoCheck()" style="display:none" title="ตรวจ secrets ของ Cloudflare R2 ฝั่งเซิร์ฟเวอร์">🔧 ตรวจ R2</button><span class="sub" id="bkPhotoMsg"></span></div><div class="photogrid" id="bkPhotoGrid"></div><div class="sub" style="margin-top:6px">รูปจากกล้องถูกย่อในเบราว์เซอร์ก่อนอัปโหลด (JPEG ด้านยาว 2048 px) · เก็บใน Cloudflare R2 แบบ private</div><input type="file" id="bkPhotoFile" accept="image/*" hidden onchange="bkPhotoFileChosen(this)"><input type="file" id="bkPhotoMulti" accept="image/*" multiple hidden onchange="bkPhotoBulkChosen(this)"></div><div class="section" style="font-size:13px">ไม่ได้ส่งตามแผน → Slide เที่ยว หรือ Cancel ตู้ (เก็บวันที่ Booking เดิมไว้คิด KPI On plan)</div><div class="row"><div class="field"><label>Slide ไปวันที่</label><input id="bk_slideDate" type="date"></div><div class="field"><label>เวลา</label><input id="bk_slideTime" type="time"></div><div class="field"><label>เหตุผล</label><input id="bk_slideReason" placeholder="เช่น รถไม่มา / ตู้ไม่พอ"></div></div><div class="toolbar" style="margin-top:8px"><button class="btn" onclick="slideBooking()">↷ Slide เที่ยวส่ง</button><button class="btn danger" onclick="cancelBooking()">✕ Cancel ตู้</button><button class="btn secondary" id="bkReopen" onclick="reopenBooking()" style="display:none">↺ Re-open</button></div><div class="section" style="font-size:13px">ประวัติที่เคยกรอก (กด Use เพื่อเติม พขร. / Sub truck / ทะเบียน / Loading by)</div><div id="bkHistory" class="tablewrap" style="max-height:200px"></div></div></div>
@@ -189,7 +206,7 @@ var parts=EMBED_PARTS.slice(),options=EMBED_OPTIONS.slice(),destinations=EMBED_D
 window.CLC_STATE={get parts(){return parts},set parts(v){parts=v},get options(){return options},set options(v){options=v},get destinations(){return destinations},set destinations(v){destinations=v},get plans(){return plans},set plans(v){plans=v},get models(){return models},set models(v){models=v},get allocations(){return allocations},set allocations(v){allocations=v}};
 const $=id=>document.getElementById(id);const n=v=>Number(v)||0;const fmt=v=>Number(v||0).toLocaleString(undefined,{maximumFractionDigits:2});const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function init(){document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$('connectionStatus').textContent=googleConnected?'Connected to Google Sheets':'Local Preview · SharePoint not connected';fillSelects();$('modelList').innerHTML=parts.map(p=>`<option value="${esc(p.model)}">${esc(p.description)}</option>`).join('');renderAll();if(googleConnected)refreshData();}
-function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));}
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===p));document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));if(p==='users')usersOpen();}
 function fillSelect(id,vals){let s=$(id),old=s.value;s.innerHTML='<option value="">Select...</option>'+vals.map(v=>`<option>${esc(v)}</option>`).join('');if(vals.includes(old))s.value=old;}
 function fillSelects(){for(const [id,cat] of [['orderType','Order Type'],['shipBy','SHIP BY'],['shipType','Type Shipment']])fillSelect(id,options.filter(x=>x.category===cat).map(x=>x.value));fillSelect('destination',[...new Set(destinations.map(x=>x.destination))]);syncPorts();}
 function syncPorts(){let d=$('destination').value;fillSelect('port',destinations.filter(x=>x.destination===d).map(x=>x.port));}
@@ -971,7 +988,7 @@ const PHOTO_SLOTS=[{n:1,t:'ก่อนโหลด',e:'Cargo Empty'},{n:2,t:'�
 const PH={cnt:{},loaded:false,loading:false,tried:false,view:{},status:null};
 const phApi=()=>window.clcPhotos||null;
 function phCount(id){return PH.cnt[id]||0}
-function phCanWrite(){const r=document.body.dataset.role;return !r||['admin','logistics','warehouse'].includes(r)}
+function phCanWrite(){if(window.clcCan)return window.clcCan('photos.edit');const r=document.body.dataset.role;return !r||['admin','logistics','warehouse'].includes(r)}
 async function phLoadIndex(force){
   const a=phApi();if(!a||PH.loading||((PH.loaded||PH.tried)&&!force))return;PH.loading=true;PH.tried=true;
   try{const rows=await a.index();PH.cnt={};rows.forEach(r=>PH.cnt[r.plan_id]=(PH.cnt[r.plan_id]||0)+1);PH.loaded=true}
@@ -1068,6 +1085,122 @@ async function bkPhotoDel(slot){
   const id=$('bookModal').dataset.plan,a=phApi();if(!a||!confirm('ลบรูปช่อง '+slot+' ('+PHOTO_SLOTS[slot-1].t+') ?'))return;
   try{await a.call('delete',{planId:id,slot})}catch(e){$('bkPhotoMsg').textContent='ลบไม่สำเร็จ: '+e.message;return}
   await bkPhotosLoad(id);
+}
+
+/* ---------- Access control: per-user permissions (user_roles.perms) + admin "Users" page ---------- */
+// The database enforces these with RLS (supabase/migrations/20261126_user_permissions.sql); here they only decide what is shown.
+const ALL_PERMS=['plans.view','plans.view_own','plans.edit','plans.delete','plans.delete_own','parts.view','parts.edit','parts.delete','masters.view','masters.edit','masters.delete','photos.view','photos.edit'];
+const ROLE_PERMS={ // role = starting template (same as clc_role_perms() in SQL)
+  admin:ALL_PERMS.slice(),
+  logistics:['plans.view','plans.edit','plans.delete_own','parts.view','masters.view','masters.edit','masters.delete','photos.view','photos.edit'],
+  warehouse:['plans.view','plans.edit','plans.delete_own','parts.view','parts.edit','parts.delete','masters.view','photos.view','photos.edit'],
+  viewer:['plans.view','parts.view','masters.view','photos.view']};
+window.CLC_ROLE_PERMS=ROLE_PERMS;
+const uCan=p=>window.clcCan?window.clcCan(p):true; // local preview without cloud: everything is shown
+const uCanPlans=()=>uCan('plans.view')||uCan('plans.view_own');
+const PAGE_NEED={dashboard:uCanPlans,mgmt:uCanPlans,booking:uCanPlans,history:uCanPlans,calculate:()=>uCanPlans()&&uCan('parts.view'),parts:()=>uCan('parts.view'),dest:()=>uCan('masters.view'),users:()=>document.body.dataset.role==='admin'};
+function clcApplyAccess(){
+  if(!window.clcCan)return;
+  let first=null,active=null;
+  document.querySelectorAll('.navbtn').forEach(b=>{const pg=b.dataset.page,ok=!!(PAGE_NEED[pg]&&PAGE_NEED[pg]());b.style.display=ok?'':'none';if(ok&&!first)first=pg;if(b.classList.contains('active'))active=ok?pg:null});
+  $('noAccess').style.display=first?'none':'';
+  if(!first){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));return}
+  if(!active)showPage(first);
+}
+window.clcApplyAccess=clcApplyAccess;
+
+const UA={users:[],loaded:false,busy:false,cur:null};
+const UA_LEVEL=(perms,all,own)=>perms.includes(all)?'all':perms.includes(own)?'own':'';
+const uaSame=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+const uaDate=x=>x?new Date(x).toLocaleString('en-GB',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}):'-';
+function permChips(perms){
+  const has=p=>perms.includes(p),lv=(a,o)=>has(a)?'ทั้งหมด':has(o)?'ของตัวเอง':'';
+  const view=[],edit=[],del=[];
+  const pv=lv('plans.view','plans.view_own');if(pv)view.push('แผน ('+pv+')');if(has('parts.view'))view.push('Part');if(has('masters.view'))view.push('Dest/Options');if(has('photos.view'))view.push('รูป');
+  if(has('plans.edit'))edit.push('แผน');if(has('parts.edit'))edit.push('Part');if(has('masters.edit'))edit.push('Dest/Options');if(has('photos.edit'))edit.push('รูป');
+  const pd=lv('plans.delete','plans.delete_own');if(pd)del.push('แผน ('+pd+')');if(has('parts.delete'))del.push('Part');if(has('masters.delete'))del.push('Dest/Options');
+  const c=(l,a)=>'<span class="chip'+(a.length?' on':'')+'">'+l+': '+(a.length?esc(a.join(', ')):'—')+'</span>';
+  return '<div class="ua-chips">'+c('ดู',view)+c('แก้ไข',edit)+c('ลบ',del)+'</div>';
+}
+function usersOpen(){if(document.body.dataset.role!=='admin')return;if(!UA.loaded)usersReload()}
+async function usersReload(note){
+  const msg=$('uaMsg');if(!window.clcAdmin){msg.textContent='ต้องล็อกอินและเชื่อม Supabase จึงจะจัดการผู้ใช้ได้';return}
+  msg.textContent='กำลังโหลดรายชื่อผู้ใช้ …';
+  try{UA.users=await window.clcAdmin.listUsers();UA.loaded=true;msg.textContent=note||''}
+  catch(e){msg.textContent='โหลดรายชื่อไม่สำเร็จ: '+e.message+(/admin_list_users|function/i.test(e.message)?' — ยังไม่ได้รัน migration 20261126_user_permissions.sql ?':'')}
+  renderUsers();
+}
+function renderUsers(){
+  const me=window.clcAdmin?window.clcAdmin.me():null,list=UA.users||[];
+  const pend=list.filter(u=>!u.role),act=list.filter(u=>u.role);
+  $('uaPending').innerHTML=pend.length?'<div class="card" style="border-color:#f0d28a;background:#fffaf0"><div class="section" style="margin-top:0">⏳ รออนุมัติ <span class="tag mid">'+pend.length+'</span></div><div class="tablewrap" style="max-height:none"><table class="ua-tbl"><thead><tr><th>Email</th><th>สมัครเมื่อ</th><th>ยืนยันอีเมล</th><th>อนุมัติเป็น Role</th><th></th></tr></thead><tbody>'
+    +pend.map(u=>'<tr><td><b>'+esc(u.email||u.user_id)+'</b></td><td>'+uaDate(u.created_at)+'</td><td>'+(u.confirmed?'<span class="chip on">ยืนยันแล้ว</span>':'<span class="chip pend">ยังไม่ยืนยัน</span>')+'</td><td><select id="uaApp_'+esc(u.user_id)+'"><option value="viewer">viewer</option><option value="warehouse">warehouse</option><option value="logistics">logistics</option><option value="admin">admin</option></select></td><td><button class="btn small green" onclick="uaApprove(\''+esc(u.user_id)+'\')">อนุมัติ</button> <button class="btn small secondary" onclick="openUserAuth(\''+esc(u.user_id)+'\')">กำหนดสิทธิ์เอง…</button></td></tr>').join('')+'</tbody></table></div></div>':'';
+  $('uaTable').innerHTML=act.length?'<table class="ua-tbl"><thead><tr><th>Email</th><th>Role</th><th>สิทธิ์ที่ใช้อยู่</th><th>เข้าระบบล่าสุด</th><th></th></tr></thead><tbody>'
+    +act.map(u=>{const mine=u.user_id===me,perms=u.perms||[],custom=u.role!=='admin'&&!uaSame(perms,ROLE_PERMS[u.role]||[]);
+      return '<tr><td><b>'+esc(u.email||u.user_id)+'</b>'+(mine?' <span class="self">(คุณ)</span>':'')+'<div class="sub">แก้ไขล่าสุด '+uaDate(u.updated_at)+'</div></td><td><span class="chip'+(u.role==='admin'?' cus':'')+'">'+esc(u.role)+'</span>'+(custom?' <span class="chip cus" title="สิทธิ์ต่างจากค่ามาตรฐานของ role">ปรับเอง</span>':'')+'</td><td>'+(u.role==='admin'?'<span class="chip on">ทุกอย่าง (admin)</span>':permChips(perms))+'</td><td>'+uaDate(u.last_sign_in_at)+'</td><td><button class="btn small" onclick="openUserAuth(\''+esc(u.user_id)+'\')">'+(mine?'ดูสิทธิ์':'แก้สิทธิ์')+'</button> <button class="btn small danger" '+(mine?'disabled title="ถอนสิทธิ์ตัวเองไม่ได้"':'')+' onclick="uaRemove(\''+esc(u.user_id)+'\')">ถอนสิทธิ์</button></td></tr>'}).join('')+'</tbody></table>':'<div class="sub" style="padding:14px">ยังไม่มีผู้ใช้ที่ได้รับสิทธิ์</div>';
+  $('uaTemplates').innerHTML='<table class="ua-tbl"><thead><tr><th>Role</th><th>สิทธิ์เริ่มต้น</th></tr></thead><tbody>'+['admin','logistics','warehouse','viewer'].map(r=>'<tr><td><b>'+r+'</b></td><td>'+(r==='admin'?'<span class="chip on">ทุกอย่าง + จัดการผู้ใช้</span>':permChips(ROLE_PERMS[r]))+'</td></tr>').join('')+'</tbody></table>';
+}
+function uaFill(perms){
+  $('ua_plans_view').value=UA_LEVEL(perms,'plans.view','plans.view_own');$('ua_plans_edit').checked=perms.includes('plans.edit');$('ua_plans_del').value=UA_LEVEL(perms,'plans.delete','plans.delete_own');
+  for(const r of ['parts','masters']){$('ua_'+r+'_view').checked=perms.includes(r+'.view');$('ua_'+r+'_edit').checked=perms.includes(r+'.edit');$('ua_'+r+'_del').checked=perms.includes(r+'.delete')}
+  $('ua_photos_view').checked=perms.includes('photos.view');$('ua_photos_edit').checked=perms.includes('photos.edit');
+}
+function uaRead(){
+  const p=[],pv=$('ua_plans_view').value,pd=$('ua_plans_del').value;
+  if(pv==='all')p.push('plans.view');if(pv==='own')p.push('plans.view_own');if($('ua_plans_edit').checked)p.push('plans.edit');if(pd==='all')p.push('plans.delete');if(pd==='own')p.push('plans.delete_own');
+  for(const r of ['parts','masters']){if($('ua_'+r+'_view').checked)p.push(r+'.view');if($('ua_'+r+'_edit').checked)p.push(r+'.edit');if($('ua_'+r+'_del').checked)p.push(r+'.delete')}
+  if($('ua_photos_view').checked)p.push('photos.view');if($('ua_photos_edit').checked)p.push('photos.edit');
+  return p;
+}
+// editing / deleting needs viewing: keep the form consistent (the database does not need this, it just avoids confusing combinations)
+function uaSync(src){
+  const pv=$('ua_plans_view'),pe=$('ua_plans_edit'),pd=$('ua_plans_del');
+  if(src==='plans_edit'&&pe.checked&&!pv.value)pv.value='own';
+  if(src==='plans_del'&&pd.value&&!pv.value)pv.value='own';
+  if(src==='plans_del'&&pd.value==='all')pv.value='all';
+  if(src==='plans_view'){if(!pv.value){pe.checked=false;pd.value=''}else if(pv.value==='own'&&pd.value==='all')pd.value='own'}
+  for(const r of ['parts','masters','photos']){
+    const v=$('ua_'+r+'_view'),e=$('ua_'+r+'_edit'),d=$('ua_'+r+'_del');
+    if(src===r+'_view'&&!v.checked){e.checked=false;if(d)d.checked=false}
+    if((src===r+'_edit'&&e.checked)||(src===r+'_del'&&d&&d.checked))v.checked=true;
+  }
+  if($('ua_photos_edit').checked&&!$('ua_photos_view').checked&&src==='photos_edit')$('ua_photos_view').checked=true;
+}
+function uaLock(lock,note){document.querySelectorAll('#userModal .ua-tbl select,#userModal .ua-tbl input').forEach(x=>x.disabled=lock);$('uaRoleNote').textContent=note||''}
+function uaRoleChanged(){const r=$('ua_role').value;uaFill(ROLE_PERMS[r]||[]);uaLock(r==='admin',r==='admin'?'admin มีสิทธิ์ทั้งหมดเสมอ และจัดการผู้ใช้ได้':'สิทธิ์ถูกตั้งตามค่ามาตรฐานของ role — ปรับรายข้อได้ด้านล่าง')}
+function uaApplyTemplate(){if(!$('ua_role').disabled)uaRoleChanged()}
+function openUserAuth(id){
+  const u=UA.users.find(x=>x.user_id===id);if(!u)return;UA.cur=u;
+  const me=window.clcAdmin&&window.clcAdmin.me()===u.user_id,role=u.role||'viewer';
+  $('uaTitle').textContent='สิทธิ์ผู้ใช้'+(u.role?'':' (ยังไม่อนุมัติ)');$('ua_email').value=u.email||u.user_id;$('ua_role').value=role;
+  uaFill(u.role?(u.perms||[]):ROLE_PERMS[role]);$('uaErr').textContent='';
+  uaLock(role==='admin'||me,role==='admin'?'admin มีสิทธิ์ทั้งหมดเสมอ และจัดการผู้ใช้ได้':'');
+  $('ua_role').disabled=!!me;$('uaSave').style.display=me?'none':'';
+  if(me)$('uaRoleNote').textContent='นี่คือบัญชีของคุณ — เปลี่ยนสิทธิ์ตัวเองไม่ได้';
+  $('userModal').classList.add('open');
+}
+async function uaSave(){
+  const u=UA.cur;if(!u||UA.busy)return;const role=$('ua_role').value,perms=role==='admin'?ALL_PERMS.slice():uaRead(),err=$('uaErr');
+  if(role!=='admin'&&!perms.length){err.textContent='ยังไม่ได้ให้สิทธิ์อะไรเลย — ถ้าไม่ต้องการให้ใช้งาน กด “ถอนสิทธิ์” แทน';return}
+  if(u.role==='admin'&&role!=='admin'&&!confirm('ลดสิทธิ์ admin ของ '+(u.email||'')+' ?'))return;
+  UA.busy=true;$('uaSave').disabled=true;err.textContent='กำลังบันทึก …';
+  try{await window.clcAdmin.saveUser({user_id:u.user_id,email:u.email,role,perms});closeModal('userModal');await usersReload('บันทึกสิทธิ์ของ '+(u.email||'')+' แล้ว (ผู้ใช้ต้อง Reload หน้าเพื่อให้เมนูอัปเดต; ฐานข้อมูลบังคับใช้ทันที)')}
+  catch(e){err.textContent='บันทึกไม่สำเร็จ: '+e.message}
+  finally{UA.busy=false;$('uaSave').disabled=false}
+}
+async function uaApprove(id){
+  const u=UA.users.find(x=>x.user_id===id),sel=$('uaApp_'+id);if(!u||!sel||UA.busy)return;const role=sel.value;
+  if(!confirm('อนุมัติ '+(u.email||'')+' เป็น '+role+' ?'))return;
+  UA.busy=true;
+  try{await window.clcAdmin.saveUser({user_id:u.user_id,email:u.email,role,perms:ROLE_PERMS[role].slice()});await usersReload('อนุมัติ '+(u.email||'')+' เป็น '+role+' แล้ว')}
+  catch(e){$('uaMsg').textContent='อนุมัติไม่สำเร็จ: '+e.message}finally{UA.busy=false}
+}
+async function uaRemove(id){
+  const u=UA.users.find(x=>x.user_id===id);if(!u||UA.busy)return;
+  if(!confirm('ถอนสิทธิ์ของ '+(u.email||'')+' ?\nผู้ใช้จะเข้าสู่ระบบได้แต่เห็นข้อมูลไม่ได้ (กลับไปเป็นรออนุมัติ)'))return;
+  UA.busy=true;
+  try{await window.clcAdmin.removeUser(u.user_id);await usersReload('ถอนสิทธิ์ของ '+(u.email||'')+' แล้ว')}
+  catch(e){$('uaMsg').textContent='ถอนสิทธิ์ไม่สำเร็จ: '+e.message}finally{UA.busy=false}
 }
 
 /* ---------- Mix Pallet Dimension Calculation: hide / show ---------- */

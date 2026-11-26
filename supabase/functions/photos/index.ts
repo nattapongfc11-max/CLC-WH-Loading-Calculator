@@ -55,9 +55,11 @@ Deno.serve(createHandler(async (req: Request) => {
   const { data: u, error: ue } = await sb.auth.getUser();
   if (ue || !u?.user) return deps;
   const { data: role } = await sb.rpc('clc_role');
+  const { data: me } = await sb.from('user_roles').select('perms').eq('user_id', u.user.id).maybeSingle(); // own row (RLS); null before the permissions migration
   const T = () => sb.from('delivery_photos');
   deps.auth = {
     role: role || null,
+    perms: me && Array.isArray(me.perms) ? me.perms : undefined,
     r2: makeR2(),
     db: {
       getByPlanSlot: async (plan_id: string, slot: number) => (await T().select('*').eq('plan_id', plan_id).eq('slot', slot).maybeSingle()).data,
