@@ -169,10 +169,11 @@ setTimeout(async()=>{
   ok(!!d.getElementById('logoCard')&&!!d.getElementById('logoFile')&&/Pioneer logo/.test(d.getElementById('logoCard').innerHTML),'Management page shows the Pioneer logo setting');
   w.alert=()=>{};
   // Container photos (R2): per-trip flag, 5 slots, bulk pick from the camera, role-aware, badge + filter
-  const calls=[];let store={};let cfg=true;
+  const calls=[];let store={};let cfg=true,probs=[],chkRes={ok:true,message:'✅ ฟังก์ชันต่อ R2 ได้'};
   w.clcPhotos={async index(){return Object.keys(store).flatMap(pid=>Object.keys(store[pid]).map(s=>({plan_id:pid,slot:Number(s)})))},
     async call(action,body){calls.push(action+(body&&body.slot?':'+body.slot:''));
-      if(action==='status')return {configured:cfg,role:'warehouse',canWrite:true};
+      if(action==='status')return {configured:cfg,role:'warehouse',canWrite:true,problems:probs};
+      if(action==='check')return chkRes;
       if(action==='sign-view')return {photos:Object.keys(store[body.planId]||{}).map(s=>({slot:Number(s),url:'https://r2.test/'+body.planId+'/'+s+'?sig',bytes:1}))};
       if(action==='sign-upload')return {key:'plans/'+body.planId+'/slot'+body.slot+'-k.jpg',url:'https://r2.test/put/'+body.slot,headers:{'Content-Type':'image/jpeg'}};
       if(action==='commit'){(store[body.planId]=store[body.planId]||{})[body.slot]=1;return {photo:{}}}
@@ -215,6 +216,26 @@ setTimeout(async()=>{
   cfg=false;await w.bkPhotosLoad('PH-1');
   ok(/ยังไม่ได้ตั้งค่า Cloudflare R2/.test(d.getElementById('bkPhotoMsg').textContent)&&d.querySelectorAll('#bkPhotoGrid button').length===0,'R2 not configured: clear message and no upload buttons');
   cfg=true;
+  // R2 secrets self-check: names the wrong secret, "🔧 ตรวจ R2" button, diagnosis when the browser cannot reach R2
+  const msgT=()=>d.getElementById('bkPhotoMsg').textContent;
+  cfg=false;probs=[{name:'R2_ACCOUNT_ID',message:'ต้องเป็นรหัส 32 ตัว แต่ค่าที่ตั้งไว้ยาว 40 ตัว'}];await w.bkPhotosLoad('PH-1');
+  ok(/R2_ACCOUNT_ID: ต้องเป็นรหัส 32 ตัว/.test(msgT())&&!/ยังไม่ได้ตั้งค่า Cloudflare R2/.test(msgT()),'wrong secret: the message names it (R2_ACCOUNT_ID) and what is wrong');
+  ok(d.getElementById('bkPhotoCheckBtn').style.display==='','🔧 ตรวจ R2 button is shown to writers even when R2 is mis-configured');
+  chkRes={ok:false,code:'config',message:'ตั้งค่า secrets ของ R2 ไม่ครบหรือรูปแบบไม่ถูกต้อง',problems:probs};await w.bkPhotoCheck();
+  ok(/⚠/.test(msgT())&&/R2_ACCOUNT_ID/.test(msgT()),'ตรวจ R2 shows the problem');
+  cfg=true;probs=[];chkRes={ok:true,message:'✅ ฟังก์ชันต่อ R2 ได้ — Account ID, bucket และ Access Key ถูกต้อง'};await w.bkPhotosLoad('PH-1');await w.bkPhotoCheck();
+  ok(/✅/.test(msgT())&&/CORS/.test(msgT()),'ตรวจ R2 OK: still reminds to check the bucket CORS');
+  d.body.dataset.role='viewer';await w.bkPhotosLoad('PH-1');
+  ok(d.getElementById('bkPhotoCheckBtn').style.display==='none','viewer role: no ตรวจ R2 button');delete d.body.dataset.role;
+  // upload where the browser cannot reach R2 (DNS / CORS): ONE server check, one explanation for all failed files
+  const realFetch=w.fetch;w.fetch=async()=>{throw new TypeError('Failed to fetch')};
+  store['PH-1']={};await w.bkPhotosLoad('PH-1');w.eval('phDiag=null');calls.length=0;
+  await w.phRunJobs('PH-1',[{f:F('IMG_1.JPG'),slot:1},{f:F('IMG_2.JPG'),slot:2}]);
+  ok(calls.filter(c=>c==='check').length===1&&/IMG_1\.JPG, IMG_2\.JPG/.test(msgT())&&/CORS/.test(msgT())&&(msgT().match(/ส่งรูปไป Cloudflare R2 ไม่ได้/g)||[]).length===1,'PUT network failure: one R2 check, one explanation (CORS) for all failed files');
+  chkRes={ok:false,code:'network',message:'ต่อ Cloudflare R2 ไม่ได้ — ชื่อโฮสต์ผิด (ตรวจ R2_ACCOUNT_ID)'};w.eval('phDiag=null');
+  await w.phRunJobs('PH-1',[{f:F('IMG_3.JPG'),slot:1}]);
+  ok(/R2_ACCOUNT_ID/.test(msgT())&&!/CORS/.test(msgT()),'PUT network failure and the server cannot reach R2 either -> points at R2_ACCOUNT_ID');
+  w.fetch=realFetch;chkRes={ok:true,message:'ok'};
   // viewer: sees photos but no upload/delete buttons
   d.body.dataset.role='viewer';store['PH-1']={1:1};await w.bkPhotosLoad('PH-1');
   ok(d.querySelectorAll('#bkPhotoGrid .pslot.has').length===1&&d.querySelectorAll('#bkPhotoGrid button').length===0&&d.getElementById('bkPhotoBulkBtn').style.display==='none','viewer role: can look at photos, no upload / delete buttons');

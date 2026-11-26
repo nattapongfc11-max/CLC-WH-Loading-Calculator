@@ -6,6 +6,42 @@ export const WRITE_ROLES = ['admin', 'logistics', 'warehouse'];
 export const UPLOAD_TTL = 600, VIEW_TTL = 900;
 const DEFAULT_ORIGINS = ['https://nattapongfc11-max.github.io', 'http://localhost:8000', 'http://localhost:8080', 'http://127.0.0.1:8000'];
 
+// ---- R2 secrets: normalised + validated here (pure; the result NEVER contains a secret value, only names / lengths) ----
+const clean = v => String(v == null ? '' : v).trim();
+export function r2Settings(env = {}) {
+  const raw = clean(env.R2_ACCOUNT_ID);
+  // tolerate a pasted endpoint (https://<id>.r2.cloudflarestorage.com[/bucket]) and stray spaces / new lines
+  const accountId = raw.replace(/^https?:\/\//i, '').replace(/\.r2\.cloudflarestorage\.com.*$/i, '').replace(/[/\s]+$/, '');
+  const cfg = { accountId, accessKeyId: clean(env.R2_ACCESS_KEY_ID), secretAccessKey: clean(env.R2_SECRET_ACCESS_KEY), bucket: clean(env.R2_BUCKET) };
+  const problems = [], p = (name, message) => problems.push({ name, message });
+  if (!raw) p('R2_ACCOUNT_ID', 'ยังไม่ได้ตั้งค่า');
+  else if (!/^[0-9a-f]{32}$/i.test(accountId)) p('R2_ACCOUNT_ID', 'ต้องเป็นรหัส 32 ตัว (0-9, a-f) แต่ค่าที่ตั้งไว้ยาว ' + accountId.length + ' ตัว' + (/[^0-9a-f]/i.test(accountId) ? ' และมีอักขระอื่นปน' : ''));
+  if (!cfg.accessKeyId) p('R2_ACCESS_KEY_ID', 'ยังไม่ได้ตั้งค่า');
+  else if (/\s/.test(cfg.accessKeyId) || cfg.accessKeyId.length < 16) p('R2_ACCESS_KEY_ID', 'รูปแบบไม่ถูกต้อง (ยาว ' + cfg.accessKeyId.length + ' ตัว หรือมีช่องว่างปน)');
+  if (!cfg.secretAccessKey) p('R2_SECRET_ACCESS_KEY', 'ยังไม่ได้ตั้งค่า');
+  else if (/\s/.test(cfg.secretAccessKey) || cfg.secretAccessKey.length < 32) p('R2_SECRET_ACCESS_KEY', 'รูปแบบไม่ถูกต้อง (ยาว ' + cfg.secretAccessKey.length + ' ตัว หรือมีช่องว่างปน)');
+  if (!cfg.bucket) p('R2_BUCKET', 'ยังไม่ได้ตั้งค่า');
+  else if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(cfg.bucket)) p('R2_BUCKET', 'ชื่อ bucket ต้องเป็นตัวพิมพ์เล็ก ตัวเลข และ - เท่านั้น (3–63 ตัว)');
+  return { cfg, problems };
+}
+const problemText = pr => pr.map(x => x.name + ': ' + x.message).join('; ');
+
+// Turns the raw answer of a signed test request to R2 (see makeR2().check in index.ts) into a human message.
+export function interpretCheck(res = {}) {
+  const { status, code, error } = res;
+  if (error) return { ok: false, code: 'network', message: 'ต่อ Cloudflare R2 ไม่ได้ — ชื่อโฮสต์ผิด (ตรวจ R2_ACCOUNT_ID) หรือเซิร์ฟเวอร์ R2 ไม่ตอบ' };
+  if (status === 200 || (status === 404 && code === 'NoSuchKey')) return { ok: true, code: 'ok', status, message: '✅ ฟังก์ชันต่อ R2 ได้ — Account ID, bucket และ Access Key ถูกต้อง' };
+  const known = {
+    NoSuchBucket: 'ไม่พบ bucket ตามชื่อใน R2_BUCKET (หรือ R2_ACCOUNT_ID เป็นของคนละบัญชี)',
+    InvalidAccessKeyId: 'R2_ACCESS_KEY_ID ไม่ถูกต้อง (หรือ token ถูกลบ/หมดอายุ)',
+    SignatureDoesNotMatch: 'R2_SECRET_ACCESS_KEY ไม่ถูกต้อง หรือไม่ตรงกับ Access Key ID',
+    AccessDenied: 'token ไม่มีสิทธิ์ใช้ bucket นี้ — ต้องเป็น Object Read & Write และเลือก bucket นี้ (หรือ bucket ไม่มีอยู่)'
+  };
+  if (known[code]) return { ok: false, code, status, message: known[code] };
+  if (status === 403) return { ok: false, code: code || 'forbidden', status, message: known.AccessDenied };
+  return { ok: false, code: code || 'http_' + status, status, message: 'R2 ตอบ HTTP ' + status + (code ? ' (' + code + ')' : '') };
+}
+
 export const safeId = s => String(s).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100);
 export const keyPrefix = (planId, slot) => `plans/${safeId(planId)}/slot${slot}-`;
 
@@ -37,8 +73,15 @@ export function createHandler(getDeps) {
     if (!role) return send(403, { error: 'no_role', message: 'Your account has no role yet' });
     const canWrite = WRITE_ROLES.includes(role);
 
-    if (action === 'status') return send(200, { configured: !!r2, role, canWrite, maxBytes: MAX_BYTES });
-    if (!r2) return send(503, { error: 'r2_not_configured', message: 'Cloudflare R2 is not configured (see README: container photos)' });
+    const problems = r2 ? [] : r2Settings(deps.env || {}).problems;
+    if (action === 'status') return send(200, { configured: !!r2, role, canWrite, maxBytes: MAX_BYTES, problems });
+    if (action === 'check') { // self-test of the R2 secrets: format first, then one signed request to R2 (reports which secret is wrong, never its value)
+      if (!canWrite) return send(403, { error: 'forbidden', message: 'Your role cannot run the R2 check' });
+      if (!r2) return send(200, { ok: false, code: 'config', message: 'ตั้งค่า secrets ของ R2 ไม่ครบหรือรูปแบบไม่ถูกต้อง', problems });
+      let res; try { res = await r2.check(); } catch (e) { res = { error: String((e && e.message) || e) }; }
+      return send(200, interpretCheck(res));
+    }
+    if (!r2) return send(503, { error: 'r2_not_configured', message: 'Cloudflare R2 is not configured' + (problems.length ? ' — ' + problemText(problems) : ' (see README: container photos)'), problems });
 
     const planId = body.planId == null ? '' : String(body.planId).trim();
     const slot = Number(body.slot);

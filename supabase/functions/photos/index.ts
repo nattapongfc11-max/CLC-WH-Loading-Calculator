@@ -3,15 +3,16 @@
 //   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET   (optional: ALLOWED_ORIGINS="https://site1,https://site2")
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { AwsClient } from 'npm:aws4fetch@1.0.20';
-import { createHandler } from './handler.mjs';
+import { createHandler, r2Settings } from './handler.mjs';
 
 const env = Deno.env.toObject();
 
 function makeR2() {
-  const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET } = env;
-  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET) return null;
-  const aws = new AwsClient({ accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY, service: 's3', region: 'auto' });
-  const base = (key: string) => `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET}/${key.split('/').map(encodeURIComponent).join('/')}`;
+  // values are trimmed/validated by r2Settings(); wrong or missing secrets -> null, and `status` / `check` report which one
+  const { cfg, problems } = r2Settings(env);
+  if (problems.length) return null;
+  const aws = new AwsClient({ accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, service: 's3', region: 'auto' });
+  const base = (key: string) => `https://${cfg.accountId}.r2.cloudflarestorage.com/${cfg.bucket}/${key.split('/').map(encodeURIComponent).join('/')}`;
   const presign = async (method: string, key: string, ttl: number, contentType?: string) => {
     const url = new URL(base(key));
     url.searchParams.set('X-Amz-Expires', String(ttl));
@@ -21,6 +22,17 @@ function makeR2() {
   return {
     presignPut: (key: string, ct: string, ttl: number) => presign('PUT', key, ttl, ct),
     presignGet: (key: string, ttl: number) => presign('GET', key, ttl),
+    // One signed GET of a key that never exists: 404 NoSuchKey proves host + bucket + credentials are all valid.
+    check: async () => {
+      try {
+        const r = await aws.fetch(base('__clc_check__'), { method: 'GET', signal: AbortSignal.timeout(8000) });
+        const t = await r.text();
+        const m = /<Code>([^<]+)<\/Code>/.exec(t);
+        return { status: r.status, code: m ? m[1] : '' };
+      } catch (e) {
+        return { error: String((e && (e as Error).message) || e) };
+      }
+    },
     head: async (key: string) => {
       const r = await aws.fetch(base(key), { method: 'HEAD' });
       if (r.status === 404) return null;
