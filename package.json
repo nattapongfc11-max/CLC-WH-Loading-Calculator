@@ -3,6 +3,6 @@
   "version": "2.1.0",
   "private": true,
   "description": "CLC WH Loading Calculator V2",
-  "scripts": { "test": "node tests/smoke.test.js && node tests/auth.test.js && node tests/delivery.test.js && node tests/photos.test.js" },
+  "scripts": { "test": "node tests/smoke.test.js && node tests/auth.test.js && node tests/delivery.test.js && node tests/calc.test.js && node tests/sim3d.test.js && node tests/photos.test.js" },
   "devDependencies": { "jsdom": "^24.0.0" }
 }

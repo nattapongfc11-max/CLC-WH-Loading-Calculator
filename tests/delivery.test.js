@@ -41,13 +41,31 @@ setTimeout(async()=>{
   // outstanding trips without a status judgement
   w.plans.push(mk('J1','00:00',{requestDate:w.shiftDay(day,-3)}));w.renderDeliveryBoard();
   ok(d.getElementById('deliveryBoard').textContent.includes('ยังไม่มีการ Judge Status')&&d.getElementById('deliveryBoard').textContent.includes('J1'),'overdue outstanding plan listed as not yet judged');
-  const tbls=d.querySelectorAll('#deliveryBoard table');
-  ok(tbls.length===1,'Delivery Board shows a single table');
+  const tbls=d.querySelectorAll('#deliveryBoard table:not(.mmatrix)');
+  ok(tbls.length===1,'Delivery Board shows a single trip table (plus the Count/Trip matrix)');
   const bodyRows=[...d.querySelectorAll('#deliveryBoard tbody tr')];
   const iJ=bodyRows.findIndex(r=>r.classList.contains('jrow')),iDay=bodyRows.findIndex(r=>r.classList.contains('grp')&&/Trip ประจำวันที่/.test(r.textContent));
   ok(iJ>=0&&iJ<iDay&&bodyRows[0].classList.contains('warn'),'un-judged outstanding plans are highlighted and listed first, then the day trips');
   ok(!d.getElementById('mParts')&&!d.getElementById('mPlans')&&!d.getElementById('mPallets')&&!d.getElementById('mGross')&&!/Part Master/.test(d.getElementById('dashboard').textContent),'Loading Overview summary cards (Part Master, Plans, Pallet, Gross) removed');
   w.plans.pop();
+  // Count/Trip per day: Plan + Actual Delivered + Outstanding + Slide + Cancel for every day of the month
+  {const mx=d.querySelector('#tripMatrix table.mmatrix');
+   const rows=[...mx.querySelectorAll('tbody tr')].map(r=>[...r.children].map(c=>c.textContent.trim()));
+   ok(rows.map(r=>r[0]).join('|')==='Plan (Trip ทั้งหมด)|Actual Delivered|Outstanding|Slide|Cancel','matrix rows: Plan, Actual Delivered, Outstanding, Slide, Cancel');
+   const dayNo=Number(day.slice(8)),col=dayNo; // first cell is the label
+   ok(rows[0][col]==='3'&&rows[1][col]==='1'&&rows[2][col]==='1'&&rows[3][col]==='·'&&rows[4][col]==='1','matrix today: Plan 3 = Delivered 1 + Outstanding 1 + Cancel 1 ('+rows.map(r=>r[col]).join(',')+')');
+   const tot=rows.map(r=>r[r.length-1]);
+   ok(Number(tot[0])===Number(tot[1].split(' ')[0])+Number(tot[2])+Number(tot[3])+Number(tot[4]),'month total: Plan = Actual Delivered + Outstanding + Slide + Cancel ('+tot.join(' / ')+')');
+   ok(/Actual Delivered/.test(d.getElementById('deliveryBoard').textContent)&&mx.querySelectorAll('thead th').length===rows[0].length,'header has one column per day plus the label and the month total');}
+  // New Shipment saved on another day -> the Delivery Board shows it
+  {const far=w.shiftDay(day,6);const np=mk('NEW1','10:00',{requestDate:far});w.plans.push(np);w.setBoardDay(day);
+   ok(d.getElementById('upcomingPlans').textContent.includes('1 trip')&&[...d.querySelectorAll('#upcomingPlans button')].some(b=>b.title===far),'upcoming-plans chips list the new plan\'s day even when the board shows today');
+   w.clcAfterPlanSaved(np);
+   ok(w.eval('BOARD.day')===far&&d.querySelector('#deliveryBoard tr.newrow')&&/NEW1/.test(d.querySelector('#deliveryBoard tr.newrow').textContent),'after saving, the board jumps to the plan day and marks the row as new');
+   ok(d.getElementById('clcToast').classList.contains('show')&&d.getElementById('clcToast').textContent.includes(far)&&d.getElementById('clcToastBtn'),'toast says where the plan is, with a button to the board');
+   w.setBoardDay(day);ok(!d.querySelector('#deliveryBoard tr.newrow'),'highlight is cleared when the user changes day');
+   const nodate=mk('NODATE','10:00',{requestDate:''});w.clcAfterPlanSaved(nodate);ok(/ไม่มี Log Request Container Date/.test(d.getElementById('clcToast').textContent),'plan without request date: user is told why it is not on the board');
+   w.plans=w.plans.filter(x=>x.planId!=='NEW1');w.renderDeliveryBoard();}
   // booking flow
   let saved=null;w.savePlanRecord=async p=>{saved=JSON.parse(JSON.stringify(p));return true};
   w.plans[1].booking={driver:'สมชาย',subTruck:'SUB-01',truckPlate:'1กข-1234',loadingBy:'Somchai',updatedAt:'2026-01-01'};
