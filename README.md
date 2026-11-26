@@ -17,17 +17,27 @@ CLC WH Loading Calculator V2 – Container Loading Calculator for Logistics and 
 ## Confirmed rules
 Pallet 110 × 110 cm · base 7 cm · target height 125 cm (120–130 cm acceptable) · cartons placed 0° / 90° · layer 1 filled before layer 2 · cartons of different height never share a layer · pallet tare 7 kg per **physical** pallet (a Mix group = 1 pallet).
 
-## Access control (roles)
-Run `supabase/migrations/20261125_rbac_rls.sql` once (rollback: `..._rollback.sql`). Users without a row in `public.user_roles` can sign in but see nothing ("pending approval").
+## Access control (roles + per-user permissions)
+Run `supabase/migrations/20261125_rbac_rls.sql` and then `supabase/migrations/20261126_user_permissions.sql` once (rollbacks: `..._rollback.sql`). Users without a row in `public.user_roles` can sign in but see nothing ("pending approval").
 
-| Role | Read | Plans | Part Master | Destination / Options |
-|---|---|---|---|---|
-| admin | all | write + delete | write | write |
-| logistics | all | write, delete own | read | write |
-| warehouse | all | write, delete own | write | read |
-| viewer | all | read | read | read |
+**Admin page `👥 Users`** (menu, admin only) – no SQL needed any more:
+- **รออนุมัติ**: every account that registered with *Create account* and has no role yet. Pick a role and press *อนุมัติ* (gets that role's default permissions), or *กำหนดสิทธิ์เอง…*.
+- **แก้สิทธิ์**: per user, choose what the person may **see**, **add / edit** and **delete**:
 
-Give a user a role (SQL editor): `insert into public.user_roles (user_id,email,role) select id,email,'warehouse' from auth.users where email='name@company.com' on conflict (user_id) do update set role=excluded.role;`
+| Data | See | Add / edit | Delete |
+|---|---|---|---|
+| Loading Plans (Dashboard, Management, Booking, History, Calculate) | none · **own plans only** · all | on / off | none · **own** · all |
+| Part & Packing Master | on / off | on / off | on / off |
+| Destination-Port & Options | on / off | on / off | on / off |
+| Container photos (only photos of plans the user can see) | on / off | upload / replace / delete | – |
+
+- The **role is the starting template** (admin / logistics / warehouse / viewer, same behaviour as before: admin = everything + Users page; logistics = plans + Destination/Options; warehouse = plans + Part Master; viewer = read only). *ใช้ค่ามาตรฐานของ role* resets the ticks; a user whose ticks differ is marked **ปรับเอง**.
+- *ถอนสิทธิ์* returns the user to pending (the account stays; delete accounts in Supabase → Authentication). You cannot remove or change your own access, and the database refuses to remove the **last admin**.
+- Everything is **enforced in the database (RLS)**, not just hidden in the menu: a user without "see Part Master" gets no rows from `part_master`; "plans: own only" filters `shipment_plans` by `created_by`; delete rights are separate policies. The menu hides pages the user cannot use, and a user with no permission at all sees "ไม่มีสิทธิ์". Changes apply to the database immediately; the user's menu updates on the next page load.
+- Permissions are stored in `user_roles.perms` (`plans.view`, `plans.view_own`, `plans.edit`, `plans.delete`, `plans.delete_own`, `parts.view|edit|delete`, `masters.view|edit|delete`, `photos.view|edit`). Old SQL that only sets a role still works (`insert … role` / `on conflict … set role`): the permissions follow that role's template. The Edge Function `photos` reads the same permissions.
+- Tests: `tests/users.test.js` (page), `tests/auth.test.js` (permission checks in the client), and `supabase/tests/user_permissions_test.sql` (run in the SQL editor: simulates 6 users against every table policy and always rolls back; expected message `USER_PERMISSIONS_TEST FAILED=0`).
+
+Approve a user without the page (SQL editor): `insert into public.user_roles (user_id,email,role) select id,email,'warehouse' from auth.users where email='name@company.com' on conflict (user_id) do update set role=excluded.role;`
 
 Dashboard-only Auth settings (cannot be set from code): enable **Leaked password protection** and, if self-registration is not needed, turn off **Allow new users to sign up**.
 

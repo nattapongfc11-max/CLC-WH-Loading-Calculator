@@ -71,10 +71,13 @@ export function createHandler(getDeps) {
     if (!deps.auth) return send(401, { error: 'unauthorized', message: 'Please sign in again' });
     const { role, db, r2 } = deps.auth;
     if (!role) return send(403, { error: 'no_role', message: 'Your account has no role yet' });
-    const canWrite = WRITE_ROLES.includes(role);
+    // Per-user permissions (user_roles.perms, set on the admin Users page). Without `perms` (older callers/tests) fall back to the role.
+    const perms = deps.auth.perms;
+    const can = p => role === 'admin' || (Array.isArray(perms) ? perms.includes(p) : (p === 'photos.view' || WRITE_ROLES.includes(role)));
+    const canView = can('photos.view'), canWrite = can('photos.edit');
 
     const problems = r2 ? [] : r2Settings(deps.env || {}).problems;
-    if (action === 'status') return send(200, { configured: !!r2, role, canWrite, maxBytes: MAX_BYTES, problems });
+    if (action === 'status') return send(200, { configured: !!r2, role, canView, canWrite, maxBytes: MAX_BYTES, problems });
     if (action === 'check') { // self-test of the R2 secrets: format first, then one signed request to R2 (reports which secret is wrong, never its value)
       if (!canWrite) return send(403, { error: 'forbidden', message: 'Your role cannot run the R2 check' });
       if (!r2) return send(200, { ok: false, code: 'config', message: 'ตั้งค่า secrets ของ R2 ไม่ครบหรือรูปแบบไม่ถูกต้อง', problems });
@@ -117,6 +120,7 @@ export function createHandler(getDeps) {
       }
 
       if (action === 'sign-view') {
+        if (!canView) return send(403, { error: 'forbidden', message: 'Your account cannot view container photos' });
         if (needPlan()) return bad(needPlan());
         const rows = await db.listByPlan(planId);
         const photos = await Promise.all(rows.map(async r => ({ slot: r.slot, bytes: r.bytes, uploaded_at: r.uploaded_at, url: await r2.presignGet(r.object_key, VIEW_TTL) })));
