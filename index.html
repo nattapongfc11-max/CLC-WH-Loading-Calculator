@@ -520,6 +520,17 @@ table.t.sm1 td{padding:2px 6px}table.t.sm2 td{padding:.5px 6px;font-size:8.5px;l
 .sg .ln{border-top:1px solid #555;padding-top:3px;color:var(--mut);font-size:9px}
 .note1{font-size:9px;color:var(--mut);margin-top:6px}
 .chk{display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--ln);border-radius:6px;padding:6px 10px;margin-top:8px;font-size:10.5px}.chk b{color:var(--bd)}
+.bar .warn{color:#ffd27a}
+.pgph{break-before:page;page-break-before:always}.nophotos .pgph{display:none}
+.phgrid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:2mm}
+.phc{border:1px solid var(--ln);border-radius:6px;overflow:hidden;break-inside:avoid;background:#fff}
+.phc .cap{display:flex;align-items:baseline;gap:6px;padding:2mm 3mm;background:var(--bt);border-bottom:1px solid #ecc3cf}
+.phc .cap b{color:var(--bd);font-size:11px}.phc .cap i{font-style:normal;color:var(--mut);font-size:9.5px}
+.phc .im{height:67mm;display:flex;align-items:center;justify-content:center;background:#f6f3f4;color:#b3a8ad;font-size:10.5px}
+.phc .im img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.phc .im.err:after{content:"โหลดรูปไม่สำเร็จ"}
+.phi dl{margin:0;padding:2.5mm 3mm;display:grid;grid-template-columns:28mm 1fr;gap:1.6mm 3mm;font-size:10.5px;height:67mm;align-content:start}
+.phi dt{color:var(--mut);font-size:9.5px;letter-spacing:.04em}.phi dd{margin:0;font-weight:700;word-break:break-word}
 @page{size:A4;margin:9mm}
 @media print{
   body{background:#fff}.bar{display:none}
@@ -534,8 +545,10 @@ function slipHeader(en,th,planId,sub){
 const printStamp=()=>new Date().toLocaleString('en-GB',{timeZone:'Asia/Bangkok',hour12:false});
 const slipFoot=()=>'<div class="ft"><span>Pioneer Manufacturing (Thailand) · CLC Container Loading Calculator</span><span>Printed '+printStamp()+' (UTC+7)</span></div>';
 function docShell(title,body,barExtra){
-  return '<!doctype html><html lang="th"><head><meta charset="utf-8"><title>'+esc(title)+'</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>'+SLIP_CSS+'</style></head><body><div class="bar"><b>'+esc(title)+' · A4</b><span>'+(barExtra||'')+'</span><button onclick="window.print()">🖨 Print / Save PDF</button></div>'+body+'</body></html>';
+  return '<!doctype html><html lang="th"><head><meta charset="utf-8"><title>'+esc(title)+'</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>'+SLIP_CSS+'</style></head><body><div class="bar"><b>'+esc(title)+' · A4</b><span>'+(barExtra||'')+'</span><button onclick="clcPrint()">🖨 Print / Save PDF</button></div>'+body+PRINT_JS+'</body></html>';
 }
+// Print window helper: if photos are still loading, wait for them (max 20 s) so they are not missing from the printout / PDF
+const PRINT_JS='<script>function clcPrint(){var b=document.querySelector(".bar button"),pend=[].filter.call(document.images,function(i){return !i.complete&&i.offsetParent!==null});if(!pend.length){window.print();return}var t=b.textContent;b.disabled=true;b.textContent="⏳ รอรูปโหลด …";var wait=Promise.all(pend.map(function(i){return new Promise(function(r){if(i.complete)return r();i.addEventListener("load",r);i.addEventListener("error",r)})}));Promise.race([wait,new Promise(function(r){setTimeout(r,20000)})]).then(function(){b.disabled=false;b.textContent=t;window.print()})}<\/script>';
 function openPrintDoc(html){
   const w=window.open('','_blank','width=1100,height=900');if(!w){alert('Popup blocked. Please allow pop-ups to print.');return null}
   w.document.open();w.document.write(html);w.document.close();return w;
@@ -573,8 +586,28 @@ function slipHtml(p){
   return docShell('Shipment Slip '+(p.planId||''),body,'');
 }
 
-/* Delivered Complete: ใบส่งงาน (Delivery Note) – exactly 1 A4 page */
-function deliveryNoteHtml(p){
+/* ใบส่งงาน + optional "รูปถ่ายตู้" page: only for trips where the customer requires photos (p.photoReq).
+   ph = null (no photo option) | {loading:true} | {error:'…'} | {photos:[{slot,url}]}. The page is hidden/shown with a checkbox in the print window's top bar. */
+function photoPrintBar(ph){
+  if(!ph)return '';
+  if(ph.loading)return '⏳ กำลังโหลดรูปถ่ายตู้ …';
+  if(ph.error)return '<span class="warn">⚠ รูปถ่ายตู้: '+esc(ph.error)+'</span>';
+  const c=(ph.photos||[]).length;
+  if(!c)return '<span class="warn">⚠ Customer ต้องการรูป แต่ยังไม่มีรูปถ่ายตู้ในระบบ</span>';
+  return '<label><input type="checkbox" id="optPhotos" checked onchange="document.body.classList.toggle(\'nophotos\',!this.checked)"> 📷 แนบรูปถ่ายตู้ท้ายใบส่งงาน ('+c+'/5'+(c<5?' · ยังไม่ครบ':'')+')</label>';
+}
+function photoPageHtml(p,photos){
+  const b=p.booking||{},by=new Map((photos||[]).map(x=>[Number(x.slot),x]));
+  const cells=PHOTO_SLOTS.map(s=>{const v=by.get(s.n);
+    return '<div class="phc"><div class="cap"><b>'+s.n+'. '+esc(s.t)+'</b><i>'+esc(s.e)+'</i></div><div class="im'+(v?'':' none')+'">'+(v?'<img src="'+esc(v.url)+'" alt="'+esc(s.e)+'" onerror="this.parentNode.classList.add(\'err\');this.remove()">':'— ไม่มีรูป —')+'</div></div>'}).join('');
+  const rec=[['Plan ID',p.planId],['Container No.',b.containerNo],['Seal No.',b.sealNo],['Invoice No.',b.invoiceNo],['Loading by',b.loadingBy],['วันที่ · เวลา',((b.loadDate||'')+' '+(b.loadTime||'')).trim()],['ทะเบียนรถ',b.truckPlate],['พขร. (Driver)',b.driver]];
+  const info='<div class="phc phi"><div class="cap"><b>รายละเอียดการโหลด</b><i>Loading record</i></div><dl>'+rec.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1]||'-')+'</dd>').join('')+'</dl></div>';
+  return '<main class="sheet fix pgph">'+slipHeader('CONTAINER PHOTOS','ภาพถ่ายตู้คอนเทนเนอร์ · แนบใบส่งงาน',p.planId,'Invoice '+(b.invoiceNo||'-'))
+    +'<div class="sec">ภาพถ่ายตู้ <small>Container photos · '+by.size+'/5 · ตามที่ Customer กำหนด</small></div><div class="phgrid">'+cells+info+'</div>'+slipFoot()+'</main>';
+}
+
+/* Delivered Complete: ใบส่งงาน (Delivery Note) – exactly 1 A4 page (+ 1 photo page when photos are attached) */
+function deliveryNoteHtml(p,ph){
   const b=p.booking||{},sm=p.summary||{};
   const items=noteItems(p),totQty=items.reduce((s,r)=>s+r.qty,0);
   const th5='<thead><tr><th class="ctr" style="width:10mm">No.</th><th style="width:44mm">Model Code</th><th>Description</th><th class="r" style="width:20mm">Qty</th><th style="width:30mm">Pallet No.</th></tr></thead>';
@@ -597,16 +630,29 @@ function deliveryNoteHtml(p){
     +'<div class="chk"><b>ผลการตรวจรับ · Receiving check</b><span>☐ สินค้าครบถ้วน</span><span>☐ Seal สมบูรณ์</span><span>☐ บรรจุภัณฑ์สภาพดี</span><span>☐ มีข้อบกพร่อง: ______________</span></div><div class="note1">ผู้รับสินค้าโปรดตรวจนับสินค้าและสภาพ Seal ก่อนลงนาม · Please check goods and seal condition before signing.</div>'
     +'<div class="sign4" style="margin-bottom:6px"><div class="sg"><b>ผู้ส่งสินค้า<br>Warehouse</b><div class="ln">ลงชื่อ / Sign<br><i>วันที่ ____/____/____</i></div></div><div class="sg"><b>พนักงานขับรถ<br>Driver</b><div class="ln">ลงชื่อ / Sign<br><i>วันที่ ____/____/____</i></div></div><div class="sg"><b>ผู้ตรวจสอบ<br>Logistics</b><div class="ln">ลงชื่อ / Sign<br><i>วันที่ ____/____/____</i></div></div><div class="sg"><b>ผู้รับสินค้า<br>Receiver</b><div class="ln">ลงชื่อ / Sign · ตราประทับ<br><i>วันที่ ____/____/____</i></div></div></div>'
     +slipFoot()+'</main>';
-  return docShell('ใบส่งงาน '+(p.planId||''),page,'');
+  const photos=(ph&&ph.photos)||[];
+  return docShell('ใบส่งงาน '+(p.planId||''),page+(photos.length?photoPageHtml(p,photos):''),photoPrintBar(ph));
 }
 function printShipmentSlip(){
   if(!models.length||!allocations.length)return alert('Please add Shipment Model and generate Pallet Allocation first.');
   const p=makePlan();openPrintDoc(slipHtml(p));
 }
-function printDeliveryNote(id){
+// Photos for the print: fresh signed URLs from the "photos" function (valid 15 min; the print window waits for them to load)
+async function phForPrint(id){
+  const a=phApi();if(!a)return {error:'ต้องล็อกอินและเชื่อม Supabase จึงจะดึงรูปมาพิมพ์ได้'};
+  try{const r=await a.call('sign-view',{planId:id});return {photos:(r.photos||[]).filter(x=>x&&x.url&&x.slot>=1&&x.slot<=5).sort((x,y)=>x.slot-y.slot)}}
+  catch(e){return {error:e.message}}
+}
+async function printDeliveryNote(id){
   const p=plans.find(x=>x.planId===id);if(!p)return;
   if(p.cancel||!bkComplete(p))return alert('พิมพ์ใบส่งงานได้เฉพาะแผนที่ Delivered Complete แล้ว (กรอก Booking ครบ)');
-  openPrintDoc(deliveryNoteHtml(p));
+  const wantPh=!!p.photoReq; // photo option only when the customer requires photos for this trip
+  const w=openPrintDoc(deliveryNoteHtml(p,wantPh?{loading:true}:null)); // open the window right away (pop-up blockers), photos are added when they arrive
+  if(!w||!wantPh)return;
+  const ph=await phForPrint(id);
+  if(w.closed)return;
+  if(ph.photos)PH.cnt[id]=ph.photos.length;
+  w.document.open();w.document.write(deliveryNoteHtml(p,ph));w.document.close();
 }
 
 function removeModel(i){let code=models[i].model;models.splice(i,1);allocations=allocations.filter(a=>a.shipmentModel!==code);recalcDerived();renderCalc()}
@@ -747,7 +793,7 @@ function openBooking(id){
   $('bkPlanInfo').innerHTML='<b>'+esc(p.destination)+' · '+esc(p.port)+'</b> · Firm Booking เดิม '+esc(planDay(p)||'-')+' '+esc(p.deliveryTime||'')+' (เวลาไทย) · '+esc(p.shipBy||'')+' · '+fmt(p.summary?.pallets)+' Pallet · '+fmt(p.summary?.gross)+' kg';
   ['containerNo','sealNo','loadingBy','invoiceNo','loadDate','loadTime','driver','subTruck','truckPlate'].forEach(k=>$('bk_'+k).value=b[k]||'');
   $('bk_slideDate').value=effDay(p)||'';$('bk_slideTime').value=effTime(p)||'';$('bk_slideReason').value='';
-  $('bkWarn').innerHTML='';bkFillHistory();bkRenderState(p);$('bkPrint').style.display=(bkComplete(p)&&!p.cancel)?'':'none';$('bookModal').classList.add('open');bkPhotosInit(p);
+  $('bkWarn').innerHTML='';bkFillHistory();bkRenderState(p);$('bkPrint').style.display=(bkComplete(p)&&!p.cancel)?'':'none';bkPrintLabel(p);$('bookModal').classList.add('open');bkPhotosInit(p);
 }
 function bkSnap(p){return JSON.stringify({booking:p.booking,slides:p.slides,cancel:p.cancel})}
 function bkRestore(p,s){const o=JSON.parse(s);p.booking=o.booking;p.slides=o.slides;p.cancel=o.cancel}
@@ -795,7 +841,7 @@ function renderBooking(){
     if(st==='waiting'&&k!=='pending'&&k!=='overdue')return false;if(st==='photo'&&!(p.photoReq&&!p.cancel&&phCount(p.planId)<5))return false;if(st&&st!=='waiting'&&st!=='photo'&&k!==st)return false;
     if(!q)return true;const b=p.booking||{};return [p.planId,p.destination,p.port,p.shipBy,b.containerNo,b.sealNo,b.invoiceNo,b.driver,b.subTruck,b.truckPlate,b.loadingBy].join(' ').toLowerCase().includes(q)}).sort((a,b)=>byPlanTime(b,a));
   if($('bkCount'))$('bkCount').textContent=fmt(list.length)+' / '+fmt(plans.length)+' plans';
-  t.innerHTML=list.length?'<table><thead><tr><th>Firm plan</th><th>Destination · Port</th><th>Container / Seal</th><th>Invoice No.</th><th>Loading by</th><th>Loading date · time</th><th>พขร. / ทะเบียน</th><th>Sub truck</th><th>Status vs Plan</th><th>Slide history</th><th></th></tr></thead><tbody>'+list.map(p=>{const b=p.booking||{};return '<tr><td><b>'+esc(p.planId)+'</b><div class="sub">'+esc(planDay(p))+' '+esc(p.deliveryTime||'')+'</div></td><td>'+esc(p.destination)+' · '+esc(p.port)+'<div class="sub">'+esc(p.shipBy||'-')+'</div></td><td><b>'+esc(b.containerNo||'-')+'</b><div class="sub">Seal '+esc(b.sealNo||'-')+'</div></td><td>'+esc(b.invoiceNo||'-')+'</td><td>'+esc(b.loadingBy||'-')+'</td><td>'+esc(((b.loadDate||'')+' '+(b.loadTime||'')).trim()||'-')+'</td><td>'+esc(b.driver||'-')+'<div class="sub">'+esc(b.truckPlate||'-')+'</div></td><td>'+esc(b.subTruck||'-')+'</td><td>'+chip(delivInfo(p,now))+(p.photoReq?' <span class="chip '+(phCount(p.planId)>=5?'ok':'bad')+'" title="รูปถ่ายตู้ที่ Customer กำหนด">📷 '+phCount(p.planId)+'/5</span>':'')+'</td><td>'+((p.slides||[]).map(s=>esc(s.fromDate.slice(5)+' '+(s.fromTime||''))+' → '+esc(s.toDate.slice(5)+' '+(s.toTime||''))).join('<br>')||'-')+'</td><td><button class="btn small" onclick="openBooking(\''+esc(p.planId)+'\')">'+(bkComplete(p)?'View':'Update')+'</button>'+(bkComplete(p)&&!p.cancel?' <button class="btn secondary small" title="Print ใบส่งงาน (1 หน้า)" onclick="printDeliveryNote(\''+esc(p.planId)+'\')">🖨 ใบส่งงาน</button>':'')+'</td></tr>'}).join('')+'</tbody></table>':'<div class="sub" style="padding:18px">ไม่พบแผน / No plans found</div>';
+  t.innerHTML=list.length?'<table><thead><tr><th>Firm plan</th><th>Destination · Port</th><th>Container / Seal</th><th>Invoice No.</th><th>Loading by</th><th>Loading date · time</th><th>พขร. / ทะเบียน</th><th>Sub truck</th><th>Status vs Plan</th><th>Slide history</th><th></th></tr></thead><tbody>'+list.map(p=>{const b=p.booking||{};return '<tr><td><b>'+esc(p.planId)+'</b><div class="sub">'+esc(planDay(p))+' '+esc(p.deliveryTime||'')+'</div></td><td>'+esc(p.destination)+' · '+esc(p.port)+'<div class="sub">'+esc(p.shipBy||'-')+'</div></td><td><b>'+esc(b.containerNo||'-')+'</b><div class="sub">Seal '+esc(b.sealNo||'-')+'</div></td><td>'+esc(b.invoiceNo||'-')+'</td><td>'+esc(b.loadingBy||'-')+'</td><td>'+esc(((b.loadDate||'')+' '+(b.loadTime||'')).trim()||'-')+'</td><td>'+esc(b.driver||'-')+'<div class="sub">'+esc(b.truckPlate||'-')+'</div></td><td>'+esc(b.subTruck||'-')+'</td><td>'+chip(delivInfo(p,now))+(p.photoReq?' <span class="chip '+(phCount(p.planId)>=5?'ok':'bad')+'" title="รูปถ่ายตู้ที่ Customer กำหนด">📷 '+phCount(p.planId)+'/5</span>':'')+'</td><td>'+((p.slides||[]).map(s=>esc(s.fromDate.slice(5)+' '+(s.fromTime||''))+' → '+esc(s.toDate.slice(5)+' '+(s.toTime||''))).join('<br>')||'-')+'</td><td><button class="btn small" onclick="openBooking(\''+esc(p.planId)+'\')">'+(bkComplete(p)?'View':'Update')+'</button>'+(bkComplete(p)&&!p.cancel?' <button class="btn secondary small" title="'+(p.photoReq?'Print ใบส่งงาน + ตัวเลือกแนบรูปถ่ายตู้ (Customer ต้องการรูป)':'Print ใบส่งงาน (1 หน้า)')+'" onclick="printDeliveryNote(\''+esc(p.planId)+'\')">🖨 ใบส่งงาน'+(p.photoReq?' + 📷':'')+'</button>':'')+'</td></tr>'}).join('')+'</tbody></table>':'<div class="sub" style="padding:18px">ไม่พบแผน / No plans found</div>';
 }
 function clearBookingFilter(){['bkSearch','bkFrom','bkTo','bkStatus'].forEach(id=>$(id).value='');renderBooking()}
 
@@ -869,11 +915,12 @@ function bkPhotosRender(){
   $('bkPhotoBulkBtn').style.display=can?'':'none';
   $('bkPhotoCheckBtn').style.display=(PH.status&&PH.status.canWrite!==false&&phCanWrite())?'':'none';
 }
+function bkPrintLabel(p){$('bkPrint').textContent='🖨 Print ใบส่งงาน'+(p.photoReq?' (+ ตัวเลือกรูปถ่ายตู้)':'')}
 async function bkTogglePhotoReq(){
   const id=$('bookModal').dataset.plan,p=plans.find(x=>x.planId===id);if(!p)return;
   const on=$('bk_photoReq').checked,old=p.photoReq;p.photoReq=on;
   if(!await persistPlan(p)){p.photoReq=old;$('bk_photoReq').checked=!!old;return}
-  $('bkPhotos').style.display=on?'':'none';if(on)await bkPhotosLoad(id);renderBooking();
+  $('bkPhotos').style.display=on?'':'none';bkPrintLabel(p);if(on)await bkPhotosLoad(id);renderBooking();
 }
 function bkPhotoPick(n){const f=$('bkPhotoFile');f.dataset.slot=n;f.value='';f.click()}
 function bkPhotoBulk(){const f=$('bkPhotoMulti');f.value='';f.click()}
