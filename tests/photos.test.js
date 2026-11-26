@@ -25,7 +25,7 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); i
       remove: async (p, s) => { const i = rows.findIndex(r => r.plan_id === p && r.slot === s); if (i >= 0) rows.splice(i, 1); },
       removeAll: async p => { for (let i = rows.length - 1; i >= 0; i--) if (rows[i].plan_id === p) rows.splice(i, 1); }
     };
-    const handler = createHandler(async () => ({ env: o.env || {}, rand: () => 'abc123', auth: role === null ? null : { role: role === 'none' ? null : role, r2, db } }));
+    const handler = createHandler(async () => ({ env: o.env || {}, rand: () => 'abc123', auth: role === null ? null : { role: role === 'none' ? null : role, perms: o.perms, r2, db } }));
     const call = async (body, method = 'POST', hdr = {}) => {
       const res = await handler(new Request('https://fn.test/photos', { method, headers: { origin: 'https://nattapongfc11-max.github.io', ...hdr }, body: method === 'POST' ? JSON.stringify(body) : undefined }));
       let j = null; try { j = await res.json(); } catch {}
@@ -142,6 +142,20 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); i
   const cNet = (await mk('admin', { checkThrows: true }).call({ action: 'check' })).j;
   ok(cNet.ok === false && cNet.code === 'network' && /R2_ACCOUNT_ID/.test(cNet.message), 'check: unreachable host -> points at R2_ACCOUNT_ID');
   ok(interpretCheck({ error: 'x' }).code === 'network' && interpretCheck({ status: 200 }).ok === true, 'interpretCheck basics');
+
+  // ---- per-user permissions (user_roles.perms, set on the admin Users page) ---------------------
+  const up = { action: 'sign-upload', planId: 'CLC-1', slot: 1, contentType: 'image/jpeg' };
+  const pv = (await mk('viewer', { perms: ['plans.view'] }).call({ action: 'status' })).j;
+  ok(pv.canView === false && pv.canWrite === false, 'perms without photos.view: status says canView = false');
+  ok((await mk('viewer', { perms: ['plans.view'] }).call({ action: 'sign-view', planId: 'CLC-1' })).s === 403, 'no photos.view -> sign-view is forbidden');
+  ok((await mk('warehouse', { perms: ['photos.view'] }).call(up)).s === 403, 'warehouse role but only photos.view -> cannot upload');
+  ok((await mk('warehouse', { perms: ['photos.view'] }).call({ action: 'delete', planId: 'CLC-1', slot: 1 })).s === 403, 'only photos.view -> cannot delete');
+  ok((await mk('viewer', { perms: ['photos.view', 'photos.edit'] }).call(up)).s === 200, 'viewer role with photos.edit -> can upload');
+  ok((await mk('viewer', { perms: ['photos.view', 'photos.edit'] }).call({ action: 'sign-view', planId: 'CLC-1' })).s === 200, 'photos.view -> sign-view works');
+  ok((await mk('warehouse', { perms: [] }).call(up)).s === 403, 'warehouse role with every permission removed -> cannot upload');
+  ok((await mk('admin', { perms: [] }).call(up)).s === 200 && (await mk('admin', { perms: [] }).call({ action: 'status' })).j.canView === true, 'admin always has everything');
+  ok((await mk('warehouse', { perms: ['photos.view'] }).call({ action: 'check' })).s === 403, 'R2 check needs photos.edit');
+  ok((await mk('viewer').call({ action: 'status' })).j.canView === true, 'no perms (older callers): any role can view, write roles unchanged');
 
   console.log(fail ? 'FAILED ' + fail : 'ALL PASSED'); process.exit(fail ? 1 : 0);
 })();
