@@ -99,8 +99,8 @@ setTimeout(()=>{
   setup([['A',500],['B',300]],[part('A'),part('B',{qtyCarton:6,cartonD:55,cartonW:36,cartonH:30})]);
   ok(w.allocations.filter(a=>a.shipmentModel==='B').every(a=>w.skidLabel(a).split('/')[1]===String(a.skidTotal))&&[...d.querySelectorAll('#allocations td.skidcell')].every(x=>/^\d+\/\d+$/.test(x.textContent)),'every row shows No./Total, numbered per model');
   // ---- Mix Pallets run on as 1, 2, 3 (split pieces included, custom names kept)
-  {const C=part('C',{cartonH:25,qtyPallet:200,palletH:125}),D=part('D',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60}),E=part('E',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60});
-   w.parts=[C,D,E];w.models=[{model:'C',planQty:400,actualQty:null,packingModel:'C'},{model:'D',planQty:100,actualQty:null,packingModel:'D'},{model:'E',planQty:100,actualQty:null,packingModel:'E'}];w.generateAllocations();
+  {const C=part('C',{cartonH:25,qtyPallet:300,palletH:125}),D=part('D',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60}),E=part('E',{cartonH:20,qtyCarton:10,qtyPallet:200,palletH:60});
+   w.parts=[C,D,E];w.models=[{model:'C',planQty:600,actualQty:null,packingModel:'C'},{model:'D',planQty:100,actualQty:null,packingModel:'D'},{model:'E',planQty:100,actualQty:null,packingModel:'E'}];w.generateAllocations();
    w.allocations.forEach(a=>{if(a.shipmentModel==='C'){a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'}else if(a.shipmentModel==='D'){a.mixGroup='Mix Pallet 2';a.skidNo='Mix Pallet 2'}else{a.mixGroup='Mix Special';a.skidNo='Mix Special'}});
    w.recalcDerived();w.renderCalc();
    const names=[...new Set(w.allocations.map(a=>a.mixGroup))];
