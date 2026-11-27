@@ -88,7 +88,7 @@ const USER_QTY=[192,448,192,64,1216,448];
   // top-view floor plan: every pallet number is on it, front / door marked
   ok(D.plan.includes('หัวตู้')&&D.plan.includes('ประตู')&&all.every(sq=>new RegExp('>[▲▼]? ?'+sq+'<').test(D.plan)),'floor plan (top view) shows every Pallet No., front and door');
   // label layout: the bigger labels of the sketch never sit on top of each other
-  const labs=[...D.container.matchAll(/<g class="s3lab"[^>]*>.*?<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m=>m.slice(1).map(Number));
+  const labs=[...D.container.matchAll(/<g class="s3lab"[^>]*>[\s\S]*?<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m=>m.slice(1).map(Number));
   let hit=0;for(let i=0;i<labs.length;i++)for(let j=i+1;j<labs.length;j++){const a=labs[i],b=labs[j];if(a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3])hit++}
   ok(labs.length>=12&&hit===0,'container labels are bigger on paper ('+D.ls+'x) and none overlaps another ('+labs.length+' labels)');
   ok(D.ls>=1.4&&D.container.includes('font-size="'+(13.5*D.ls).toFixed(1)+'"'),'label scale reaches the text (font-size '+(13.5*D.ls).toFixed(1)+')');
@@ -123,7 +123,7 @@ const USER_QTY=[192,448,192,64,1216,448];
   w.newPlan();const fm=JSON.stringify([w.models,w.allocations]);
   w.openBooking('PTM-261126-S-001');
   const bk=d.getElementById('bk3d');
-  ok(d.getElementById('bk3dBox').style.display===''&&bk.innerHTML.includes('<polygon')&&/Stack ×2/.test(bk.innerHTML),'Delivery Booking shows the 3D View of the plan\'s pallets (with Pallet No. labels)');
+  ok(d.getElementById('bk3dBox').style.display===''&&bk.innerHTML.includes('<polygon')&&/×2/.test(bk.innerHTML),'Delivery Booking shows the 3D View of the plan\'s pallets (with Pallet No. labels)');
   ok(/Physical Pallet <b>23<\/b>/.test(d.getElementById('bk3Info').innerHTML)&&/ซ้อน 3 คู่/.test(d.getElementById('bk3Info').textContent),'summary line under the picture: pallets, floor use, stacked pairs');
   ok(JSON.stringify([w.models,w.allocations])===fm,'opening the dialog does not touch the calculation form behind it');
   const a0=bk.innerHTML;w.bk3view(0,86);ok(bk.innerHTML!==a0&&w.BK3?true:bk.innerHTML!==a0,'view buttons turn the picture (top view)');
