@@ -15,7 +15,7 @@ CLC – Container Loading Calculator for Logistics and Warehouse (Pioneer Manufa
 | Loading History | Search, date filter, open/edit, delete saved plans |
 
 ## Confirmed rules
-Pallet 110 × 110 cm · base 7 cm · target height 125 cm (120–130 cm acceptable) · cartons placed 0° / 90° · layer 1 filled before layer 2 · cartons of different height never share a layer · pallet tare 7 kg per **physical** pallet (a Mix group = 1 pallet).
+Pallet 110 × 110 cm · pallet (skid) 13 cm high, 7 kg · target height 125 cm (120–130 cm acceptable) · cartons placed 0° / 90° · layer 1 filled before layer 2 · cartons of different height never share a layer · pallet tare 7 kg per **physical** pallet (a Mix group = 1 pallet).
 
 ## Access control (roles + per-user permissions)
 Run `supabase/migrations/20261125_rbac_rls.sql`, `supabase/migrations/20261126_user_permissions.sql` and (v2.9) `supabase/migrations/20261127_plans_slide_permission.sql` once, in this order (rollbacks: `..._rollback.sql`). Users without a row in `public.user_roles` can sign in but see nothing ("pending approval").
@@ -188,6 +188,14 @@ No database change in v3.1. Tests: `tests/lang.test.js` (new), `tests/sketch.tes
 - Test `tests/dates.test.js` scans every page, dashboard grouping, Booking dialog and print document in Standard / English / 日本語 and fails if any `yyyy-mm-dd` is still visible.
 
 No database change in v3.2. Tests: `tests/dates.test.js` (new), `tests/sketch.test.js` (layers, floor plan, pagination, camera / label consistency), `tests/delivery.test.js`, `tests/lang.test.js`.
+
+## v3.4 – layers, pallet data, containers, stacking
+- **Pinwheel layers.** When a layer holds the same number of cartons in several arrangements, the layout that carries the whole pallet face is chosen: four cartons *a × b* (a + b ≤ 110 cm) are turned 90° one after another around an empty centre, so no corner of the base is left bare and the load is centred (the old 3 + 1 block left an empty corner). The carton count and the filled area never go down (checked on 250 random carton sizes in `tests/layout34.test.js`).
+- **Pallet data: 13 cm high, 7 kg.** `MIX_BASE_H = 13`, `PALLET_TARE_KG = 7`. The Part Master *Pallet H* already includes the skid (2,184 of 4,389 parts fit `13 + n × Carton H`, only 148 fit `7 + n × Carton H`), so partial-pallet and Mix heights are now right. Plans saved earlier keep their stored non-Mix heights until their Qty is edited.
+- **Container by Type Shipment.** *Type Shipment* decides the container: `20FT` 590 × 235 × 239 cm · 10 floor positions, `40FT/GP` 1203 × 235 × 239 · 20, `40HC` 1203 × 235 × 269 · 20, `45HC` 1355 × 235 × 269 · 24. The Floor capacity / height fields, the 3D view, the Sketch and the stacking limit follow it; Air / LCL keep the container as it is, *Other (กำหนดเอง)* keeps the sizes typed in. A saved plan is drawn with the container of its own Type Shipment (so old plans saved as 40HC but shipped as 20FT are drawn correctly).
+- **Manual Stack.** In the stacking plan (*Simulate Layout*) choose a *bottom* and a *top* pallet and press *จับคู่*. Hand-made pairs are always used (even when automatic stacking is off) and kept in the plan (`manualStack`); the planner only adds the pairs still needed. A pair higher than the container is refused, a heavier top / non-flat bottom asks first.
+- **Overflow → Stack = Y.** When the pallets need more floor positions than the container has, the system sets *Stack = Y* by itself (Models with the most pallets first, only as many as needed, only when two pallets are not higher than the container; otherwise the 2-high pairing is switched on). Switch: *ล้นตู้ → ตั้ง Stack = Y ให้อัตโนมัติ*. It runs when the quantities are calculated or the container changes, never when a saved plan is opened.
+- **3D draw order.** When boxes interlock in a genuine cycle no whole-box order exists; the painter's algorithm now breaks the cycle where the fewest pairs end up wrong.
 
 ## v3.3 – security hardening
 Nothing changes in how the program is used; this release closes the findings of the security review (see `docs/SECURITY.md`).

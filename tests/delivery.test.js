@@ -125,6 +125,7 @@ setTimeout(async()=>{
   ok(gs.every(g=>{const s=g.stack;const firstPartial=s.findIndex(x=>x.partial);return firstPartial<0||s.slice(firstPartial).every(x=>x.partial)}),'incomplete layers are always on top (flat surface below)');
   ok(gs.every(g=>g.stack.every((x,i)=>x.level===i+1&&(i===0||x.cum>g.stack[i-1].cum))),'levels numbered bottom to top with cumulative height');
   const hs=gs.map(g=>g.totalHeight);ok(hs.length<2||Math.max(...hs)-Math.min(...hs)<=Math.max(...gs.map(g=>g.stack[0].h)),'split pallets have balanced heights ('+hs.join(',')+')');
+  d.getElementById('autoStackY').checked=false; // this section tests the floor-capacity block + the 2-high pair planner; "overflow -> Stack = Y" is tested in layout34.test.js
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.parts=[part('A')];w.generateAllocations();w.renderCalc();
   d.getElementById('stackPallet').checked=false;w.renderSummary();
   ok(w.physicalPalletCount()>20&&d.getElementById('savePlanBtn').disabled===true,'floor positions > 20 disables Save button');
