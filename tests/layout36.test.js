@@ -115,6 +115,28 @@ setTimeout(()=>{
    w.manualLayout=[];
   }
 
+  // ================= 5. Print Slip: the "Pallet No." column shows the Skid Pallet No. (no./total) =================
+  {w.parts=[part('A',{qtyCarton:10,qtyPallet:200}),part('B',{qtyCarton:10,qtyPallet:200}),part('C',{qtyCarton:10,qtyPallet:200})];
+   w.models=[['A',500],['B',250],['C',400]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));
+   $('shipType').value='40HC';w.syncContFromShipType();w.manualLayout=[];w.manualStack=[];w.generateAllocations();
+   // the remainders of A and B stand together on one Mix Pallet
+   w.allocations.forEach(a=>{if((a.shipmentModel==='A'||a.shipmentModel==='B')&&n2(a.qtyPallet)<200){a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'}});
+   w.recalcDerived();w.renderCalc();$('planId').value='PLAN-36S';
+   const cells=html=>{const doc=new w.DOMParser().parseFromString(html,'text/html'),secs=[...doc.querySelectorAll('.sec')].find(e=>/Pallet Allocation Detail/.test(e.textContent)),tb=secs.nextElementSibling;
+     const head=[...tb.querySelectorAll('thead th')].map(x=>x.textContent.trim()),ix=head.indexOf('Pallet No.');return {ix,rows:[...tb.querySelectorAll('tbody tr')].map(tr=>tr.children[ix].textContent.trim()),head}};
+   function n2(v){return Number(v)||0}
+   const plan=w.makePlan(),c=cells(w.slipHtml(plan)),want=w.allocations.map(a=>w.skidLabel(a));
+   ok(c.ix>=0&&c.rows.length===w.allocations.length,'Slip: the Pallet Allocation Detail table has a "Pallet No." column ('+c.head.join(' | ')+')');
+   ok(JSON.stringify(c.rows)===JSON.stringify(want),'Slip: "Pallet No." = Skid Pallet No. (no./total) of every row, as in Pallet Allocation ('+c.rows.join(', ')+')');
+   ok(c.rows.every(t=>/^\d+\/\d+$/.test(t)),'Slip: every cell is "n/total" — no Mix name and no "Pallet เศษ" text in that column');
+   ok(w.allocations.some(a=>w.eval('isMixAllocation')(a))&&c.rows.some((t,i)=>w.eval('isMixAllocation')(w.allocations[i])&&/^\d+\/\d+$/.test(t)),'Slip: a Mix Pallet row also shows its Skid Pallet No. (e.g. '+c.rows.filter((t,i)=>w.eval('isMixAllocation')(w.allocations[i])).join(', ')+')');
+   // an older plan whose rows carry no stored skid numbers still prints them
+   const old=JSON.parse(JSON.stringify(plan));old.allocations.forEach(a=>{delete a.skidSeq;delete a.skidTotal;delete a.skidNo});
+   ok(JSON.stringify(cells(w.slipHtml(old)).rows)===JSON.stringify(want),'Slip: an older plan without stored Skid numbers prints the same numbers (worked out from its rows)');
+   // the Delivery Note keeps its own column
+   ok(/Pallet No\./.test(w.deliveryNoteHtml(plan,null)),'the Delivery Note is unchanged');
+  }
+
   ok(errs.length===0,'no script errors ('+errs.join('|')+')');
   console.log(fail?fail+' FAILED':'ALL PASSED');process.exit(fail?1:0);
 },900);

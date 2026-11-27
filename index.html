@@ -307,6 +307,15 @@ function renumberSkids(){
 }
 // "3/4" = this is the 3rd of 4 pallets that carry this Model (single-model pallets first, then the Mix Pallets the Model is in)
 function skidLabel(a){return (a.skidSeq||a.skidNo||'-')+'/'+(a.skidTotal||'-')}
+// The same numbering worked out from a list of rows (a saved plan / the Slip): row index -> "3/4". Mirrors renumberSkids, so old plans without stored numbers print them too.
+function skidLabelsOf(al){
+  const per={},seen={},out=new Map();
+  al.forEach(a=>{const m=String(a.shipmentModel||''),o=per[m]=per[m]||{solo:0,mix:new Map()};if(isMixAllocation(a)){if(!o.mix.has(mixKey(a)))o.mix.set(mixKey(a),o.mix.size+1)}else o.solo++});
+  al.forEach((a,i)=>{const m=String(a.shipmentModel||''),o=per[m],tot=o.solo+o.mix.size;let no;
+    if(isMixAllocation(a))no=o.solo+o.mix.get(mixKey(a));else{seen[m]=(seen[m]||0)+1;no=seen[m]}
+    out.set(i,no+'/'+tot)});
+  return out;
+}
 // Mix Pallets run in one sequence in the order they appear: Mix Pallet 1, 2, 3 … Only a pallet that carries >= 2 different Models is a Mix Pallet.
 // A grouped pallet with ONE Model is a "Pallet เศษ" (remainder pallet, not placed with another Model); internally it is "Mix Rem n" and never takes a Mix Pallet number.
 // Split pieces get their own number; custom-named groups keep their name.
@@ -848,10 +857,10 @@ function slipStackData(p){
   })}catch(e){return null}
 }
 function slipHtml(p){
-  const al=p.allocations||[],sm=p.summary||{},seq=palletSeqOf(al),PI=palletInfoOf(al),SK=slipStackData(p);
+  const al=p.allocations||[],sm=p.summary||{},seq=palletSeqOf(al),SK=slipStackData(p),SKID=skidLabelsOf(al);
   let prev=null,gi=0;
   const rows=al.map((a,i)=>{if(prev!==null&&a.shipmentModel!==prev)gi++;prev=a.shipmentModel;
-    return '<tr class="g'+(gi%2)+'"><td class="ctr">'+(i+1)+'</td><td><b>'+esc(a.shipmentModel||'-')+'</b></td><td class="ctr">'+(()=>{const k=SK&&SK.by.get(seq.get(i));return '<span style="white-space:nowrap">'+esc(a.stack||'N')+(k?' · <b class="stk" style="color:#7a1c3a">'+esc(k.tag)+(k.role?' '+k.role:'')+'</b>':'')+'</span>'})()+'</td><td class="r">'+fmt(a.qtyPallet)+'</td><td class="ctr">'+fmt(seq.get(i))+'</td><td>'+esc((()=>{const g=PI.byRow.get(i);if(g.kind==='mix')return g.label;const t=a.skidTotal?((a.skidSeq||a.skidNo)+'/'+a.skidTotal):String(a.skidNo||'');return (g.kind==='rem'?'Pallet เศษ ':'')+t})())+'</td><td class="ctr">'+fmt(a.palletD)+' × '+fmt(a.palletW)+' × '+fmt(a.palletH)+'</td><td class="r">'+fmt(a.grossLine)+'</td><td>'+esc(a.remark||'')+'</td></tr>'}).join('');
+    return '<tr class="g'+(gi%2)+'"><td class="ctr">'+(i+1)+'</td><td><b>'+esc(a.shipmentModel||'-')+'</b></td><td class="ctr">'+(()=>{const k=SK&&SK.by.get(seq.get(i));return '<span style="white-space:nowrap">'+esc(a.stack||'N')+(k?' · <b class="stk" style="color:#7a1c3a">'+esc(k.tag)+(k.role?' '+k.role:'')+'</b>':'')+'</span>'})()+'</td><td class="r">'+fmt(a.qtyPallet)+'</td><td class="ctr">'+fmt(seq.get(i))+'</td><td class="ctr">'+esc(SKID.get(i)||'-')+'</td><td class="ctr">'+fmt(a.palletD)+' × '+fmt(a.palletW)+' × '+fmt(a.palletH)+'</td><td class="r">'+fmt(a.grossLine)+'</td><td>'+esc(a.remark||'')+'</td></tr>'}).join('');
   const items=noteItems(p);
   const mrows=items.map(r=>'<tr><td class="ctr">'+r.no+'</td><td><b>'+esc(r.model)+'</b></td><td>'+esc(r.desc)+'</td><td class="r">'+fmt(r.plan)+'</td><td class="r">'+fmt(r.qty)+'</td></tr>').join('');
   const nStk=SK&&SK.pos?SK.pos.length+2:0,dens=(items.length+al.length+nStk)>20?' sm2':(items.length+al.length+nStk)>14?' sm1':'';
@@ -871,7 +880,7 @@ function slipHtml(p){
     +slipCell('Destination-Port',p.destination,'s2 hl')+slipCell('Port',p.port,'s2')+'</div>'
     +'<div class="kp"><div><b>'+fmt(sm.models??items.length)+'</b><span>MODELS</span></div><div><b>'+fmt(sm.qty)+'</b><span>QTY</span></div><div><b>'+fmt(sm.pallets)+'</b><span>PHYSICAL PALLET</span></div><div><b>'+fmt(sm.net)+'</b><span>NET kg</span></div><div><b>'+fmt(sm.gross)+'</b><span>GROSS kg</span></div><div><b>'+fmt(sm.cbm)+'</b><span>CBM m³</span></div></div>'
     +'<div class="sec">Shipment Model Detail</div><table class="t'+dens+'"><thead><tr><th class="ctr" style="width:9mm">No.</th><th>Model Code</th><th>Description</th><th class="r" style="width:22mm">Plan Qty</th><th class="r" style="width:24mm">Shipment Qty</th></tr></thead><tbody>'+mrows+'</tbody></table>'
-    +'<div class="sec">Pallet Allocation Detail <small>แยกสีตาม Model · Gross รวม Tare</small></div><table class="t'+dens+'"><thead><tr><th class="ctr" style="width:8mm">No.</th><th>Model No.</th><th class="ctr" style="width:24mm">Stack</th><th class="r" style="width:16mm">Qty/Pallet</th><th class="ctr" style="width:15mm">Pallet Seq</th><th style="width:20mm">Pallet No.</th><th class="ctr" style="width:30mm">D × W × H (cm)</th><th class="r" style="width:19mm">Gross kg</th><th>Remark</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3">TOTAL</td><td class="r">'+fmt(sm.qty)+'</td><td class="ctr">'+fmt(sm.pallets)+' plt</td><td></td><td class="ctr">'+fmt(sm.cbm)+' m³</td><td class="r">'+fmt(sm.gross)+'</td><td></td></tr></tfoot></table>'+stkSec
+    +'<div class="sec">Pallet Allocation Detail <small>แยกสีตาม Model · Gross รวม Tare</small></div><table class="t'+dens+'"><thead><tr><th class="ctr" style="width:8mm">No.</th><th>Model No.</th><th class="ctr" style="width:24mm">Stack</th><th class="r" style="width:16mm">Qty/Pallet</th><th class="ctr" style="width:15mm">Pallet Seq</th><th class="ctr" style="width:20mm">Pallet No.</th><th class="ctr" style="width:30mm">D × W × H (cm)</th><th class="r" style="width:19mm">Gross kg</th><th>Remark</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3">TOTAL</td><td class="r">'+fmt(sm.qty)+'</td><td class="ctr">'+fmt(sm.pallets)+' plt</td><td></td><td class="ctr">'+fmt(sm.cbm)+' m³</td><td class="r">'+fmt(sm.gross)+'</td><td></td></tr></tfoot></table>'+stkSec
     +'<div class="rmk"><b>Shipment Remark:</b> '+esc(p.remark||'-')+'</div>'
     +'<div class="sign"><div><b>Prepared by</b>Warehouse</div><div><b>Checked by</b>Logistics</div><div><b>Approved by</b>Supervisor</div></div>'
     +slipFoot()+'</main>';
