@@ -1,8 +1,8 @@
 {
   "name": "clc-wh-loading-calculator",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "private": true,
   "description": "CLC WH Loading Calculator V2",
-  "scripts": { "test": "node tests/smoke.test.js && node tests/auth.test.js && node tests/delivery.test.js && node tests/planid.test.js && node tests/calc.test.js && node tests/sim3d.test.js && node tests/photos.test.js && node tests/users.test.js && node tests/logistics.test.js && node tests/sketch.test.js && node tests/lang.test.js && node tests/dates.test.js && node tests/realplan.test.js && node tests/security.test.js && node tests/layout34.test.js" },
+  "scripts": { "test": "node tests/smoke.test.js && node tests/auth.test.js && node tests/delivery.test.js && node tests/planid.test.js && node tests/calc.test.js && node tests/sim3d.test.js && node tests/photos.test.js && node tests/users.test.js && node tests/logistics.test.js && node tests/sketch.test.js && node tests/lang.test.js && node tests/dates.test.js && node tests/realplan.test.js && node tests/security.test.js && node tests/layout34.test.js && node tests/layout35.test.js" },
   "devDependencies": { "jsdom": "^24.0.0" }
 }

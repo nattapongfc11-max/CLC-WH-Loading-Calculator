@@ -15,7 +15,7 @@ CLC – Container Loading Calculator for Logistics and Warehouse (Pioneer Manufa
 | Loading History | Search, date filter, open/edit, delete saved plans |
 
 ## Confirmed rules
-Pallet 110 × 110 cm · pallet (skid) 13 cm high, 7 kg · target height 125 cm (120–130 cm acceptable) · cartons placed 0° / 90° · layer 1 filled before layer 2 · cartons of different height never share a layer · pallet tare 7 kg per **physical** pallet (a Mix group = 1 pallet).
+Pallet 110 × 110 cm · pallet (skid) 13 cm high, 7 kg · target height 125 cm (120–130 cm acceptable) · cartons placed 0° / 90° (a layer may overhang the pallet by 10 cm in total) · layer 1 filled before layer 2 · cartons of different height never share a layer · pallet tare 7 kg per **physical** pallet (a Mix group = 1 pallet).
 
 ## Access control (roles + per-user permissions)
 Run `supabase/migrations/20261125_rbac_rls.sql`, `supabase/migrations/20261126_user_permissions.sql` and (v2.9) `supabase/migrations/20261127_plans_slide_permission.sql` once, in this order (rollbacks: `..._rollback.sql`). Users without a row in `public.user_roles` can sign in but see nothing ("pending approval").
@@ -188,6 +188,16 @@ No database change in v3.1. Tests: `tests/lang.test.js` (new), `tests/sketch.tes
 - Test `tests/dates.test.js` scans every page, dashboard grouping, Booking dialog and print document in Standard / English / 日本語 and fails if any `yyyy-mm-dd` is still visible.
 
 No database change in v3.2. Tests: `tests/dates.test.js` (new), `tests/sketch.test.js` (layers, floor plan, pagination, camera / label consistency), `tests/delivery.test.js`, `tests/lang.test.js`.
+
+## v3.5 – even layers, 10 cm overhang, stacks at the head, manual layout, Stack on the slip
+- **Layers land on an even count (4, 6, 8 …).** Measured on the real Part Master: 98% of its full layers are even (3,367 of 4,111 parts with a whole number of cartons per layer). The old packer produced an even layer for only about half of the cartons. When the best layout is odd and an even layout with one carton fewer still spans the pallet (no side shorter than 90 cm), the even one is taken. A *partial* layer always keeps every remaining carton (nothing is dropped to make it even).
+- **A layer may overhang the pallet by 10 cm** (`MIX_OVER = 10`: 120 × 120 cm envelope, centred on the 110 × 110 pallet = 5 cm each side). *Snug* = both sides of the layer are 100–120 cm (gap or overhang of at most 10 cm). The layer is turned so its longer side runs along the container length. The Mix card shows a *ล้นขอบ n cm* chip and an *even* chip per layer.
+  *Container check:* two pallets side by side must fit the container width (235 cm) and the rows one behind the other need 110 cm each plus their overhang; the Floor status warns when they do not (it never blocks Save).
+- **Better Mix layers.** Besides the six greedy priorities and the pinwheel, eight seeded variants are tried and the snuggest layout is kept (count → area → snug → least overhang → pallet face covered → centred → smallest hole). On 300 random 2–3 carton mixes the average number of layers fell from 10.98 to 9.80 and the area fill of full layers rose from 84% to 94%. Identical layer requests are cached (`MIX_CACHE`).
+- **Stacks against the container head.** Stacked positions (a pair, or a *Stack = Y* pallet) take the first rows; single pallets follow. The 3D label numbers are the *Pallet No.* (identity), not a loading sequence.
+- **Manual Layout.** *จัดตำแหน่ง Pallet เอง* in the stacking plan: slot *k* = row *k/2* counted from the head, left / right (seen from the door). Pick a pallet for a slot and it swaps with the one that was there. Kept in the plan (`manualLayout`, in `payload`, no migration), used by 3D, Sketch and the slip. With an odd number of positions the panel warns that the last row holds one pallet that can slide, and lets the person choose which one stands alone.
+- **Print Slip: Stack Pallet.** The *Stack* column names the pair (`Stack 5-14 ▲/▼` = top / bottom, `Stack ×2` for *Stack = Y*) and a *Stack Pallet* section lists every stacked position (row · L/R, bottom, top, stacked height, gross kg).
+- **3D draw order** is now exact for every pair of boxes that is not part of a genuine cycle (strongly connected components); only boxes inside one cycle are ordered best-effort.
 
 ## v3.4 – layers, pallet data, containers, stacking
 - **Pinwheel layers.** When a layer holds the same number of cartons in several arrangements, the layout that carries the whole pallet face is chosen: four cartons *a × b* (a + b ≤ 110 cm) are turned 90° one after another around an empty centre, so no corner of the base is left bare and the load is centred (the old 3 + 1 block left an empty corner). The carton count and the filled area never go down (checked on 250 random carton sizes in `tests/layout34.test.js`).

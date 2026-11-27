@@ -27,12 +27,12 @@ setTimeout(()=>{
   w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();
   const l2=w.calculateMixPalletLayouts()[0];ok(l2.heightGroups.length===2,'25 cm and 30 cm cartons are separate height groups');
   // 3b. Mix group taller than 130 cm is split into several physical pallets
-  w.models=[{model:'A',planQty:400,actualQty:null,packingModel:'A'}];w.generateAllocations();
+  w.models=[{model:'A',planQty:600,actualQty:null,packingModel:'A'}];w.generateAllocations();
   w.allocations.forEach(a=>{a.mixGroup='Mix Pallet 1';a.skidNo='Mix Pallet 1'});w.recalcDerived();w.renderCalc();
   const gs=w.calculateMixPalletLayouts();
-  ok(gs.length===2,'40 cartons x 25 cm (7+5x25=132 cm) split into 2 mix pallets, got '+gs.length);
+  ok(gs.length===2,'60 cartons x 25 cm, 12 per layer (13+5x25=138 cm) split into 2 mix pallets, got '+gs.length);
   ok(gs.every(g=>g.totalHeight<=130),'every split pallet <= 130 cm ('+gs.map(g=>g.totalHeight).join(', ')+')');
-  ok(w.allocations.reduce((s,a)=>s+a.ctnNo,0)===40&&w.allocations.reduce((s,a)=>s+a.qtyPallet,0)===400,'split keeps total cartons (40) and qty (400)');
+  ok(w.allocations.reduce((s,a)=>s+a.ctnNo,0)===60&&w.allocations.reduce((s,a)=>s+a.qtyPallet,0)===600,'split keeps total cartons (60) and qty (600)');
   ok(w.physicalPalletCount()===2&&Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0)-14)<1e-6,'2 physical pallets -> tare 14 kg');
   ok(gs[0].group==='Mix Rem 1'&&gs[1].group==='Mix Rem 2','single-model split pieces are Pallet เศษ (internal Mix Rem 1, 2), never numbered as Mix Pallet, no "(2)" names');
   w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
