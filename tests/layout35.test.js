@@ -120,11 +120,11 @@ setTimeout(()=>{
      if(Object.values(rem).some(v=>v>0))bad++;
      L.slice(0,-1).forEach(r=>{full++;if(r.snug)snug++;if(r.placed%2===0)evenFull++;
        const pl=r.placements;for(let i=0;i<pl.length;i++)for(let j=i+1;j<pl.length;j++){const a=pl[i],b=pl[j];if(!(a.x+a.w<=b.x+1e-6||b.x+b.w<=a.x+1e-6||a.y+a.d<=b.y+1e-6||b.y+b.d<=a.y+1e-6))bad++}
-       if(pl.some(p=>p.x<-5-1e-6||p.y<-5-1e-6||p.x+p.w>115+1e-6||p.y+p.d>115+1e-6))bad++});
+       if(pl.some(p=>p.x<-3-1e-6||p.y<-3-1e-6||p.x+p.w>113+1e-6||p.y+p.d>113+1e-6))bad++});
      layers+=L.length;cnt++;
    }
-   ok(bad===0,'60 random Mix groups: every carton placed, no overlap, nothing beyond the 120 x 120 envelope');
-   ok(snug/full>=.9,'Mix: '+Math.round(snug/full*100)+'% of the full layers are snug (both sides 100..120 cm: gap or overhang of at most 10 cm)');
+   ok(bad===0,'60 random Mix groups: every carton placed, no overlap, nothing beyond the 116 x 116 envelope');
+   ok(snug/full>=.8,'Mix: '+Math.round(snug/full*100)+'% of the full layers are snug (both sides 104..116 cm: gap or overhang of at most 6 cm; the rest are cartons that cannot fill the pallet any closer)');
    ok(evenFull/full>=.9,'Mix: '+Math.round(evenFull/full*100)+'% of the full layers hold an even number of cartons');
   }
   // memo: the same layer asked twice gives the same answer and does not disturb the caller's counts
@@ -132,25 +132,27 @@ setTimeout(()=>{
    ok(a.placed===b.placed&&r1.m1===r2.m1&&r1.m1===30-a.placed&&JSON.stringify(a.placements)===JSON.stringify(b.placements),'a repeated layer request (cached) gives the identical layout and the same remaining count');
   }
 
-  // ================= container fit of the 10 cm overhang =================
+  // ================= container fit of the 6 cm overhang =================
   {const L=(wd,dd,n)=>{const t={key:'q',model:'Q',w:wd,d:dd,h:25,count:n};return w.mixPackOneLayer([t],{q:n})};
    // the longer side of a layer is turned along the container length: a layer never overhangs MORE across the width than along the length
    let across=0,total=0;[[29.6,50.5],[28.1,46.3],[48,30],[56,32],[52.4,32.4],[26.3,46.4],[57,37],[60.5,48]].forEach(([d,wd])=>{const r=L(wd,d,60);total++;if(r.spanY<=r.spanX+1e-9)across++});
    ok(across===total,'every layer has spanX >= spanY (the longer side runs along the container length): '+across+' of '+total);
-   // 4 x 29.6 = 118.4 wide overhang: two such pallets side by side need 2 x 109.7 across the width -> fits 235
-   w.parts=[part('A',{cartonD:29.6,cartonW:50.5,cartonH:25,qtyCarton:10,qtyPallet:600,palletH:13+4*25})];
+   // 28.1 x 46.3: 116 cm square layers (3 cm overhang each side): two such pallets side by side need 2 x 116 = 232 cm -> fits 235
+   w.parts=[part('A',{cartonD:28.1,cartonW:46.3,cartonH:25,qtyCarton:10,qtyPallet:600,palletH:13+4*25})];
    w.models=[['A',40]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));$('shipType').value='40HC';w.syncContFromShipType();w.manualLayout=[];w.generateAllocations();
    w.allocations.forEach(a=>{a.mixGroup='Mix Rem 1';a.skidNo='Mix Rem 1'});w.recalcDerived();w.renderCalc();
    let fit=w.layoutFitIssues(w.planStacking());ok(fit.wide.length===0&&fit.len===null,'1 overhanging pallet in a 40HC: no width / length problem');
-   // many overhanging pallets in a 20FT (590 cm): 5 rows x 110 + the overhang of every row > 590
-   w.parts=[part('A',{cartonD:29.6,cartonW:50.5,cartonH:25,qtyCarton:10,qtyPallet:600,palletH:13+4*25})];
-   w.models=[['A',4000]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));$('shipType').value='20FT';w.syncContFromShipType();w.generateAllocations();
+   // many overhanging pallets: the rows one behind the other need 110 cm each plus 6 cm of overhang per row. A 20FT (590 cm) takes 5 rows (580 cm) -> always fits;
+   // a custom container of 12 positions (6 rows: 6 x 110 + 30 = 690 cm) has less room than 6 x 116 = 696 cm -> warned
+   w.parts=[part('A',{cartonD:28.1,cartonW:46.3,cartonH:25,qtyCarton:10,qtyPallet:600,palletH:13+4*25})];
+   w.models=[['A',7200]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));$('shipType').value='LCL';$('containerType').value='Other';w.setContainerType();$('floorCap').value=12;$('contH').value=269;w.generateAllocations();
    w.allocations.forEach(a=>{a.mixGroup='Mix Rem '+(1+w.allocations.indexOf(a));a.skidNo=a.mixGroup});w.recalcDerived();w.renderCalc();
    const st=w.planStacking();fit=w.layoutFitIssues(st);
-   ok(st.positions.length>=8&&!!fit.len&&fit.len.need>fit.len.L,'20FT: rows with overhang are checked against the container length ('+(fit.len?fit.len.need+' > '+fit.len.L:'ok')+')');
+   ok(st.positions.length>=12&&!!fit.len&&fit.len.need>fit.len.L,'custom container, 6 overhanging rows: the length is checked ('+(fit.len?fit.len.need+' > '+fit.len.L:'ok')+')');
+   $('containerType').value='20FT';w.setContainerType();{const st2=w.planStacking(),f2=w.layoutFitIssues(st2);ok(!f2.len&&f2.wide.length===0,'20FT: 5 rows with a 3 cm overhang each side always fit (5 x 116 = 580 <= 590)')}
+   $('containerType').value='Other';w.setContainerType();$('floorCap').value=12;w.renderCalc();
    ok(/อาจไม่พอดีตู้/.test(d.getElementById('floorStatus').innerHTML),'the Floor status tells the person the overhanging cartons may not fit the container');
-   // a layer wider than half the container: both sides 120 -> 240 > 235
-   const lay={x:0,y:0};
+      const lay={x:0,y:0};
    w.models=[['A',200]].map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));w.parts=[part('A',{cartonD:30,cartonW:40,cartonH:25,qtyCarton:10,qtyPallet:600,palletH:60})];
    $('shipType').value='40HC';w.syncContFromShipType();w.generateAllocations();w.allocations.forEach(a=>{a.mixGroup='Mix Rem 1';a.skidNo='Mix Rem 1'});w.recalcDerived();w.renderCalc();
    ok(typeof w.layoutFitIssues(w.planStacking()).wide==='object','the fit check runs on the open form without error');

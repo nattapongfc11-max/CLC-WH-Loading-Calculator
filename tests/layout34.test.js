@@ -9,7 +9,7 @@ const part=(model,o)=>Object.assign({model,description:model,qtyCarton:10,carton
 const $=id=>d.getElementById(id);
 const setup=(ps,ms)=>{w.parts=ps;w.models=ms.map(([m,q])=>({model:m,planQty:q,actualQty:null,packingModel:m}));w.generateAllocations();w.renderCalc()};
 const cov=(pl,x,y)=>pl.some(p=>x>=p.x-1e-9&&x<=p.x+p.w+1e-9&&y>=p.y-1e-9&&y<=p.y+p.d+1e-9);
-const inside=pl=>pl.every(p=>p.x>=-5-1e-6&&p.y>=-5-1e-6&&p.x+p.w<=115+1e-6&&p.y+p.d<=115+1e-6);   // v3.5: a layer may overhang the 110 x 110 pallet by 10 cm in total (5 cm each side)
+const inside=pl=>pl.every(p=>p.x>=-3-1e-6&&p.y>=-3-1e-6&&p.x+p.w<=113+1e-6&&p.y+p.d<=113+1e-6);   // v3.6: a layer may overhang the 110 x 110 pallet by 6 cm in total (3 cm each side)
 const noOverlap=pl=>pl.every((a,i)=>pl.every((b,j)=>j<=i||a.x+a.w<=b.x+1e-7||b.x+b.w<=a.x+1e-7||a.y+a.d<=b.y+1e-7||b.y+b.d<=a.y+1e-7));
 const corners=pl=>[[1,1],[109,1],[1,109],[109,109]].every(([x,y])=>cov(pl,x,y));
 
@@ -18,7 +18,7 @@ setTimeout(()=>{
   {const t={key:'r',model:'NVF-0459ZS02/XNJP',w:35.2,d:73.4,h:27.6,count:12};
    const r=w.mixPackOneLayer([t],{r:12});
    ok(r.placed===4&&Math.abs(r.fillPercent-85.41)<.01,'73.4 x 35.2 cartons: 4 per layer, 85.41% fill (same count and area as before)');
-   ok(r.pinwheel&&inside(r.placements)&&noOverlap(r.placements),'the layer is a pinwheel (4 cartons turned 90° around an empty centre), inside the pallet, no overlap');
+   ok(r.donut&&r.edgeHole<=30&&inside(r.placements)&&noOverlap(r.placements),'the layer is a pinwheel / donut (4 cartons turned 90° around an empty centre, every corner carried), inside the pallet, no overlap');
    ok(corners(r.placements),'all 4 corners of the pallet face carry a carton (no gap at the base)');
    ok(r.cogOff<.5&&r.spanArea>108*108,'load is centred ('+r.cogOff.toFixed(2)+' cm off) and spans the whole pallet face ('+r.spanArea.toFixed(0)+' cm²)');
    const y={key:'y',model:'NVF-0059ZS03/XNJP',w:40.2,d:68.8,h:27.6,count:8},ry=w.mixPackOneLayer([y],{y:8});
@@ -44,15 +44,17 @@ setTimeout(()=>{
    ok(sq.placed===4&&!sq.pinwheel,'square cartons (55 x 55): plain 2 x 2 grid, no pinwheel needed');
   }
 
-  // ================= 1b. v3.5: full layers land on an EVEN count; a layer may overhang the pallet by 10 cm =================
+  // ================= 1b. v3.5 / v3.6: full layers land on an EVEN count; a layer may overhang the pallet by 6 cm =================
   {const L=(wd,dd,n)=>{const t={key:'q',model:'Q',w:wd,d:dd,h:25,count:n};return w.mixPackOneLayer([t],{q:n})};
    const a=L(28.1,46.3,60),b=L(29.6,50.5,60);
    ok(a.placed===8&&b.placed===8,'28.1 x 46.3 and 29.6 x 50.5 cartons: 8 per full layer (an even count; the old 110 x 110 limit gave 7)');
-   ok(b.spanX<=120+1e-9&&b.spanY<=120+1e-9&&b.overhang>0&&b.overhang<=10+1e-9&&b.snug,'29.6 x 50.5: 4 across = '+b.spanX.toFixed(1)+' cm, the layer overhangs the pallet by '+b.overhang.toFixed(1)+' cm (<= 10) and is snug (gap / overhang <= 10 cm)');
-   {const xs=b.placements,x0=Math.min(...xs.map(p=>p.x)),x1=Math.max(...xs.map(p=>p.x+p.w));ok(Math.abs((x0+x1)/2-55)<1e-6,'the overhang is shared: the layer is centred on the pallet (5 cm each side at most)');}
+   // 4 x 29.6 = 118.4 cm no longer fits the 116 cm envelope: the 8 cartons are laid as four blocks of 2 turned around an empty centre (a donut), 109.7 cm square
+   ok(b.spanX<=116+1e-9&&b.spanY<=116+1e-9&&b.snug&&b.donut&&b.edgeHole<=30&&b.overhang<=1e-9,'29.6 x 50.5: four blocks of 2 cartons around an empty centre = '+b.spanX.toFixed(1)+' cm square, no overhang, snug and a donut');
+   ok(a.overX<=6+1e-9&&a.overY<=6+1e-9&&a.spanX<=116+1e-9&&a.spanY<=116+1e-9,'28.1 x 46.3: the layer overhangs the pallet by at most 6 cm per direction ('+a.overX.toFixed(1)+' x '+a.overY.toFixed(1)+')');
+   {const xs=b.placements,x0=Math.min(...xs.map(p=>p.x)),x1=Math.max(...xs.map(p=>p.x+p.w));ok(Math.abs((x0+x1)/2-55)<1e-6,'the overhang is shared: the layer is centred on the pallet (3 cm each side at most)');}
    ok(w.mixLayerCap({key:'q',model:'Q',w:28.1,d:46.3,h:25,count:1})===8,'layer capacity of the carton (used for flat / full-layer checks) is the even 8');
    const part5=L(28.1,46.3,5);ok(part5.placed===5,'a PARTIAL layer keeps every remaining carton (5 left -> 5 placed), nothing is dropped to make it even');
-   ok(L(119,30,3).placed>=1&&L(121,30,3).placed===0,'a carton 119 cm wide still fits the 110 + 10 cm envelope; 121 cm does not');
+   ok(L(115,30,3).placed>=1&&L(117,30,3).placed===0,'a carton 115 cm wide still fits the 110 + 6 cm envelope; 117 cm does not');
    // real Part Master cartons (D x W): the share of EVEN full layers (the warehouse packs 98% of its layers even)
    const real=[[29.6,50.5],[60.5,48],[64.4,44.6],[28.1,46.3],[55,49],[48,30],[50,29.1],[45.4,60.8],[26.3,46.4],[70,37.4],[35.8,52],[29.2,50.1],[57,37],[45.2,56.7],[29.1,51.8],[46.8,28.6],[48.4,64.7],[35.9,56.1],[41,63.3],[47.2,28.3],[28.4,51.8],[36.2,26.9],[29.3,48.2],[39.1,61.8],[58.4,33.8],[52.4,32.4],[48.1,57.2],[28,49],[35.1,51.7],[46.1,57.4],[39.4,68.6],[63.8,45.3],[57.5,32.5],[54.5,32.5],[32.9,51.1],[46.6,56.8],[47,31],[49,28],[48.8,55.8],[35.1,54.6]];
    let ev=0;real.forEach(([d,wd])=>{if(L(wd,d,60).placed%2===0)ev++});
@@ -61,8 +63,8 @@ setTimeout(()=>{
    w.allocations=[{shipmentModel:'Z',packingModel:'Z',mixGroup:'Mix Rem 1',skidNo:'Mix Rem 1',cartonD:28.1,cartonW:46.3,cartonH:25,ctnNo:30,qtyPallet:300}];
    const g=w.calculateMixPalletLayouts()[0];
    ok(g.valid&&g.stack.slice(0,-1).every(x=>x.layer.cartons%2===0)&&g.stack.reduce((s,x)=>s+x.layer.cartons,0)===30,'30 cartons: full layers 8,8,8 + 6 on top ('+g.stack.map(x=>x.layer.cartons).join(', ')+'), all 30 placed');
-   // every layer is drawn inside the envelope (a layer never leaves 120 x 120) and carries its own overhang figures
-   ok(g.stack.every(x=>inside(x.layer.placements)&&x.layer.overhang<=10+1e-9),'every layer sits inside the 120 x 120 envelope');
+   // every layer is drawn inside the envelope (a layer never leaves 116 x 116) and carries its own overhang figures
+   ok(g.stack.every(x=>inside(x.layer.placements)&&x.layer.overX<=6+1e-9&&x.layer.overY<=6+1e-9),'every layer sits inside the 116 x 116 envelope');
   }
 
   // ================= 2. pallet data: 13 cm high, 7 kg =================
