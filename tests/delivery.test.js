@@ -17,7 +17,7 @@ setTimeout(async()=>{
   const partial=full('2026-11-25','08:00');delete partial.sealNo;
   ok(!w.bkComplete(P('E','09:00',{booking:partial})),'missing Seal No. -> not Delivered Complete');
   const sl=P('F','09:00',{slides:[{fromDate:'2026-11-25',fromTime:'09:00',toDate:'2026-11-27',toTime:'08:00'}]});
-  ok(w.delivInfo(sl,now).key==='slided'&&w.delivInfo(sl,now).label.includes('เดิม 2026-11-25 09:00'),'Slide shows original booking date');
+  ok(w.delivInfo(sl,now).key==='slided'&&w.delivInfo(sl,now).label.includes('เดิม 25/11/2026 09:00'),'Slide shows original booking date (dd/mm/yyyy)');
   const slDone=P('G','09:00',{slides:sl.slides,booking:full('2026-11-27','07:00')});
   ok(w.delivInfo(slDone,now).delay===true,'delivered after Slide still Delay vs ORIGINAL plan (KPI)');
   ok(w.delivInfo(P('H','09:00',{cancel:{reason:'x'}}),now).key==='cancelled','Cancel status keeps original date');
@@ -59,7 +59,7 @@ setTimeout(async()=>{
    ok(/Actual Delivered/.test(d.getElementById('deliveryBoard').textContent)&&mx.querySelectorAll('thead th').length===rows[0].length,'header has one column per day plus the label and the month total');}
   // New Shipment saved on another day -> the Delivery Board shows it
   {const far=w.shiftDay(day,6);const np=mk('NEW1','10:00',{requestDate:far});w.plans.push(np);w.setBoardDay(day);
-   ok(d.getElementById('upcomingPlans').textContent.includes('1 trip')&&[...d.querySelectorAll('#upcomingPlans button')].some(b=>b.title===far),'upcoming-plans chips list the new plan\'s day even when the board shows today');
+   ok(d.getElementById('upcomingPlans').textContent.includes('1 trip')&&[...d.querySelectorAll('#upcomingPlans button')].some(b=>b.title===w.dmy(far)),'upcoming-plans chips list the new plan\'s day even when the board shows today');
    w.clcAfterPlanSaved(np);
    ok(w.eval('BOARD.day')===far&&d.querySelector('#deliveryBoard tr.newrow')&&/NEW1/.test(d.querySelector('#deliveryBoard tr.newrow').textContent),'after saving, the board jumps to the plan day and marks the row as new');
    ok(d.getElementById('clcToast').classList.contains('show')&&d.getElementById('clcToast').textContent.includes(far)&&d.getElementById('clcToastBtn'),'toast says where the plan is, with a button to the board');

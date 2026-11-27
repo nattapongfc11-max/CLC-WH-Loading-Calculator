@@ -81,9 +81,28 @@ const USER_QTY=[192,448,192,64,1216,448];
   ok(D.pairs.length===3&&D.pairs.every(x=>h.includes('Stack '+x.a+'-'+x.b)),'stacked pairs are listed ("Stack 18-19" style)');
   ok(JSON.stringify([w.models,w.allocations])===before,'printing does not change the form');
   ok(/PTM|-/.test(h)&&/Warehouse|จัดเตรียม/.test(h),'signature boxes for the warehouse are on the sheet');
-  // many pallets: still one fixed-size sheet, grid chosen to fit
-  const g1=w.sketchGrid(6,281,79,10.5,1.6),g2=w.sketchGrid(40,281,79,10.5,1.6);
-  ok(g1.s>g2.s&&g2.c*g2.rows>=40&&g2.s>=12,'drawing size adapts to the number of pallet types (6 types '+g1.s.toFixed(0)+' mm, 40 types '+g2.s.toFixed(0)+' mm)');
+  // layer-by-layer detail: every pallet card lists its Layers, and the cartons of the layers add up to the pallet's cartons
+  ok(D.groups.every(g=>g.levels.parts.length===(g.pl.units?g.pl.units.length:1)&&g.levels.parts.every(lv=>lv.length>0)),'every pallet card has its Layer list (one list per physical pallet of a Stack = Y position)');
+  ok(D.groups.every(g=>g.levels.parts.reduce((s,lv)=>s+lv.reduce((a,x)=>a+x.cartons,0),0)===g.ctn),'cartons in the Layers add up to the cartons of the pallet ('+D.groups.map(g=>g.ctn).join(',')+')');
+  ok((h.match(/<b>Layer \d/g)||[]).length>=D.groups.length&&/ctn\/layer/.test(h)&&/61\.9×42\.8/.test(h),'Layer lines show cartons per layer and the carton footprint (W×D cm)');
+  // top-view floor plan: every pallet number is on it, front / door marked
+  ok(D.plan.includes('หัวตู้')&&D.plan.includes('ประตู')&&all.every(sq=>new RegExp('>[▲▼]? ?'+sq+'<').test(D.plan)),'floor plan (top view) shows every Pallet No., front and door');
+  // label layout: the bigger labels of the sketch never sit on top of each other
+  const labs=[...D.container.matchAll(/<g class="s3lab"[^>]*>.*?<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m=>m.slice(1).map(Number));
+  let hit=0;for(let i=0;i<labs.length;i++)for(let j=i+1;j<labs.length;j++){const a=labs[i],b=labs[j];if(a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3])hit++}
+  ok(labs.length>=12&&hit===0,'container labels are bigger on paper ('+D.ls+'x) and none overlaps another ('+labs.length+' labels)');
+  ok(D.ls>=1.4&&D.container.includes('font-size="'+(13.5*D.ls).toFixed(1)+'"'),'label scale reaches the text (font-size '+(13.5*D.ls).toFixed(1)+')');
+  // one sheet when it fits, more sheets when it does not: nothing is cut, signatures only on the last sheet
+  const sheets=s=>(s.match(/<main class="sheet sk">/g)||[]).length;
+  ok(sheets(h)===1&&/A4 แนวนอน · 1 Page/.test(h),'11 pallet types fit ONE A4 sheet');
+  const many=()=>{const names=Array.from({length:30},(_,i)=>'ZZ-'+(100+i)+'/XJP');w.parts=names.map((m,i)=>part(m,i%2?{cartonD:30+i,cartonW:40,cartonH:20+i%6,qtyCarton:6,qtyPallet:96,palletH:121}:{}));
+    w.models=names.map((m,i)=>({model:m,planQty:64*(1+i%4)+(i%5)*16,actualQty:null,packingModel:m}));w.generateAllocations();w.allocations.forEach(a=>w.setStack(w.allocations.indexOf(a),'Y'));w.renderCalc();return w.makePlan()};
+  const pm=many(),hm=w.sketchHtml(pm),dm=w.sketchData(pm);
+  ok(sheets(hm)>=2&&(hm.match(/class="pc"/g)||[]).length===dm.groups.length&&dm.groups.flatMap(g=>g.seqs).length===w.planStacking().physical,'30 pallet types: continues on more sheets ('+sheets(hm)+'), every pallet card is on exactly one sheet');
+  ok((hm.match(/class="sg2"/g)||[]).length===1&&hm.lastIndexOf('class="sg2"')>hm.lastIndexOf('<main class="sheet sk">'),'signature boxes only on the LAST sheet');
+  ok(/<main class="sheet sk">[\s\S]*?class="top"/.test(hm)&&(hm.match(/class="top"/g)||[]).length===1,'container picture only on the first sheet');
+  ok(/@media print\{\.sk\.sheet\{[^}]*\}\.sk\.sheet\+\.sk\.sheet\{break-before:page/.test(hm),'each continuation sheet starts a new page when printed');
+  load(S,USER_QTY);
   // a mix of models: Mix Pallet / Pallet เศษ drawn with their cartons
   load(S,[192+36,448+20,192+10,64,1216+40,448+12]);
   const D2=w.sketchData(w.makePlan());
@@ -121,15 +140,21 @@ const USER_QTY=[192,448,192,64,1216,448];
   const saved=JSON.parse(JSON.stringify(cur2));saved.allocations.reverse();               // a plan saved in a different row order (older save)
   saved.allocations.forEach(a=>{if(w.isMixAllocation(a))a.palletH=40});   // ... with stale pallet heights (WH Calculate recalculates them when the plan is opened)
   const gid=s=>s.replace(/s3bg|bk3bg|skbg/g,'G').replace(/<text[^>]*>ลากเพื่อหมุน[^<]*<\/text>/,'');
-  const live=gid(w.s3svg(w.sceneOfPlan().sc,{cam:{yaw:-34,pitch:30,zoom:1},look:'model',gid:'s3bg',hint:false}).html);
+  const CAM={yaw:-24,pitch:37,zoom:1},LS=w.sketchData(cur2).ls;
+  const live=gid(w.s3svg(w.sceneOfPlan().sc,{cam:CAM,look:'model',gid:'s3bg',hint:false,labelScale:LS}).html);
   ok(gid(w.sketchData(cur2).container)===live,'sketch of the open form == the 3D of the open form (identical SVG)');
   w.plans=[saved];w.loadPlan('PTM-261126-S-007');
-  const calcSvg=gid(d.getElementById('sim3d').innerHTML);
+  const calcRaw=d.getElementById('sim3d').innerHTML,calcSvg=gid(calcRaw);
   w.newPlan();w.openBooking('PTM-261126-S-007');
   const bkSvg=gid(d.getElementById('bk3d').innerHTML);
   ok(w.sceneOfPlan(saved).st.pls.some(x=>x.kind==='mix')&&calcSvg.length>5000&&calcSvg===bkSvg,'Delivery Booking 3D == WH Calculate 3D of the same saved plan (identical SVG, even for rows saved in another order)');
   const viaDom=h=>{const s=d.createElementNS('http://www.w3.org/2000/svg','svg');s.innerHTML=h;return s.innerHTML};    // same serialisation as the on-screen <svg>
-  ok(gid(viaDom(w.sketchData(saved).container))===calcSvg,'Print Sketch picture == WH Calculate 3D of the same saved plan (identical SVG)');
+  const Dsv=w.sketchData(saved),inCtx=f=>w.withPlanCtx(saved,()=>w.s3svg(w.sceneOfPlan().sc,f({cam:CAM,look:'model',gid:'s3bg',hint:false})).html);   // the renderer, run with the saved plan loaded
+  ok(gid(viaDom(Dsv.container))===gid(viaDom(inCtx(o=>Object.assign({labelScale:Dsv.ls},o)))),'Print Sketch picture == the shared 3D renderer with the default camera (only the label size differs)');
+  ok(gid(viaDom(inCtx(o=>o)))===calcSvg,'WH Calculate / Booking open at the SAME default camera (-24° / 37°) as the Print Sketch');
+  const strip=x=>x.replace(/<g class="s3lab"[\s\S]*?<\/g>/g,'').replace(/<line [^>]*>(<\/line>)?<circle [^>]*>(<\/circle>)?/g,'').replace(/font-size="[\d.]+"/g,'');
+  ok(strip(gid(viaDom(Dsv.container)))===strip(calcSvg.replace(/<text[^>]*>ลากเพื่อหมุน[^<]*<\/text>/,'')),'apart from labels, the Print Sketch picture is IDENTICAL to the WH Calculate picture (same boxes, same colours)');
+  ok(/-24° \/ 37°/.test(calcRaw),'WH Calculate opens at the default view angle -24° / 37°');
   const ids=w.sceneOfPlan(saved).st.pls.map(x=>x.seq+':'+x.kind+':'+x.label).join();
   w.loadPlan('PTM-261126-S-007');ok(w.planStacking().pls.map(x=>x.seq+':'+x.kind+':'+x.label).join()===ids,'Pallet No. / Mix Pallet / Pallet เศษ numbering is the same in every view');
   w.closeModal('bookModal');w.newPlan();
