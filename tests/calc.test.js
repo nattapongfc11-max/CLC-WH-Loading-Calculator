@@ -137,7 +137,7 @@ setTimeout(()=>{
    const st=w.planStacking(),sim=d.getElementById('simLayout');
    ok(st.pairs.length>=3&&sim.querySelectorAll('table.stk tr.pair').length===st.pairs.length,'stacking plan table highlights every stacked pair ('+st.pairs.length+')');
    ok(sim.querySelectorAll('table.stk tbody tr').length===st.positions.length,'one table row per floor position');
-   const pr=st.pairs[0],rowTxt=[...sim.querySelectorAll('table.stk tr.pair')][0].textContent;
+   const pp0=st.positions.find(ps=>ps.length>1),pr={bottom:pp0[0],top:pp0[1]},rowTxt=[...sim.querySelectorAll('table.stk tr.pair')][0].textContent;
    ok(rowTxt.includes('#'+pr.top.seq)&&rowTxt.includes('#'+pr.bottom.seq)&&rowTxt.includes('ซ้อนบน'),'a pair row names the pallet on top (#'+pr.top.seq+') and the one underneath (#'+pr.bottom.seq+')');
    ok(rowTxt.includes('('+FM(pr.bottom.h)+' + '+FM(pr.top.h)+') = '+FM(pr.bottom.h+pr.top.h)),'stacked dimension = D × W × (H bottom + H top) = '+FM(pr.bottom.h+pr.top.h)+' cm');
    ok(/Gross kg/.test(sim.textContent)&&rowTxt.includes(FM(pr.bottom.gross+pr.top.gross)),'stacked gross weight = bottom + top');
