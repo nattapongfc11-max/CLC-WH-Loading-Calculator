@@ -28,22 +28,33 @@ setTimeout(async()=>{
   ok(items.filter(i=>i.k==='skid'||i.k==='cargo'||i.k==='carton').every(i=>i.b[0]>=-1&&i.b[3]<=sc.L+1&&i.b[1]>=-1&&i.b[4]<=sc.W+1&&i.b[5]<=sc.H+1),'every pallet is inside the container (length, width, height)');
   // painter's algorithm: for any two boxes separated along an axis, the one nearer the camera is drawn later
   const angles=[[0,0],[-22,50],[-32,56],[45,30],[120,20],[170,35],[-90,12],[90,40],[-150,25],[0,88],[-10,5],[200,60]];
-  let bad=0,pairsChecked=0;
+  let bad=0,pairsChecked=0,cyc=0;   // cyc = wrong pairs inside a GENUINE cycle of the constraint graph (no whole-box order exists for those)
   angles.forEach(([yaw,pitch])=>{
     const th=yaw*Math.PI/180,ph=pitch*Math.PI/180,v=[-Math.cos(ph)*Math.sin(th),-Math.cos(ph)*Math.cos(th),Math.sin(ph)];
     const ct=Math.cos(th),stt=Math.sin(th),cpp=Math.cos(ph),spp=Math.sin(ph),cx=sc.L/2,cy=sc.W/2,cz=sc.H/2;
     const PP=(x,y,z)=>{const dx=x-cx,dy=y-cy,dz=z-cz;return [dx*ct-dy*stt,-(dz*cpp+(dx*stt+dy*ct)*spp)]};
     const ord=w.eval("(function(v){var c=Math.cos,s=Math.sin;return s3order(s3items(SIM3.scene,v),v,function(x,y,z){var th="+th+",ph="+ph+",cx=SIM3.scene.L/2,cy=SIM3.scene.W/2,cz=SIM3.scene.H/2,dx=x-cx,dy=y-cy,dz=z-cz;return [dx*c(th)-dy*s(th),-(dz*c(ph)+(dx*s(th)+dy*c(th))*s(ph))]})})("+JSON.stringify(v)+")");
     const bb=ord.map(it=>{const b=it.b;let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;[b[0],b[3]].forEach(x=>[b[1],b[4]].forEach(y=>[b[2],b[5]].forEach(z=>{const q=PP(x,y,z);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])})));return [x0,x1,y0,y1]});
+    // strongly connected components of the 'must be drawn before' graph: a pair inside one is a true cycle (e.g. interlocking carton layers)
+    const nn=ord.length,gadj=Array.from({length:nn},()=>[]);
+    for(let i=0;i<nn;i++)for(let j=i+1;j<nn;j++){
+      if(bb[i][1]<=bb[j][0]+1e-6||bb[j][1]<=bb[i][0]+1e-6||bb[i][3]<=bb[j][2]+1e-6||bb[j][3]<=bb[i][2]+1e-6)continue;
+      const A=ord[i].b,B=ord[j].b;let best=0,ax=-1,aLow=true;
+      for(let k=0;k<3;k++){const ab=A[k+3]<=B[k]+1e-6,ba=B[k+3]<=A[k]+1e-6,m=Math.abs(v[k]);if((ab||ba)&&m>best+1e-9){best=m;ax=k;aLow=ab}}
+      if(ax<0)continue;if(aLow===(v[ax]>0))gadj[i].push(j);else gadj[j].push(i);
+    }
+    let tix=0;const tst=[],ton=new Array(nn).fill(false),tind=new Array(nn).fill(-1),tlow=new Array(nn).fill(0),comp=new Array(nn).fill(-1);let cn=0;
+    const tdfs=u=>{tind[u]=tlow[u]=tix++;tst.push(u);ton[u]=true;gadj[u].forEach(x=>{if(tind[x]<0){tdfs(x);tlow[u]=Math.min(tlow[u],tlow[x])}else if(ton[x])tlow[u]=Math.min(tlow[u],tind[x])});if(tlow[u]===tind[u]){let x;const members=[];do{x=tst.pop();ton[x]=false;members.push(x)}while(x!==u);if(members.length>1)members.forEach(m=>comp[m]=cn);cn++}};
+    for(let i=0;i<nn;i++)if(tind[i]<0)tdfs(i);
     for(let i=0;i<ord.length;i++)for(let j=i+1;j<ord.length;j++){
       if(bb[i][1]<=bb[j][0]+1e-6||bb[j][1]<=bb[i][0]+1e-6||bb[i][3]<=bb[j][2]+1e-6||bb[j][3]<=bb[i][2]+1e-6)continue; // outlines do not overlap on screen
       const A=ord[i].b,B=ord[j].b;let ax=-1,best=0,aLow=true;
       for(let k=0;k<3;k++){const ab=A[k+3]<=B[k]+1e-6,ba=B[k+3]<=A[k]+1e-6,m=Math.abs(v[k]);if((ab||ba)&&m>best+1e-9){best=m;ax=k;aLow=ba}}
       // A is drawn before B: B must not be strictly farther than A on the best separating axis
-      if(ax<0)continue;pairsChecked++;const aIsLow=A[ax+3]<=B[ax]+1e-6;const aNearer=(aIsLow&&v[ax]<0)||(!aIsLow&&v[ax]>0);if(aNearer)bad++;
+      if(ax<0)continue;pairsChecked++;const aIsLow=A[ax+3]<=B[ax]+1e-6;const aNearer=(aIsLow&&v[ax]<0)||(!aIsLow&&v[ax]>0);if(aNearer){if(comp[i]>=0&&comp[i]===comp[j])cyc++;else bad++}
     }
   });
-  ok(bad===0&&pairsChecked>500,'draw order is correct from '+angles.length+' camera angles ('+pairsChecked+' overlapping box pairs checked, '+bad+' wrong)');
+  ok(bad===0&&pairsChecked>500&&cyc<=pairsChecked*.01,'draw order is correct from '+angles.length+' camera angles ('+pairsChecked+' overlapping box pairs checked, '+bad+' wrong, '+cyc+' inside genuine cycles)');
   // camera
   const before=top.innerHTML;
   w.s3down({button:0,clientX:200,clientY:200,pointerId:1,currentTarget:top});w.s3move({clientX:260,clientY:215});await sleep(60);w.s3up();
@@ -59,7 +70,8 @@ setTimeout(async()=>{
   w.s3look('kraft');
   ok(d.querySelector('.s3look button[data-look=kraft]').classList.contains('on')&&fills(d.getElementById('sim3d')).has(w.eval("s3col('#cfa66d',1.1)")),'Kraft look: brown cartons');
   w.s3look('model');ok(fills(d.getElementById('sim3d')).has(ca),'back to colours by model');
-  // stacked pairs
+  // stacked pairs (the pair planner; "overflow -> Stack = Y" is tested in layout34.test.js)
+  d.getElementById('autoStackY').checked=false;
   setup([['A',200*17],['B',96*4]]);
   const st=w.planStacking(),it2=w.eval("s3items(SIM3.scene,[0,-1,.5])");
   ok(st.pairs.length>0&&it2.filter(i=>i.k==='skid'&&i.b[2]>50).length===st.pairs.length,'each stacked pair is drawn two-high ('+st.pairs.length+' upper pallets)');

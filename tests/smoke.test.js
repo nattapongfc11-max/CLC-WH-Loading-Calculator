@@ -19,7 +19,7 @@ setTimeout(()=>{
   const tareTotal=w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0);ok(Math.abs(tareTotal-7)<1e-6,'tare counted once per mix group (7 kg)');
   const lay=w.calculateMixPalletLayouts()[0];
   ok(lay.cartons===10,'mix cartons = 5 (A) + 5 (B)');
-  ok(lay.totalHeight===7+lay.stackHeight,'total height = 7 cm base + sum of layer heights');
+  ok(lay.totalHeight===13+lay.stackHeight,'total height = 13 cm pallet + sum of layer heights');
   ok(d.querySelectorAll('#mixCalcPanel svg.pal3d').length>=1&&!d.querySelector('#mixCalcPanel svg.topview')&&!/Top View/.test(d.getElementById('mixCalcPanel').textContent),'3D per pallet rendered in the Mix card (no 2D Top View)');
   w.pal3dAll();{const sv=d.querySelector('#mixCalcPanel svg.pal3d');ok(sv.querySelectorAll('polygon').length>=20&&/110 × 110 ×/.test(sv.textContent),'the 3D pallet draws its cartons and prints 110 × 110 × H');const y0=w.eval('PAL3.cam.yaw');w.eval('PAL3.cam.yaw=60');w.pal3dAll();ok(sv.innerHTML!==''&&w.eval('PAL3.cam.yaw')===60,'rotating the camera redraws the pallet');w.eval('PAL3.cam.yaw='+y0)}
   // 3. Different heights never share a layer
@@ -36,7 +36,8 @@ setTimeout(()=>{
   ok(w.physicalPalletCount()===2&&Math.abs(w.allocations.reduce((s,a)=>s+a.grossLine-a.grossKgPallet,0)-14)<1e-6,'2 physical pallets -> tare 14 kg');
   ok(gs[0].group==='Mix Rem 1'&&gs[1].group==='Mix Rem 2','single-model split pieces are Pallet เศษ (internal Mix Rem 1, 2), never numbered as Mix Pallet, no "(2)" names');
   w.recalcDerived();ok(w.calculateMixPalletLayouts().length===2,'split is stable on recalculation');
-  // 3c. 40HC floor capacity = 20 pallets
+  // 3c. 40HC floor capacity = 20 pallets (the 2-high pair planner itself; "overflow -> Stack = Y automatically" has its own checks in layout34.test.js)
+  d.getElementById('autoStackY').checked=false;
   w.models=[{model:'A',planQty:200*21,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   d.getElementById('stackPallet').checked=false;w.renderSummary();
   ok(w.physicalPalletCount()===21&&/เกินความจุพื้นตู้/.test(d.getElementById('floorStatus').textContent),'21 pallets on 40HC, stacking off -> floor capacity warning');

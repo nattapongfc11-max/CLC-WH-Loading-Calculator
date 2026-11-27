@@ -25,10 +25,10 @@ setTimeout(()=>{
   const solo=w.allocations.find(a=>w.isMixAllocation(a));solo.mixGroup='N';solo.skidNo=3;w.recalcDerived();w.renderCalc();
   const idx=w.allocations.indexOf(solo);
   w.editAlloc(idx,'qtyPallet','200');ok(w.allocations[idx].palletH===125,'full pallet = Part Master height (125)');
-  w.editAlloc(idx,'qtyPallet','100');const h100=w.allocations[idx].palletH;ok(h100>7&&h100<125&&Math.abs(h100-77.8)<0.2,'Qty 100 -> height re-calculated ('+h100+' cm, 3 of 5 layers)');
-  w.editAlloc(idx,'qtyPallet','40');ok(Math.abs(w.allocations[idx].palletH-30.6)<0.2,'Qty 40 -> 1 layer ('+w.allocations[idx].palletH+' cm)');
+  w.editAlloc(idx,'qtyPallet','100');const h100=w.allocations[idx].palletH;ok(h100>13&&h100<125&&Math.abs(h100-69)<0.2,'Qty 100 -> height re-calculated ('+h100+' cm = 13 cm pallet + 2 of 4 layers of 28 cm)');
+  w.editAlloc(idx,'qtyPallet','40');ok(Math.abs(w.allocations[idx].palletH-41)<0.2,'Qty 40 -> 1 layer ('+w.allocations[idx].palletH+' cm)');
   w.editAlloc(idx,'palletH','99');w.editAlloc(idx,'remark','x');ok(w.allocations[idx].palletH===99,'height typed by the user stays while other fields change');
-  w.editAlloc(idx,'qtyPallet','160');ok(Math.abs(w.allocations[idx].palletH-101.4)<0.3&&!w.allocations[idx].hManual,'editing Qty recalculates the height again ('+w.allocations[idx].palletH+' cm, 4 layers)');
+  w.editAlloc(idx,'qtyPallet','160');ok(Math.abs(w.allocations[idx].palletH-125)<0.3&&!w.allocations[idx].hManual,'editing Qty recalculates the height again ('+w.allocations[idx].palletH+' cm, 4 layers)');
   ok(d.querySelectorAll('#allocations .dim-input')[2].value==String(w.allocations[0].palletH),'height shown in the table');
   w.parts=[part('A',{palletStack:'Y'})];w.models=[{model:'A',planQty:400,actualQty:null,packingModel:'A'}];w.generateAllocations();w.renderCalc();
   ok(w.allocations.length===1&&w.allocations[0].stack==='Y'&&w.allocations[0].palletH===250,'Stack = Y full pallet = 2 x 125');
@@ -69,7 +69,7 @@ setTimeout(()=>{
   w.manualConfirm();ok(sumOf('A')===500&&w.allocations.filter(a=>a.remark==='Manual')[0].qtyPallet===150&&w.allocations[0].qtyPallet===50,'balance used first: existing pallets untouched (rows before: '+rowsBefore+')');
   // ---- Layer 1 levelled, Layer 2 free
   {const lay=(cap,stackOn)=>{d.getElementById('floorCap').value=cap;d.getElementById('stackPallet').checked=stackOn};
-   const B=part('B',{qtyCarton:1,qtyPallet:100,cartonD:55,cartonW:36,cartonH:33,grossPallet:100});
+   const B=part('B',{qtyCarton:1,qtyPallet:100,cartonD:55,cartonW:36,cartonH:32,grossPallet:100}); // 4 layers x 32 + 13 cm pallet = 141 cm: taller than 130, and 125 + 141 = 266 <= 269
    const A=part('A'); // one full flat pallet 125 cm
    w.parts=[A,B];w.models=[{model:'A',planQty:200,actualQty:null,packingModel:'A'},{model:'B',planQty:24,actualQty:null,packingModel:'B'}];
    lay(1,false);w.generateAllocations();w.renderCalc();
@@ -128,7 +128,8 @@ setTimeout(()=>{
    w.allocations.forEach(a=>{if(a.shipmentModel==='C'){a.mixGroup='Mix Pallet 1 (6)';a.skidNo='Mix Pallet 1 (6)';delete a.skidSeq;delete a.skidTotal}});w.renderCalc();
    ok(![...d.querySelectorAll('#allocations td.skidcell')].some(x=>/\(\d+\)|Mix/.test(x.textContent))&&!w.allocations.some(a=>/\(\d+\)/.test(a.mixGroup)),'old saved names such as "Mix Pallet 1 (6)" are renumbered when a plan is opened');
   }
-  // ---- Stacking plan: which pallet is on top / bottom / paired with which
+  // ---- Stacking plan: which pallet is on top / bottom / paired with which (the pair planner; "overflow -> Stack = Y" is tested in layout34.test.js)
+  d.getElementById('autoStackY').checked=false;
   {const lay=(cap,stackOn)=>{d.getElementById('floorCap').value=cap;d.getElementById('stackPallet').checked=stackOn};
    const Cp=part('C',{qtyCarton:12,cartonH:20,qtyPallet:240,palletH:110,grossPallet:180}),Bp=part('B',{qtyCarton:6,cartonD:55,cartonW:36,cartonH:30,qtyPallet:96,palletH:120,grossPallet:200});
    w.parts=[part('A'),Bp,Cp];w.models=[{model:'A',planQty:200*17+60,actualQty:null,packingModel:'A'},{model:'B',planQty:96*4+30,actualQty:null,packingModel:'B'},{model:'C',planQty:240*5+120,actualQty:null,packingModel:'C'}];
